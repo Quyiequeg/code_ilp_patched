@@ -2,3 +2,5 @@ venv/
 __pycache__/
 .DS_Store
 *.pyc
+dblp-2023-06-28.dtd
+dblp-2025-05-02.xml

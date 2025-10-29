@@ -2,35 +2,39 @@ import argparse
 import sys
 import os
 import networkx as nx
+from pyvis.network import Network
+from PyQt5 import QtWidgets
+# import pyqtgraph as pg
+from PyQt6 import QtCore, QtGui, QtWidgets
+# ensure local gui module is importable when running main.py as a script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
+from gui import Ui_MainWindow
 
 # ensure the package root is importable when running from the repo root
 ROOT = os.path.dirname(os.path.dirname(__file__))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from src.graphs import nx_to_pyvis
-
-
-def build_sample_graph() -> nx.Graph:
-    """Create a simple sample graph (path) with labels."""
-    G = nx.path_graph(5)
-    for n in G.nodes:
-        G.nodes[n]["label"] = f"Node {n}"
-    return G
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Visualize a sample graph with pyvis")
-    parser.add_argument("-o", "--output", default="graph.html", help="Output HTML file")
-    parser.add_argument("--physics", action="store_true", help="Enable physics layout")
-    parser.add_argument("--width", default="100%", help="Canvas width (CSS)")
-    parser.add_argument("--height", default="600px", help="Canvas height (CSS)")
-    args = parser.parse_args()
-
-    G = build_sample_graph()
-    net = nx_to_pyvis(G, height=args.height, width=args.width, physics=args.physics)
-    net.show(args.output)
-
-
+def main():
+    # G = nx.Graph()
+    # G.add_nodes_from([1, 2, 3])
+    # G.add_edges_from([(1, 2), (2, 3)])
+    # print(list(G.nodes))
+    # nt = Network(height='500px', width='500px')
+    # nt.from_nx(G)
+    # nt.show('G.html', notebook=False)
+    print("Lade GUI.")
+    # app = QtWidgets.QApplication(sys.argv)
+    # MainWindow = QtWidgets.QMainWindow()
+    # ui = Ui_MainWindow()
+    # ui.setupUi(MainWindow)
+    # print("Laden abgeschlossen.")
+    # MainWindow.show()
+    # sys.exit(app.exec())
+    
+    
+    
 if __name__ == "__main__":
     main()

@@ -1,0 +1,22 @@
+Allgemein:
+* spinx documentation generator
+* .venv\Scripts\activate.bat
+
+Funktionalitäten:
+* .html löschen -> wann?
+* vorverarbeiter für xml -> graphml (welche funktionen dafür notwendig? wie flexibel?)
+* funktion auch für nur rechnen ohne visualisierung?
+
+GUI:
+* beim Laden: barycenter oder ILP auswählen, Jahreszahlen auswählen (dynamisch manipulierbar?) 2000 - 2xxx oder 2001, 2002 ...
+* config?
+
+ACHSEN:
+* ansatz entwickeln
+
+KANTEN:
+* edges -> smooth attribut für BEZIER
+
+Auswertungen:
+* vergleich von kreuzungen
+* vergleich der rechenzeit zwischen den varianten?
