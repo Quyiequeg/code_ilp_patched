@@ -2,5 +2,13 @@ venv/
 __pycache__/
 .DS_Store
 *.pyc
+# XML-Dateien für dblp
 dblp-2023-06-28.dtd
 dblp-2025-05-02.xml
+# Temporäre Build-Verzeichnisse
+/build
+/dist
+*.egg-info/
+.eggs/
+# Testdatei für schnelle Funktionstests
+*\src\test.py

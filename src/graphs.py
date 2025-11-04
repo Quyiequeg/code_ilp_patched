@@ -6,7 +6,16 @@ from flexitext import flexitext
 from hiveplotlib import HivePlot
 from hiveplotlib.converters import networkx_to_nodes_edges
 
-G = nx.complete_multipartite_graph(10, 10, 10)
+def sample_graph():
+    G = nx.complete_multipartite_graph(10, 10, 10)
+    return G
+
+# def cost_axis_ordering(nodes, edges):
+
+def node_span(node_0, node_1): #span(a_i, a_j) function
+    
+
+G = sample_graph()
 nodes, edges = networkx_to_nodes_edges(G)
 
 # split node IDs into separate lists based on which "subset" they're in

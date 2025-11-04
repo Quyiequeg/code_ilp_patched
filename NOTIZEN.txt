@@ -20,3 +20,8 @@ KANTEN:
 Auswertungen:
 * vergleich von kreuzungen
 * vergleich der rechenzeit zwischen den varianten?
+
+STEP1 grouping
+* https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.louvain.louvain_communities.html#networkx.algorithms.community.louvain.louvain_communities
+STEP2 opt. axis ordering
+STEP3 opt. vertex ordering
