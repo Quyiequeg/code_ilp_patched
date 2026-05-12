@@ -2,5 +2,8 @@
     "python-envs.pythonProjects": [],
     "python-envs.defaultEnvManager": "ms-python.python:venv",
     "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
-    "terminal.integrated.defaultProfile.windows": "Command Prompt"
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": ["tests"]
 }

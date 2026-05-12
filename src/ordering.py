@@ -1,4 +1,4 @@
-from graphs import sample_graph
+from src.graphs import edges_between_axes
 
 def cyclic_ordering(nodes): # phi
     """Bekommt einen NodeView übergeben und wandelt diese über ein Set in eine Liste um, die alle Subsetnumnern enthält. Diese Subsets spiegeln die Achsen wieder. Die Liste spiegelt also die zyklische Achsenanordnung wieder.
@@ -56,6 +56,7 @@ def node_to_axis(node, node_grps): # alpha(u)
     
 if __name__ == "__main__":
     # Aufbau der Testdaten
+    from src.graphs import sample_graph
     G = sample_graph()
     nodes = list(G.nodes(data="subset"))
     edges = list(G.edges())
