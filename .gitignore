@@ -12,3 +12,5 @@ dblp-2025-05-02.xml
 .eggs/
 # Testdatei für schnelle Funktionstests
 *\src\test.py
+# Jupyter Notebook Outputdateien
+notebooks/.ipynb_checkpoints/
