@@ -1,4 +1,5 @@
-from graphs import sample_graph
+import numpy as np
+from src.ordering import node_to_axis
 
 def node_or_axes_span(n1, n2, k): #Span von Knoten u,v oder Achsen a_i,a_j
     """Berechnet den Spann zweier Knoten oder Achsen
@@ -14,7 +15,7 @@ def node_or_axes_span(n1, n2, k): #Span von Knoten u,v oder Achsen a_i,a_j
     span = np.minimum(np.mod(n1 - n2, k), np.mod(n2 - n1, k))
     return span
 
-def edges_between_axes(node_grps, edges, a1, a2): #w_i,j !Kommentar: wenn edgelist immer geordnet else korrekt, falls nicht else entfernen PRÜF
+def edges_between_axes(node_grps, edges, a1, a2): #w_i,j !prüfen: wenn edgelist immer geordnet else korrekt, falls nicht else entfernen PRÜF
     """Ermittelt wieviele Kanten zwischen den gegebenen Achsen bestehen.
 
     Args:
@@ -37,7 +38,7 @@ def edges_between_axes(node_grps, edges, a1, a2): #w_i,j !Kommentar: wenn edgeli
         #         break
     return edgecount
 
-def cost_function_whole(ordering): #cost(phi) etc.
+def cost_function_whole(ordering: list[int]) -> int:
     cost = 0
     # for elem in range(len(ordering)-1):
     for ax in ordering:
@@ -48,8 +49,15 @@ def cost_function_whole(ordering): #cost(phi) etc.
 
 if __name__ == "__main__":
     # Aufbau der Testdaten
+    from graphs import sample_graph
+    from src.ordering import cyclic_ordering, node_groups
     G = sample_graph()
     nodes = list(G.nodes(data="subset"))
     edges = list(G.edges())
     phi = cyclic_ordering(nodes)
     node_grps = node_groups(nodes)
+    print("##########################################")
+    print("node_grps:", node_grps)
+    print("phi:", phi)
+    print(cost_function_whole(phi))
+    print("##########################################")

@@ -1,4 +1,3 @@
-# src/graphs.py
 import networkx as nx
 
 def sample_graph(sizes=(10, 10, 10)):
@@ -13,4 +12,6 @@ def sample_graph(sizes=(10, 10, 10)):
 
 if __name__ == "__main__":
     G = sample_graph()
+    print("##########################################")
     print(f"Knoten: {G.number_of_nodes()}, Kanten: {G.number_of_edges()}")
+    print("##########################################")
