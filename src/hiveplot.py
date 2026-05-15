@@ -84,10 +84,10 @@ class HivePlotLayout:
 
 
 if __name__ == "__main__":
-    from src.graphs import sample_graph
+    from src.graphs import sample_graph_multipartite
     from src.ordering import cyclic_ordering, node_groups
 
-    G = sample_graph()
+    G = sample_graph_multipartite()
     nodes = list(G.nodes(data="subset"))
     phi = cyclic_ordering(nodes)
     grps = node_groups(nodes)

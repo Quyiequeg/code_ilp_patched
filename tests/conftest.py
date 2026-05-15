@@ -4,4 +4,8 @@ import networkx as nx
 
 @pytest.fixture
 def sample_graph():
-    return nx.complete_multipartite_graph(5, 10, 5, 8)
+    return nx.complete_multipartite_graph(10, 10, 10)
+
+@pytest.fixture
+def caveman_graph():
+    return nx.caveman_graph(4, 10)

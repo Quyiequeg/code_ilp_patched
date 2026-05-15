@@ -1,3 +1,7 @@
+from itertools import permutations
+
+from src.graphs import sample_graph_selfconstructed
+
 def cyclic_ordering(nodes): # phi, zyklische achsenanordnung
     """Bekommt einen NodeView übergeben und wandelt diese über ein Set in eine Liste um, die alle Subsetnumnern enthält. Diese Subsets spiegeln die Achsen wieder. Die Liste spiegelt also die zyklische Achsenanordnung wieder.
 
@@ -52,16 +56,58 @@ def node_to_axis(node, node_grps): # alpha(u)
     else:
         return axis
     
+def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> tuple[int, tuple[int, ...]]:
+    from src.cost import cost_function_whole
+    permutations_ordering = list(permutations(ordering))
+    minimized_cost = float('inf') # init
+    optimal_perm = None # init
+    for perm in permutations_ordering:
+        cost = cost_function_whole(perm, node_grps, edges)
+        print(f"Permutation: {perm}, Kosten: {cost}") # debugging
+        if cost < minimized_cost:
+            minimized_cost = cost
+            optimal_perm = perm
+    return minimized_cost, optimal_perm
+
 if __name__ == "__main__":
     # Aufbau der Testdaten
-    from src.graphs import sample_graph
-    G = sample_graph()
-    nodes = list(G.nodes(data="subset"))
-    edges = list(G.edges())
-    phi = cyclic_ordering(nodes)
-    node_grps = node_groups(nodes)
-    print("##########################################")
-    print("nodes:", nodes)
-    print("phi:", phi)
-    print("node_grps:", node_grps)
-    print("##########################################")
+    from src.graphs import sample_graph_multipartite, sample_graph_caveman, sample_graph_selfconstructed
+    from src.partitioning import clauset_newman_moore_communities, louvain_community_detection
+    G = sample_graph_multipartite()
+    CG = sample_graph_caveman(4, 10)
+    SC = sample_graph_selfconstructed()
+    pipeline_test = 1
+    if pipeline_test == 1:
+        edges = list(SC.edges())
+        nodes = list(SC.nodes(data="subset"))
+        phi = cyclic_ordering(nodes)
+        node_grps = node_groups(nodes)
+        print("##########################################")
+        print(">>>> Pipeline Test")
+        print("nodes:", nodes)
+        print("phi:", phi)
+        print("node_grps:", node_grps)
+        print("##########################################")
+        print(brute_force_ordering(phi, node_grps, edges))
+        print("##########################################")        
+        # edges = list(SC.edges())
+        # comm_graph_cnm = clauset_newman_moore_communities(SC)
+        # first_phi = []
+        # for i in range(len(comm_graph_cnm)):
+        #     first_phi.append(i)
+        # print(first_phi)
+        # # comm_graph_louvain = louvain_community_detection(CG)
+        # print(brute_force_ordering(first_phi, comm_graph_cnm, edges))
+        # # print("Communities (Louvain):", comm_graph_louvain)     
+        # print("##########################################")
+
+    else:
+        nodes = list(G.nodes(data="subset"))
+        edges = list(G.edges())
+        phi = cyclic_ordering(nodes)
+        node_grps = node_groups(nodes)
+        print("##########################################")
+        print("nodes:", nodes)
+        print("phi:", phi)
+        print("node_grps:", node_grps)
+        print("##########################################")
