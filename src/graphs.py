@@ -26,9 +26,8 @@ def sample_graph_selfconstructed():
     """Erzeugt einen sehr kleinen, selbst konstruierten Graphen. Dient dem Testen und Debugging. Er weist folgende Kennzahlen auf:
     - 8 Knoten
     - 5 Kanten
-    - 4 Achsen (0, 1, 2, 3) mit jeweils 2 Knoten
-    - Phi = (0, 1, 2, 3) (zyklische Anordnung)
-    - das optimale Gewicht ist 6, bei der Achsenanordnung (0, 1, 3, 2)
+    - 4 Achsen mit jeweils 2 Knoten -> Phi = (0, 1, 2, 3)  
+    - das optimale Gewicht ist 7, bei der Achsenanordnung (0, 1, 3, 2)
 
     Returns:
         nx.Graph: selbst konstruierter Graph
