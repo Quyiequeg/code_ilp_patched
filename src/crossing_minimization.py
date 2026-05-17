@@ -29,17 +29,28 @@ from src.partitioning import clauset_newman_moore_communities
 
 
 def subdivide_long_edges(layout: HivePlotLayout) -> dict[int, list[int]]:
+    """_summary_
 
-    def clockwise_count(start, end, span):
-        dummyposition = (start + 1) % k
+    Args:
+        layout (HivePlotLayout): _description_
+
+    Returns:
+        dict[int, list[int]]: _description_
+    """
+    def clockwise_count(start_pos, start_node, end_node, span):
+        """Fügt Dummy-Knoten für eine Kante im Uhrzeigersinn ein."""
+        dummyposition = (start_pos + 1) % k
         for _ in range(span - 1): # achsen zwischen start und ende
-            dummies[dummyposition].append(f"d_{start}_{end}") # name unikal pro achse, achsensegmente leicht rekonstruierbar
+            axis = layout.axis_order[dummyposition] # position -> achse
+            dummies[axis].append(f"d_{start_node}_{end_node}") # name unikal pro achse, achsensegmente leicht rekonstruierbar
             dummyposition = (dummyposition + 1) % k
 
-    def counter_clockwise_count(start, end, span):
-        dummyposition = (start - 1) % k
+    def counter_clockwise_count(start_pos, start_node, end_node, span):
+        """Fügt Dummy-Knoten für eine Kante gegen den Uhrzeigersinn ein."""
+        dummyposition = (start_pos - 1) % k
         for _ in range(span - 1): # achsen zwischen start und ende
-            dummies[dummyposition].append(f"d_{start}_{end}") # name unikal pro achse, achsensegmente leicht rekonstruierbar
+            axis = layout.axis_order[dummyposition] # position -> achse
+            dummies[axis].append(f"d_{start_node}_{end_node}") # name unikal pro achse, achsensegmente leicht rekonstruierbar
             dummyposition = (dummyposition - 1) % k
             
     k = layout.num_axes
@@ -47,19 +58,20 @@ def subdivide_long_edges(layout: HivePlotLayout) -> dict[int, list[int]]:
     dummies = layout.node_groups_dummies
     for axis in layout.axis_order: # initialisiere dummyliste
         dummies[axis] = []
+    pos = {axis: i for i, axis in enumerate(layout.axis_order)} # umrechnen von achsen zu positionen
     for edge in edges:
-        # egg = [edge[0]]
-        # print(type(egg))
-        start = node_to_axis(edge[0], layout.node_groups)
-        end = node_to_axis(edge[1], layout.node_groups)
-        if node_or_axes_span(start, end, k) > 1:
-            span = node_or_axes_span(start, end, k)
-            if (start - end) % k < (end - start) % k: # richtung start -> ende, clockwise
-                clockwise_count(start, end, span)
-            elif (start - end) % k > (end - start) % k: # richtung ende <- start, counter cw
-                counter_clockwise_count(start, end, span)
+        start = node_to_axis(edge[0], layout.node_groups) # startachse
+        end = node_to_axis(edge[1], layout.node_groups) # endachse
+        start_pos = pos[start] # startpositioon
+        end_pos = pos[end] # endposition
+        if node_or_axes_span(start_pos, end_pos, k) > 1:
+            span = node_or_axes_span(start_pos, end_pos, k)
+            if (start_pos - end_pos) % k < (end_pos - start_pos) % k: # richtung start -> ende, clockwise
+                clockwise_count(start_pos, edge[0], edge[1], span)
+            elif (start_pos - end_pos) % k > (end_pos - start_pos) % k: # richtung ende <- start, counter cw
+                counter_clockwise_count(start_pos, edge[0], edge[1], span)
             else: # gleicher spann, routing im uhrzeigersinn
-                clockwise_count(start, end, span)
+                clockwise_count(start_pos, edge[0], edge[1], span)
 
 
 
