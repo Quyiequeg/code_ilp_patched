@@ -36,7 +36,7 @@ class HivePlotLayout:
     crossings_extended: Optional[int] = None  # kreuzungszahl erweitertes modell
 
     def __str__(self):
-        """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei print() und debugging.
+        """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
 
         Returns:
             str: Zeilenweise Ausgabe der Parameter und Felder.

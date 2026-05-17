@@ -21,13 +21,16 @@
 # 5. Pipeline gesamt (nur diese wird ausgeführt und bündelt die einzelnen Bestandteile)
 # -> Parameter intuitiv: def barycenter_crossing_min(G, alpha, phi, pi, g=1, threshold=None) | RETURN: PI
 
+from src.ordering import cyclic_ordering, node_groups
+
+
 def subdivide_long_edges():
     pass
 
-def sweep():
+def _sweep():
     pass
 
-def gap_handling():
+def _gap_handling():
     pass
 
 def barycenter_crossmin_pipeline():
@@ -35,4 +38,32 @@ def barycenter_crossmin_pipeline():
 
 if __name__ == "__main__":
     print("##########################################")
+    from src.graphs import sample_graph_selfconstructed
+    from src.hiveplot import HivePlotLayout
+    # from src.partitioning import louvain_community_detection
+    from src.debug_renderer import draw_hiveplot_debug
+
+    G = sample_graph_selfconstructed()
+    nodes = list(G.nodes(data="subset"))
+    phi = cyclic_ordering(nodes)
+    grps = node_groups(nodes)
+
+    hpl = HivePlotLayout(
+        graph=G,
+        num_axes=len(phi),
+        axis_order=phi,
+        node_groups=grps
+    )
+
+    print("=== VOR subdivide ===")
+    print(hpl)
+    print(hpl.axes())
+    draw_hiveplot_debug(G, hpl, title="VOR subdivide") #output 1
+
+    # dummies = subdivide_long_edges(G, layout)
+
+    # print(f"\n=== NACH subdivide ===")
+    # print(f"Neue Dummy-Knoten: {dummies}")
+    # draw_hiveplot_debug(G, layout, title="NACH subdivide",
+    #                     highlight_nodes=dummies) #output 2
     print("##########################################")
