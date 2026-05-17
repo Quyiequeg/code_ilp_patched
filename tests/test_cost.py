@@ -1,11 +1,11 @@
 from src.cost import cost_function_whole
 
 def test_cost_function_whole_default_ordering(sample_graph):
-    from src.ordering import cyclic_ordering, node_groups
+    from src.ordering import native_order, node_groups
     nodes = list(sample_graph.nodes(data="subset"))
     edges = list(sample_graph.edges())
     node_grps = node_groups(nodes)
-    ordering_default = cyclic_ordering(nodes)
+    ordering_default = native_order(nodes)
     cost_default = cost_function_whole(ordering_default, node_grps, edges)
     assert isinstance(cost_default, int)
     assert cost_default == 300

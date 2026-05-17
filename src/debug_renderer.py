@@ -70,11 +70,6 @@ def render_debug(
 
     plt.show()
 
-
-# ---------------------------------------------------------------------------
-# Interne Hilfsfunktionen
-# ---------------------------------------------------------------------------
-
 _AXIS_COLORS = [
     "#4f98a3", "#e07b39", "#6daa45", "#a86fdf",
     "#dd6974", "#d19900", "#006494", "#964219",
@@ -270,28 +265,3 @@ def _draw_hive(
             ),
             zorder=1
         )
-
-
-# ---------------------------------------------------------------------------
-# Direktaufruf / Smoke-Test
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    from src.graphs import sample_graph_selfconstructed
-    from src.ordering import cyclic_ordering, node_groups
-
-    G = sample_graph_selfconstructed()
-    nodes = list(G.nodes(data="subset"))
-    phi = cyclic_ordering(nodes)
-    grps = node_groups(nodes)
-
-    layout = HivePlotLayout(
-        graph=G,
-        num_axes=len(phi),
-        axis_order=phi,
-        node_groups=grps,
-    )
-
-    print("Smoke-Test: render_debug mit sample_graph_selfconstructed")
-    print(layout)
-    render_debug(layout, title="Smoke-Test – selfconstructed")

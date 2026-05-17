@@ -1,7 +1,7 @@
-from src.ordering import cyclic_ordering
+from src.ordering import native_order
 
-def test_cyclic_ordering(sample_graph):
+def test_native_order(sample_graph):
     nodes = list(sample_graph.nodes(data="subset"))
-    result = cyclic_ordering(nodes)
+    result = native_order(nodes)
     assert isinstance(result, list)
     assert len(result) == 3

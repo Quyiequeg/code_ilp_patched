@@ -8,10 +8,12 @@ class HivePlotLayout:
     """Zentrale Datenstruktur für ein berechnetes Hive-Plot-Layout.
 
     Attributes:
-        graph (nx.Graph): der zugrundeliegende Graph G
+        graph (nx.Graph): ein Simple Graph den man nach der Verarbeitung der geparsten DBLP Daten erhält: V = Autoren, E = Coautorenschaft zu 
         num_axes (int): k = Anzahl Achsen
-        axis_order (list[int]): phi: siehe cyclic_ordering Funktion in ordering.py
+        axis_order (list[int]): phi: siehe native_order Funktion in ordering.py
         node_groups (dict[int, list[int]]): alpha: siehe node_groups Funktion in ordering.py
+        node_groups_dummies (dict[int, list[int]]): Achsen mit Dummyknoten
+        # dummy_edge_segments (dict[tuple[int,int], list[tuple[int, int]]]): key: Kantentupel (u,v) value: Liste von Kantensegmenten die u und v über Dummyknoten verbinden
         node_order (dict[int, list[int]]): pi_i pro Achse gebündelt
         node_order_plus (dict[int, list[int]]): pi_i^+
         node_order_minus (dict[int, list[int]]): pi_i^-
@@ -19,21 +21,25 @@ class HivePlotLayout:
         crossings_extended (Optional[int]): Kreuzungszahl erweitertes Modell
     """
     # ursprünglicher graph und notwendige erweiterungen für die pipeline
-    graph: nx.Graph # der zugrundeliegende Graph G
-    num_axes: int # k = Anzahl Achsen
-    axis_order: list[int] # phi
-    node_groups: dict[int, list[int]] # alpha
+    graph: nx.Graph
+    num_axes: int
+    axis_order: list[int]
+    node_groups: dict[int, list[int]]
+
+    # notwendig für Pipeline Schritt 3: lange Kanten segmentieren
+    node_groups_dummies: dict[int, list[int]] = field(default_factory=dict)
+    # dummy_edge_segments: dict[tuple[int,int], list[tuple[int, int]]] = field(default_factory=dict)
 
     # knotenordnung auf achsen, wobei pi_i = p_i^+ = p_i^-
-    node_order: dict[int, list[int]] = field(default_factory=dict) # pi_i pro Achse gebündelt
+    node_order: dict[int, list[int]] = field(default_factory=dict)
 
     # unabhängige Kopien für pi+ und pi-, da diese sich im erweiterten Modell unterscheiden können
     node_order_plus:  dict[int, list[int]] = field(default_factory=dict) # +
     node_order_minus: dict[int, list[int]] = field(default_factory=dict) # -
 
     # ergebnisse zu evaluationszwecken !prüfen
-    crossings: Optional[int] = None           # kreuzungszahl standardmodell
-    crossings_extended: Optional[int] = None  # kreuzungszahl erweitertes modell
+    crossings: Optional[int] = None
+    crossings_extended: Optional[int] = None
 
     def __str__(self):
         """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
@@ -47,6 +53,7 @@ class HivePlotLayout:
             f"  Number of Axes: {self.num_axes}",
             f"  Axis Order (phi): {self.axis_order}",
             f"  Node Groups (alpha): {self.node_groups}",
+            f"  Node Groups with Dummies: {self.node_groups_dummies}",
             f"  Node Order (pi_i): {self.node_order}",
             f"  Node Order Plus (pi_i^+): {self.node_order_plus}",
             f"  Node Order Minus (pi_i^-): {self.node_order_minus}",
@@ -56,40 +63,51 @@ class HivePlotLayout:
         return "\n".join(lines)
 
     def edges(self) -> list[tuple]:
-        """Gibt die Kantenliste des Graphen zurück.
+        """Gibt die Kantenliste des Graphen zurück. Notwendig, weil mit dem Networkx Edgeview nicht direkt gearbeitet werden kann.
 
         Returns:
             list[tuple]: Liste der Kanten als Tupel (u, v)
         """
         return list(self.graph.edges())
 
-    def axes(self) -> list[int]:
-        """Gibt die geordneten Achsen zurück (= axis_order).
-
-        Returns:
-            list[int]: Geordnete Liste der Achsen
-        """
-        return self.axis_order
-
-    def nodes_on_axis(self, axis: int) -> list[int]:
+    def nodes_on_axis(self, axis: int, include_dummies: bool = False) -> list[int]:
         """Gibt die Knoten einer bestimmten Achse zurück.
 
         Args:
             axis (int): Die Achse, für die die Knoten zurückgegeben werden sollen
+            include_dummies (bool): false (default) Rückgabe ohne dummies, true mit dummies
 
         Returns:
             list[int]: Liste der Knoten auf der angegebenen Achse
         """
-        return self.node_groups.get(axis, [])
+        if include_dummies:
+            return self.fuse_node_groups_with_dummies().get(axis, [])
+        else:
+            return self.node_groups.get(axis, [])
+    
+    def fuse_node_groups_with_dummies(self) -> dict[int, list[int]]:
+        """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert.
+
+        Returns:
+            dict[int, list[int]]: Vereinigung der Knoten und Dummyknoten pro Achse.
+        """
+        fused_groups = {}
+        for axis in self.axis_order:
+            original_nodes = set(self.node_groups.get(axis, []))
+            dummy_nodes = set(self.node_groups_dummies.get(axis, []))
+            fused_groups[axis] = list(original_nodes.union(dummy_nodes))
+        return fused_groups
+
+
 
 
 if __name__ == "__main__":
     from src.graphs import sample_graph_multipartite
-    from src.ordering import cyclic_ordering, node_groups
+    from src.ordering import native_order, node_groups
 
     G = sample_graph_multipartite()
     nodes = list(G.nodes(data="subset"))
-    phi = cyclic_ordering(nodes)
+    phi = native_order(nodes)
     grps = node_groups(nodes)
 
     hpl = HivePlotLayout(
@@ -101,6 +119,6 @@ if __name__ == "__main__":
     print("##########################################")
     print(hpl)
     print("##########################################")
-    print("Achsen:", hpl.axes())
+    print("Achsen:", hpl.axis_order)
     print("Knoten auf Achse 0:", hpl.nodes_on_axis(0))
     print("##########################################")

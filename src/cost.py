@@ -50,21 +50,19 @@ def cost_function_whole(ordering: list[int], node_grps: dict, edges: list) -> in
     cost = 0
     for i in range(k):
         for j in range(i + 1, k):
-            print(f"{ordering[i]} -> {ordering[j]}") # debugging
-            print(f"{edges_between_axes(node_grps, edges, ordering[i], ordering[j])
-                     * node_or_axes_span(i, j, k)}") # debugging
-            cost += (edges_between_axes(node_grps, edges, ordering[i], ordering[j])
-                     * node_or_axes_span(i, j, k))
+            # print(f"{ordering[i]} -> {ordering[j]}") # debugging
+            # print(f"{edges_between_axes(node_grps, edges, ordering[i], ordering[j])* node_or_axes_span(i, j, k)}") # debugging
+            cost += (edges_between_axes(node_grps, edges, ordering[i], ordering[j]) * node_or_axes_span(i, j, k))
     return cost
 
 if __name__ == "__main__":
     # Aufbau der Testdaten
     from graphs import sample_graph_multipartite
-    from src.ordering import cyclic_ordering, node_groups
+    from src.ordering import native_order, node_groups
     G = sample_graph_multipartite()
     nodes = list(G.nodes(data="subset"))
     edges = list(G.edges())
-    phi_default = cyclic_ordering(nodes)
+    phi_default = native_order(nodes)
     phi_reordered = [2, 0, 1, 4]
     node_grps = node_groups(nodes)
     print("##########################################")

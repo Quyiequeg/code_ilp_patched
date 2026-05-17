@@ -2,8 +2,8 @@ from itertools import permutations
 
 from src.graphs import sample_graph_selfconstructed
 
-def cyclic_ordering(nodes): # phi, zyklische achsenanordnung
-    """Bekommt einen NodeView übergeben und wandelt diese über ein Set in eine Liste um, die alle Subsetnumnern enthält. Diese Subsets spiegeln die Achsen wieder. Die Liste spiegelt also die zyklische Achsenanordnung wieder.
+def native_order(nodes):
+    """Bekommt einen NodeView übergeben und wandelt diese über ein Set in eine Liste um, die alle Subsetnumnern enthält. Diese Subsets spiegeln die Achsen wieder. Die Liste dient als Initialisierung zur Berechnung von Phi. Es handelt sich als o
 
     Args:
         nodes (NodeDataView): siehe networkx.graph.nodes
@@ -15,8 +15,8 @@ def cyclic_ordering(nodes): # phi, zyklische achsenanordnung
     ordered_list = list(ordered_set)
     return ordered_list
 
-def node_groups(nodes): # alpha, Mapping von Knoten zu Achsengruppen
-    """Erzeugt ein Dict wobei jeder Key ein Subset ist dem eine Liste aus zughörigen Knoten zugeordnet wird.
+def node_groups(nodes: list[tuple[int, int]], ): # alpha, Mapping von Knoten zu Achsengruppen
+    """Erzeugt ein Dict wobei jeder Key ein Subset ist dem eine Liste aus zughörigen Knoten zugeordnet wird. Es handelt sich hierbei um die Funktion alpha.
 
 
     Args:
@@ -38,7 +38,7 @@ def node_to_axis(node, node_grps): # alpha(u)
 
     Args:
         node (int): Knoten ID
-        node_grps (dict): key: subset, value: list
+        node_grps (dict): key: Achse, value: Knoten
 
     Raises:
         ValueError: Der Knoten kann keiner Achse zugeordnet werden.
@@ -56,18 +56,33 @@ def node_to_axis(node, node_grps): # alpha(u)
     else:
         return axis
     
-def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> tuple[int, tuple[int, ...]]:
+def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> tuple[int, ...]:
+    """Für kleine k und zum Entwickeln der Pipeline vermeide ich zuerst die Auseinandersetzung mit dem Solver.
+    Diese Funktion dient dem schnellen Berechnen von Pipelineschritt 2: günstigste Achsenanordnung finden. 
+
+    Args:
+        ordering (list[int]): aktuelle Achsenordnung (phi)
+        node_grps (dict): key: Achse, value: Knoten
+        edges (list): Knotenliste
+
+    Returns:
+        tuple[int, ...]: _description_
+    """
     from src.cost import cost_function_whole
     permutations_ordering = list(permutations(ordering))
     minimized_cost = float('inf') # init
     optimal_perm = None # init
     for perm in permutations_ordering:
         cost = cost_function_whole(perm, node_grps, edges)
-        print(f"Permutation: {perm}, Kosten: {cost}") # debugging
+        # print(f"Permutation: {perm}, Kosten: {cost}") # debugging
         if cost < minimized_cost:
             minimized_cost = cost
             optimal_perm = perm
-    return minimized_cost, optimal_perm
+    # print(f"Optimale Permutation: {optimal_perm}, Minimierte Kosten: {minimized_cost}") # debugging
+    return optimal_perm
+
+def reordered_node_groups(node_grps: dict[int, list[int]], new_order: tuple[int, ...]) -> dict[int, list[int]]:
+    return {axis: node_grps[axis] for axis in new_order}
 
 if __name__ == "__main__":
     # Aufbau der Testdaten
@@ -80,8 +95,10 @@ if __name__ == "__main__":
     if pipeline_test == 1:
         edges = list(SC.edges())
         nodes = list(SC.nodes(data="subset"))
-        phi = cyclic_ordering(nodes)
-        node_grps = node_groups(nodes)
+        axes = native_order(nodes)
+        grps = node_groups(nodes)
+        phi = brute_force_ordering(axes, grps, edges)
+        node_grps = reordered_node_groups(grps, phi)
         print("##########################################")
         print(">>>> Pipeline Test")
         print("nodes:", nodes)
@@ -104,7 +121,7 @@ if __name__ == "__main__":
     else:
         nodes = list(G.nodes(data="subset"))
         edges = list(G.edges())
-        phi = cyclic_ordering(nodes)
+        phi = native_order(nodes)
         node_grps = node_groups(nodes)
         print("##########################################")
         print("nodes:", nodes)
