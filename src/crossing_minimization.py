@@ -28,35 +28,50 @@ from src.ordering import brute_force_ordering, native_order, node_groups, node_t
 from src.partitioning import clauset_newman_moore_communities
 
 
-def subdivide_long_edges(layout: HivePlotLayout) -> dict[int, list[int]]:
-    """_summary_
+def subdivide_long_edges(layout: HivePlotLayout) -> None:
+    """Funktion dient dem Einfügen von Dummyknoten für lange Kanten (span > 1) auf den Achsen zwischen Start- und Endknoten. Schema: d_[Startknoten]_[Endknoten]_[Sequenznummer]: z.B. d_5_10_2 ist der zweite Dummyknoten auf der zerlegten langen Kante von 5 nach 10. Die lange Kante kann dann folgendermaßen beschrieben werden:
+    Startknoten - d_5_10_1 - d_5_10_2 - ... - d_5_10_(span-1) - Endknoten. Die Funktion schreibt direkt in layout.node_groups_dummies.
 
     Args:
-        layout (HivePlotLayout): _description_
-
-    Returns:
-        dict[int, list[int]]: _description_
+        layout (HivePlotLayout): Das HivePlotLayout-Objekt, das die Informationen über den Graphen, die Achsen und die Knoten enthält. 
     """
-    def clockwise_count(start_pos, start_node, end_node, span):
-        """Fügt Dummy-Knoten für eine Kante im Uhrzeigersinn ein."""
-        dummyposition = (start_pos + 1) % k
-        for _ in range(span - 1): # achsen zwischen start und ende
-            axis = layout.axis_order[dummyposition] # position -> achse
-            dummies[axis].append(f"d_{start_node}_{end_node}") # name unikal pro achse, achsensegmente leicht rekonstruierbar
-            dummyposition = (dummyposition + 1) % k
+    def make_dummy_name(start_node: int, end_node: int, sequence_number: int) -> str:
+        """Konstruktor für die Bennenung von Dummyknoten.
+        Args:
+            start_node (int): Startknoten ursprüngliche Kante
+            end_node (int): Endknoten ursprüngliche Kante
+            sequence_number (int): Wievielter Dummyknoten zwischen Start und Ende, beginnend bei 1
 
-    def counter_clockwise_count(start_pos, start_node, end_node, span):
-        """Fügt Dummy-Knoten für eine Kante gegen den Uhrzeigersinn ein."""
-        dummyposition = (start_pos - 1) % k
+        Returns:
+            str: Der Name des Dummyknotens
+        """
+        return f"d_{start_node}_{end_node}_{sequence_number}"
+    
+    def clockwise_count(start_pos: int, start_node: int, end_node: int, span: int):
+        """Fügt Dummy-Knoten für eine Kante im Uhrzeigersinn ein. span: Wieviele Achsen die Kante zwischen Start und Endknoten überspannt. span-1 ist die Anzahl der Dummyknoten."""
+        dummyposition = (start_pos + 1) % k
+        sequence_number = 1
         for _ in range(span - 1): # achsen zwischen start und ende
             axis = layout.axis_order[dummyposition] # position -> achse
-            dummies[axis].append(f"d_{start_node}_{end_node}") # name unikal pro achse, achsensegmente leicht rekonstruierbar
+            dummies[axis].append(make_dummy_name(start_node, end_node, sequence_number)) # name unikal pro achse, achsensegmente leicht rekonstruierbar
+            dummyposition = (dummyposition + 1) % k
+            sequence_number += 1
+
+    def counter_clockwise_count(start_pos: int, start_node: int, end_node: int, span: int):
+        """Fügt Dummy-Knoten für eine Kante gegen den Uhrzeigersinn ein. span: Wieviele Achsen die Kante zwischen Start und Endknoten überspannt. span-1 ist die Anzahl der Dummyknoten."""
+        dummyposition = (start_pos - 1) % k
+        sequence_number = 1
+        for _ in range(span - 1): # achsen zwischen start und ende
+            axis = layout.axis_order[dummyposition] # position -> achse
+            dummies[axis].append(make_dummy_name(start_node, end_node, sequence_number)) # name unikal pro achse, achsensegmente leicht rekonstruierbar
             dummyposition = (dummyposition - 1) % k
+            sequence_number += 1
+    
             
     k = layout.num_axes
     edges = layout.edges()
     dummies = layout.node_groups_dummies
-    for axis in layout.axis_order: # initialisiere dummyliste
+    for axis in layout.axis_order: # initialisiere dummyliste, schreibt explizit in die HivePlotLayout Instanz
         dummies[axis] = []
     pos = {axis: i for i, axis in enumerate(layout.axis_order)} # umrechnen von achsen zu positionen
     for edge in edges:
@@ -64,17 +79,28 @@ def subdivide_long_edges(layout: HivePlotLayout) -> dict[int, list[int]]:
         end = node_to_axis(edge[1], layout.node_groups) # endachse
         start_pos = pos[start] # startpositioon
         end_pos = pos[end] # endposition
-        if node_or_axes_span(start_pos, end_pos, k) > 1:
-            span = node_or_axes_span(start_pos, end_pos, k)
-            if (start_pos - end_pos) % k < (end_pos - start_pos) % k: # richtung start -> ende, clockwise
+        span = node_or_axes_span(start_pos, end_pos, k)
+        if span > 1:
+            if (start_pos - end_pos) % k < (end_pos - start_pos) % k or (start_pos - end_pos) % k == (end_pos - start_pos) % k: # richtung start -> ende, clockwise oder span cw = span ccw
                 clockwise_count(start_pos, edge[0], edge[1], span)
             elif (start_pos - end_pos) % k > (end_pos - start_pos) % k: # richtung ende <- start, counter cw
                 counter_clockwise_count(start_pos, edge[0], edge[1], span)
-            else: # gleicher spann, routing im uhrzeigersinn
-                clockwise_count(start_pos, edge[0], edge[1], span)
 
 
+def parse_dummy_name(name: str) -> tuple[int, int, int]:
+    """Zerlegt den Namen eines Dummyknotens in seine Bestandteile: Startknoten, Endknoten und Sequenznummer. (siehe make_dummy_name Funktion für Namensschema)
 
+    Args:
+        name (str): Der zu zerlegende Dummyknoten
+
+    Returns:
+        tuple[int, int, int]: Tupel aus int-Werten: (Startknoten, Endknoten, Sequenznummer)
+    """
+    parts = name.split("_")
+    return int(parts[1]), int(parts[2]), int(parts[3])
+
+def get_dummy_edge(graph, start, ende):
+    pass
 
 def _sweep():
     pass
@@ -123,10 +149,10 @@ if __name__ == "__main__":
     print(hpl)
     print(hpl.edges())
     print("=== VOR subdivide ===")
-    render_debug(hpl, title="VOR subdivide") #output 1
+    # render_debug(hpl, title="VOR subdivide") #output 1
     hpl.node_groups = hpl.fuse_node_groups_with_dummies() # wichtig für die folgenden Schritte, damit die Dummyknoten in den Berechnungen berücksichtigt werden
     print(f"\n=== NACH subdivide ===")
     print("Node Groups mit Dummies:", hpl.node_groups)
     # print(f"Neue Dummy-Knoten: {dummies}")
-    render_debug(hpl, title="NACH subdivide") #output 2
+    # render_debug(hpl, title="NACH subdivide") #output 2
     print("##########################################")
