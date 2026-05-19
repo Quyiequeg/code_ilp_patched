@@ -28,7 +28,8 @@ class HivePlotLayout:
 
     # notwendig für Pipeline Schritt 3: lange Kanten segmentieren
     node_groups_dummies: dict[int, list[int]] = field(default_factory=dict)
-    # dummy_edge_segments: dict[tuple[int,int], list[tuple[int, int]]] = field(default_factory=dict)
+    dummy_edge_segments: list[tuple[int, int]] = field(default_factory=list)
+    long_edges: set[tuple[int, int]] = field(default_factory=set)
 
     # knotenordnung auf achsen, wobei pi_i = p_i^+ = p_i^-
     node_order: dict[int, list[int]] = field(default_factory=dict)
@@ -57,6 +58,7 @@ class HivePlotLayout:
             f"  Node Order (pi_i): {self.node_order}",
             f"  Node Order Plus (pi_i^+): {self.node_order_plus}",
             f"  Node Order Minus (pi_i^-): {self.node_order_minus}",
+            f"  Long Edges: {self.long_edges}",
             f"  Crossings (standard): {self.crossings}",
             f"  Crossings (erweitert): {self.crossings_extended}"
         ]
@@ -97,6 +99,17 @@ class HivePlotLayout:
             dummy_nodes = set(self.node_groups_dummies.get(axis, []))
             fused_groups[axis] = list(original_nodes.union(dummy_nodes))
         return fused_groups
+
+    def fuse_edges_with_edge_dummies(self) -> list[tuple[int, int]]:
+        """Erzeugt eine Liste die alle kurzen Kanten und Dummykanten vereinigt zurückgibt.
+
+        Returns:
+            list[tuple[int, int]]: Vereinigung aus Kanten und Dummykanten
+        """
+        
+        direct_edges = [e for e in self.edges() if e not in self.long_edges]
+        fused_edges = direct_edges + self.dummy_edge_segments
+        return fused_edges
 
 
 

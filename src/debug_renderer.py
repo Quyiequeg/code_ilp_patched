@@ -240,7 +240,8 @@ def _draw_hive(
             ax.plot(x, y, "o", color=color, ms=7, zorder=3)
             ax.text(x + 0.03, y + 0.03, str(node),
                     fontsize=6, zorder=4, color="#333333")
-
+            
+    edges_to_draw = layout.dummy_edge_segments or list(G.edges())    
     # Kanten zeichnen
     edge_set = set()
     if highlight_edges:
@@ -248,7 +249,7 @@ def _draw_hive(
             edge_set.add((u, v))
             edge_set.add((v, u))
 
-    for u, v in G.edges():
+    for u, v in edges_to_draw:
         if u not in node_pos or v not in node_pos:
             continue
         x0, y0 = node_pos[u]
