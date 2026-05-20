@@ -106,13 +106,27 @@ class HivePlotLayout:
         Returns:
             list[tuple[int, int]]: Vereinigung aus Kanten und Dummykanten
         """
-        
         direct_edges = [e for e in self.edges() if e not in self.long_edges]
         fused_edges = direct_edges + self.dummy_edge_segments
         return fused_edges
+    
+    def get_proper_neighbors(self, node: int | str, fused_list: list[tuple[int | str, int | str]]) -> list[int | str]: # prüfen: typsicherheit?
+        """Die Funktion gibt eine Liste aller Nachbarknoten von node zurück. 
 
+        Args:
+            node (int | str): Der zu untersuchende Knoten.
+            fused_list (list[tuple[int  |  str, int  |  str]]): Liste aller kurzen Kanten des HivePlotLayouts (inklusive Dummykanten).
 
-
+        Returns:
+            list[int | str]: Liste aller Nachbarknoten von node.
+        """
+        neighbors_list = []
+        for edge in fused_list:
+            if edge[0] == node:
+                neighbors_list.append(edge[1])
+            elif edge[1] == node:
+                neighbors_list.append(edge[0])
+        return neighbors_list
 
 if __name__ == "__main__":
     from src.graphs import sample_graph_multipartite

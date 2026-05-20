@@ -21,10 +21,10 @@
 # 5. Pipeline gesamt (nur diese wird ausgeführt und bündelt die einzelnen Bestandteile)
 # -> Parameter intuitiv: def barycenter_crossing_min(G, alpha, phi, pi, g=1, threshold=None) | RETURN: PI
 
-from prompt_toolkit import layout
 from src.cost import node_or_axes_span
 from src.ordering import brute_force_ordering, native_order, node_groups, node_to_axis, reordered_node_groups
 from src.partitioning import clauset_newman_moore_communities
+import networkx as nx
 # import logging
 # logging.basicConfig(
 #     level=logging.DEBUG,
@@ -122,10 +122,6 @@ def parse_dummy_name(name: str) -> tuple[int, int, int]:
     parts = name.split("_")
     return int(parts[1]), int(parts[2]), int(parts[3])
 
-def get_dummy_edges(layout: HivePlotLayout, start: int, ende: int) -> list[tuple[int, int]]:
-
-    pass
-
 def edge_direction(start_pos: int, end_pos: int, k: int) -> int:
     """Ermittelt die Richtung einer Kante in Form der nächsten Achse, die die Kante überquert. Diese spiegelt sowohl die Richtung im Uhrzeigersinn oder gegen den Uhrzeigersinn als auch die Position des ersten Dummyknotens wieder, sollte es sich um eine lange Kante handeln.
     Für Span <=1 wird simpel der Endknoten zurückgegeben. 
@@ -150,13 +146,71 @@ def edge_direction(start_pos: int, end_pos: int, k: int) -> int:
         print(f"Der Span ist kleiner 1. Die Kante endet entweder auf einem Nachbarn oder ist intra-axis.")
         return end_pos
 
+def _remove_isolated_nodes(graph: nx.Graph, node_groups: dict[str, list[int]]) -> dict[str, list[int]]:
+    """Die Funktion ermöglicht das Entfernen aller isolierten Knoten aus der persitenten node_group des HivePlotLayouts.
+
+    Args:
+        graph (nx.Graph): Der zugrundeliegende Graph aus dem HivePlotLayout.
+        node_groups (dict[str, list[int]]): Die persistente Knotenlisten der Achsen.
+
+    Returns:
+        dict[str, list[int]]: Ein dict mit den isolierten Knoten pro Achse, key: Achse, value: Listen mit isolierten Knoten.
+    """
+    isolated_node_groups = {key: [] for key in node_groups}
+    for key in node_groups:
+        non_isolated_node_groups = []
+        for node in node_groups[key]:
+            if nx.is_isolate(graph, node):
+                isolated_node_groups[key].append(node)
+            else:
+                non_isolated_node_groups.append(node)
+        node_groups[key] = non_isolated_node_groups
+    return isolated_node_groups
+
+def _return_isolated_nodes(node_groups: dict[str, list[int]], isolated_node_groups: dict[str, list[int]]) -> None:
+    """Fügt die isolierten Knoten wieder in die Knotenlisten auf den Achsen hinzu.
+
+    Args:
+        node_groups (dict[str, list[int]]): Die persistente Kontenliste des HivePlotLayouts.
+        isolated_node_groups (dict[str, list[int]]): Die isolierten Knoten und ihre Achsenzuordnung.
+    """
+    for key in node_groups:
+        node_groups[key].extend(isolated_node_groups[key])
+
+
 def _sweep():
     pass
 
-def _gap_handling():
-    pass
+# def _gap_handling(): VERMUTLICH NICHT NOWENDIG; DA REAL UND VIRTUELL SAUBER GETRENNT UND G=1
+#     pass
+
+def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int]) -> float:
+    """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
+
+    Args:
+        layout (HivePlotLayout): das zu berechnende HivePlotLayout
+        neighbor_group (list[int]): Liste der Nachbarknoten
+
+    Returns:
+        float: Barycenterposition
+    """
+    neighbor_sum = 0
+    for neighbor in neighbor_group:
+        node_axis_name = node_to_axis(neighbor, layout.node_groups)
+        neighbor_sum += layout.node_groups[node_axis_name].index(neighbor)/len(layout.node_groups[node_axis_name])
+    position = 1/len(neighbor_group) * neighbor_sum
+    return position
 
 def barycenter_crossmin_pipeline():
+    # _remove_isolated_nodes()
+    # _subdivide_long_edges
+
+    # for node in all_nodes:
+    #     neighbor_group = hpl.get_proper_neighbors(node, hpl.dummy_edge_segments)
+    #     print(f"Barycenter Position von Knoten {node}: {calculate_barycenter_position(hpl, neighbor_group)}")
+    
+    # >>> nach berechnung
+    # _return_isolated_nodes()
     pass
 
 if __name__ == "__main__":
@@ -194,15 +248,29 @@ if __name__ == "__main__":
     print("<<< ")
     print("##########################################")
     print("=== VOR subdivide ===")
-    render_debug(hpl, title="VOR subdivide") #output
+    # render_debug(hpl, title="VOR subdivide") #output
     print("<<< ")  
     print(">>> Lange Kanten segmentieren und dem Layout übergeben")
     print(f"\n=== NACH subdivide ===")
     subdivide_long_edges(hpl)
     hpl.node_groups = hpl.fuse_node_groups_with_dummies() # wichtig für die folgenden Schritte, damit die Dummyknoten in den Berechnungen berücksichtigt werden
     hpl.dummy_edge_segments = hpl.fuse_edges_with_edge_dummies() # wichtig für die folgenden Schritte, damit die Dummyknoten in den Berechnungen berücksichtigt werden
-    print("Node Groups mit Dummies:", hpl.node_groups)
-    print("Edges mit Dummyedges:", hpl.dummy_edge_segments)
+    # print("Node Groups mit Dummies:", hpl.node_groups)
+    # print("Edges mit Dummyedges:", hpl.dummy_edge_segments)
     print("<<< ")
-    render_debug(hpl, title="NACH subdivide") #output 2
+    # render_debug(hpl, title="NACH subdivide") #output 2
+    isolated_nodes =  _remove_isolated_nodes(hpl.graph, hpl.node_groups)
+    print(isolated_nodes)
+    print(type(list(hpl.node_groups.values())[0]))
+    print(list(hpl.node_groups.values())[0])
+    # print(type(axis), axis)
+    print(list(hpl.node_groups.keys())[:5])
+    print(list(hpl.node_groups_dummies.keys())[:5])
+    print(list(hpl.node_groups.values()))
+    print(hpl.dummy_edge_segments)
+    all_nodes = [node for nodes in hpl.node_groups.values() for node in nodes]
+    for node in all_nodes:
+        neighbor_group = hpl.get_proper_neighbors(node, hpl.dummy_edge_segments)
+        print(f"Barycenter Position von Knoten {node}: {calculate_barycenter_position(hpl, neighbor_group)}")
+    # print(calculate_barycenter_position(hpl, 5))
     print("##########################################")

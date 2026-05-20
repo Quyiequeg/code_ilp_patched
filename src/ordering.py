@@ -33,12 +33,13 @@ def node_groups(nodes: list[tuple[int, int]], ): # alpha, Mapping von Knoten zu 
         node_groups[subset].append(node)
     return node_groups
 
-def node_to_axis(node, node_grps): # alpha(u)
+def node_to_axis(node, node_grps, position = False): # alpha(u)
     """Gibt an auf welcher Achse sich ein Knoten befindet.
 
     Args:
         node (int): Knoten ID
         node_grps (dict): key: Achse, value: Knoten
+        position (bool): Rückgabe der Achse, true Rückgabe der Position der Achse in der Achsenordnung (phi). False ist default.        
 
     Raises:
         ValueError: Der Knoten kann keiner Achse zugeordnet werden.
@@ -53,8 +54,10 @@ def node_to_axis(node, node_grps): # alpha(u)
             break
     if axis is None:
         raise ValueError(f"Knoten {node} keiner Achse zugeordnet.")
-    else:
+    elif position == False:
         return axis
+    elif position == True:
+        return list(node_grps.keys()).index(axis)
     
 def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> tuple[int, ...]:
     """Für kleine k und zum Entwickeln der Pipeline vermeide ich zuerst die Auseinandersetzung mit dem Solver.
@@ -81,7 +84,7 @@ def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> t
     # print(f"Optimale Permutation: {optimal_perm}, Minimierte Kosten: {minimized_cost}") # debugging
     return optimal_perm
 
-def reordered_node_groups(node_grps: dict[int, list[int]], new_order: tuple[int, ...]) -> dict[int, list[int]]:
+def reordered_node_groups(node_grps: dict[int, list[int]], new_order: tuple[int, ...]) -> dict[int, list[int]]: # ermöglicht schnelles umordnen nach optimierung der achsenordnung
     return {axis: node_grps[axis] for axis in new_order}
 
 if __name__ == "__main__":
