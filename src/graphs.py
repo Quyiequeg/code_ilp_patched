@@ -62,7 +62,7 @@ def sample_graph_selfconstructed_extended():
     G.add_edges_from([(6, 11), (7, 9), (8, 10)])
     G.add_edges_from([(0, 10), (2, 9)])
     # G.add_edges_from([(4, 10), (1, 7), (5, 11)]) # lange kanten
-    G.add_edges_from([(1, 7), (2, 8), (5, 11)]) # lange kanten
+    G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
     return G
 
 if __name__ == "__main__":

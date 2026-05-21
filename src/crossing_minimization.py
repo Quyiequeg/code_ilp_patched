@@ -228,7 +228,7 @@ def _sweep(layout: HivePlotLayout, threshold = float("inf"), real: bool = True) 
             # print(changed)
     elif real == False:
         while  threshold_run <= threshold and changed == True: # 1 schleifendurchlauf: cw+ccw sweep mit anschließender abbruchprüfung
-            # print(f"RUN {threshold_run}")
+            print(f"RUN {threshold_run}")
             threshold_run += 1
             changed = False
             reversed_phi = list(reversed(phi))
@@ -291,6 +291,7 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold=float("inf")):
     isolated = _remove_isolated_nodes(layout.graph, layout.node_groups)
     _subdivide_long_edges(layout)
+    print(f"layout.node_groups_dummies: {layout.node_groups_dummies}") # debugging
     # fused_nodes = layout.fuse_node_groups_with_dummies()
     layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
     _sweep(layout, threshold=threshold, real=True)
@@ -299,6 +300,7 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold=float("inf"))
 
 if __name__ == "__main__":
     print("##########################################")
+    printer = 1
     from src.graphs import sample_graph_selfconstructed, sample_graph_multipartite, sample_graph_caveman
     from src.hiveplot import HivePlotLayout
     # # from src.partitioning import louvain_community_detection
@@ -316,14 +318,17 @@ if __name__ == "__main__":
         node_groups=ng
     )
     print(hpl)
-    # render_debug(hpl, title="ORIGINAL") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ORIGINAL
+    if printer == 1:
+        render_debug(hpl, title="ORIGINAL") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ORIGINAL
     hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
-    # render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< OHNE PIPELINE - OPTIMIZED
+    if printer == 1:
+        render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< OHNE PIPELINE - OPTIMIZED
     # barycenter_crossmin_pipeline(hpl, threshold=10)
     barycenter_crossmin_pipeline(hpl)
     hpl.node_groups = hpl.fuse_node_groups_with_dummies() # ACHTUNG: FÜR RENDERING NÖTIG, FÜR WEITERE PIPELINE-OPERATIONEN NICHT NÖTIG, DA DUMMYS IN SEPARATEN STRUKTUREN GEHALTEN WERDEN
-    # render_debug(hpl, title="PIPELINE ABGESCHLOSSEN") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PIPELINE ABGESCHLOSSEN
+    if printer == 1:
+        render_debug(hpl, title="PIPELINE ABGESCHLOSSEN") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PIPELINE ABGESCHLOSSEN
     print("Layout NACH OPTIMIERUNG")
     print(hpl)
     print(hpl.edges())

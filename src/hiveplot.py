@@ -127,7 +127,7 @@ class HivePlotLayout:
                 neighbors_list.append(edge[1])
             elif edge[1] == node:
                 neighbors_list.append(edge[0])
-        return neighbors_list
+        return list(dict.fromkeys(neighbors_list)) # entfernen von duplikaten, da sonst die Barycenter positionen falsch berechnet werden.
 
 if __name__ == "__main__":
     from src.graphs import sample_graph_multipartite
