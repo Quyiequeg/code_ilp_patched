@@ -55,10 +55,11 @@ class HivePlotLayout:
             f"  Axis Order (phi): {self.axis_order}",
             f"  Node Groups (alpha): {self.node_groups}",
             f"  Node Groups with Dummies: {self.node_groups_dummies}",
+            f"  Dummy Edge Segments: {self.dummy_edge_segments}",
+            f"  Long Edges: {self.long_edges}",
             f"  Node Order (pi_i): {self.node_order}",
             f"  Node Order Plus (pi_i^+): {self.node_order_plus}",
             f"  Node Order Minus (pi_i^-): {self.node_order_minus}",
-            f"  Long Edges: {self.long_edges}",
             f"  Crossings (standard): {self.crossings}",
             f"  Crossings (erweitert): {self.crossings_extended}"
         ]
@@ -88,16 +89,16 @@ class HivePlotLayout:
             return self.node_groups.get(axis, [])
     
     def fuse_node_groups_with_dummies(self) -> dict[int, list[int]]:
-        """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert.
+        """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.
 
         Returns:
             dict[int, list[int]]: Vereinigung der Knoten und Dummyknoten pro Achse.
         """
         fused_groups = {}
         for axis in self.axis_order:
-            original_nodes = set(self.node_groups.get(axis, []))
-            dummy_nodes = set(self.node_groups_dummies.get(axis, []))
-            fused_groups[axis] = list(original_nodes.union(dummy_nodes))
+            original_nodes = self.node_groups.get(axis, [])
+            dummy_nodes = self.node_groups_dummies.get(axis, [])
+            fused_groups[axis] = list(original_nodes) + list(dummy_nodes)
         return fused_groups
 
     def fuse_edges_with_edge_dummies(self) -> list[tuple[int, int]]:
@@ -120,7 +121,7 @@ class HivePlotLayout:
         Returns:
             list[int | str]: Liste aller Nachbarknoten von node.
         """
-        neighbors_list = []
+        neighbors_list = [] # PRÜFEN ALLE KNOTEN ZWEI MAL!!!!
         for edge in fused_list:
             if edge[0] == node:
                 neighbors_list.append(edge[1])

@@ -36,8 +36,33 @@ def sample_graph_selfconstructed():
     G.add_nodes_from([0, 1], subset=0)
     G.add_nodes_from([2, 3], subset=1)
     G.add_nodes_from([4, 5], subset=2)
-    G.add_nodes_from([6, 7], subset=3)
+    G.add_nodes_from([6, 7,], subset=3)
     G.add_edges_from([(0, 2), (0,5), (1, 3), (2, 4), (2, 7)])
+    return G
+
+def sample_graph_selfconstructed_extended():
+    """Erzeugt einen etwas größeren Graphen für Pipelinetests (Barycenter/ILP).
+
+    Kennzahlen:
+    - 12 Knoten
+    - 4 Achsen mit je 3 Knoten → Phi = (0, 1, 2, 3)
+    - optimierte ordnung:
+
+    Returns:
+        nx.Graph: selbst konstruierter Graph
+    """
+    G = nx.Graph()
+    G.add_nodes_from([0, 1, 2], subset=0)
+    G.add_nodes_from([3, 4, 5], subset=1)
+    G.add_nodes_from([6, 7, 8], subset=2)
+    G.add_nodes_from([9, 10, 11, 12], subset=3) # + isolierter Knoten
+
+    G.add_edges_from([(0, 5), (1, 3), (2, 4)])
+    # G.add_edges_from([(3, 8), (4, 6), (5, 7)])
+    G.add_edges_from([(6, 11), (7, 9), (8, 10)])
+    G.add_edges_from([(0, 10), (2, 9)])
+    # G.add_edges_from([(4, 10), (1, 7), (5, 11)]) # lange kanten
+    G.add_edges_from([(1, 7), (2, 8), (5, 11)]) # lange kanten
     return G
 
 if __name__ == "__main__":

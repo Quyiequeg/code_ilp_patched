@@ -10,7 +10,6 @@ dblp-2025-05-02.xml
 /dist
 *.egg-info/
 .eggs/
-# Testdatei für schnelle Funktionstests
-*\src\test.py
 # Jupyter Notebook Outputdateien
 notebooks/.ipynb_checkpoints/
+/Test_Bilder

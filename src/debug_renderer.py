@@ -33,36 +33,18 @@ def render_debug(
     highlight_edges: list[tuple] | None = None,
     save_path: str | None = None,
 ) -> None:
-    """Zeigt einen Debug-Plot des aktuellen HivePlotLayouts.
-
-    Linker Plot: networkx Spring-Layout des Graphen mit farbiger Partition.
-    Rechter Plot: Hiveplot-Achsen-Darstellung (nur wenn axis_order und
-    node_groups befüllt sind).
-
-    Args:
-        layout (HivePlotLayout): Das aktuelle Layout-Objekt.
-        title (str): Titel für beide Subplots.
-        highlight_nodes (list | None): Knoten, die rot hervorgehoben werden
-            (z. B. Dummy-Knoten nach subdivide).
-        highlight_edges (list[tuple] | None): Kanten, die rot hervorgehoben
-            werden.
-        save_path (str | None): Falls angegeben, wird das Bild zusätzlich
-            unter diesem Pfad gespeichert (z. B. "/tmp/debug.png").
-    """
-    has_hive = bool(layout.axis_order and layout.node_groups)
-    n_plots = 2 if has_hive else 1
-    fig, axes = plt.subplots(1, n_plots, figsize=(7 * n_plots, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 6))
     fig.suptitle(title, fontsize=13, fontweight="bold")
 
-    if n_plots == 1:
-        axes = [axes]
-
-    _draw_spring(axes[0], layout, title, highlight_nodes, highlight_edges)
-
-    if has_hive:
-        _draw_hive(axes[1], layout, title, highlight_nodes, highlight_edges)
+    _draw_hive(ax, layout, title, highlight_nodes, highlight_edges)
 
     plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=120, bbox_inches="tight")
+        print(f"  [debug_renderer] Gespeichert: {save_path}")
+
+    plt.show()
 
     if save_path:
         plt.savefig(save_path, dpi=120, bbox_inches="tight")
@@ -231,10 +213,9 @@ def _draw_hive(
             x = np.cos(ang) * r
             y = np.sin(ang) * r
             node_pos[node] = (x, y)
-
-            color = (
-                "#e03c3c"
-                if highlight_nodes and node in highlight_nodes
+            is_dummy = isinstance(node, str) and node.startswith("d_")
+            color = ("#e03c3c"
+                if (highlight_nodes and node in highlight_nodes) or is_dummy
                 else _AXIS_COLORS[axis_id % len(_AXIS_COLORS)]
             )
             ax.plot(x, y, "o", color=color, ms=7, zorder=3)
@@ -255,6 +236,12 @@ def _draw_hive(
         x0, y0 = node_pos[u]
         x1, y1 = node_pos[v]
         color = "#e03c3c" if (u, v) in edge_set or (v, u) in edge_set else "#01696f"
+
+        # Kreuzprodukt z-Komponente: positiv → v liegt links von u (aus Ursprung gesehen)
+        # → rad negativ damit Kurve nach außen wölbt, und umgekehrt
+        cross_z = x0 * y1 - y0 * x1
+        rad = 0.25 if cross_z > 0 else -0.25
+
         ax.annotate(
             "",
             xy=(x1, y1), xytext=(x0, y0),
@@ -262,7 +249,7 @@ def _draw_hive(
                 arrowstyle="-",
                 color=color,
                 lw=1.2,
-                connectionstyle="arc3,rad=0.25"
+                connectionstyle=f"arc3,rad={rad}"
             ),
             zorder=1
         )
