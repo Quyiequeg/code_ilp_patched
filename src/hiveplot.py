@@ -30,6 +30,8 @@ class HivePlotLayout:
     node_groups_dummies: dict[int, list[int]] = field(default_factory=dict)
     dummy_edge_segments: list[tuple[int, int]] = field(default_factory=list)
     long_edges: set[tuple[int, int]] = field(default_factory=set)
+    intra_axis_nodes: dict[int, list[int]] = field(default_factory=dict)
+    intra_axis_edges: list[tuple[int, int]] = field(default_factory=list)
 
     # knotenordnung auf achsen, wobei pi_i = p_i^+ = p_i^-
     node_order: dict[int, list[int]] = field(default_factory=dict)
@@ -56,6 +58,8 @@ class HivePlotLayout:
             f"  Node Groups (alpha): {self.node_groups}",
             f"  Node Groups with Dummies: {self.node_groups_dummies}",
             f"  Dummy Edge Segments: {self.dummy_edge_segments}",
+            f"  Intra-Axis Nodes: {self.intra_axis_nodes}",
+            f"  Intra-Axis Edges: {self.intra_axis_edges}",
             f"  Long Edges: {self.long_edges}",
             f"  Node Order (pi_i): {self.node_order}",
             f"  Node Order Plus (pi_i^+): {self.node_order_plus}",
@@ -121,7 +125,7 @@ class HivePlotLayout:
         Returns:
             list[int | str]: Liste aller Nachbarknoten von node.
         """
-        neighbors_list = [] # PRÜFEN ALLE KNOTEN ZWEI MAL!!!!
+        neighbors_list = []
         for edge in fused_list:
             if edge[0] == node:
                 neighbors_list.append(edge[1])

@@ -222,7 +222,7 @@ def _draw_hive(
             ax.text(x + 0.03, y + 0.03, str(node),
                     fontsize=6, zorder=4, color="#333333")
             
-    edges_to_draw = layout.dummy_edge_segments or list(G.edges())    
+    edges_to_draw = (layout.dummy_edge_segments or list(G.edges())) + layout.intra_axis_edges 
     # Kanten zeichnen
     edge_set = set()
     if highlight_edges:

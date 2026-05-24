@@ -21,6 +21,8 @@
 # 5. Pipeline gesamt (nur diese wird ausgeführt und bündelt die einzelnen Bestandteile)
 # -> Parameter intuitiv: def barycenter_crossing_min(G, alpha, phi, pi, g=1, threshold=None) | RETURN: PI
 
+from pyvis import node
+
 from src import graphs
 from src.cost import node_or_axes_span
 from src.ordering import brute_force_ordering, native_order, node_groups, node_to_axis, reordered_node_groups
@@ -61,7 +63,7 @@ def _subdivide_long_edges(layout: HivePlotLayout) -> None:
         dummyposition = (start_pos + 1) % k
         sequence_number = 1
         previous = start_node
-        for _ in range(span - 1): # achsen zwischen start und ende
+        for _ in range(span-1): # achsen zwischen start und ende
             current_dummy = make_dummy_name(start_node, end_node, sequence_number)
             axis = layout.axis_order[dummyposition] # position -> achse
             dummies[axis].append(current_dummy) # name unikal pro achse, achsensegmente leicht rekonstruierbar
@@ -77,7 +79,7 @@ def _subdivide_long_edges(layout: HivePlotLayout) -> None:
         dummyposition = (start_pos - 1) % k
         sequence_number = 1
         previous = start_node
-        for _ in range(span - 1): # achsen zwischen start und ende
+        for _ in range(span-1): # achsen zwischen start und ende
             current_dummy = make_dummy_name(start_node, end_node, sequence_number)
             axis = layout.axis_order[dummyposition] # position -> achse
             dummies[axis].append(current_dummy) # name unikal pro achse, achsensegmente leicht rekonstruierbar
@@ -88,7 +90,14 @@ def _subdivide_long_edges(layout: HivePlotLayout) -> None:
         long_edges.add((start_node, end_node))
         dummy_edges.append((previous, end_node))
     
-            
+    def is_mixed(node, layout): # check ob ein knoten sowohl intra als auch inter ist
+        axis = node_to_axis(node, layout.node_groups)
+        return any(
+            node_to_axis(neighbor, layout.node_groups) != axis
+            for neighbor in layout.graph.neighbors(node)
+        )
+    
+    layout.intra_axis_nodes = {key: [] for key in layout.node_groups}
     k = layout.num_axes
     edges = layout.edges()
     long_edges = layout.long_edges
@@ -96,7 +105,9 @@ def _subdivide_long_edges(layout: HivePlotLayout) -> None:
     dummies = layout.node_groups_dummies
     for axis in layout.axis_order: # initialisiere dummyliste, schreibt explizit in die HivePlotLayout Instanz
         dummies[axis] = []
-    pos = {axis: i for i, axis in enumerate(layout.axis_order)} # umrechnen von achsen zu positionen
+    pos = {axis: i for i, axis in enumerate(layout.axis_order)} # umrechnen von achsen zu positionen value phi(i), value pos(i)
+    intra_axis_nodes = set()
+    intra_candidate_list = []
     for edge in edges:
         start = node_to_axis(edge[0], layout.node_groups) # startachse
         end = node_to_axis(edge[1], layout.node_groups) # endachse
@@ -104,11 +115,42 @@ def _subdivide_long_edges(layout: HivePlotLayout) -> None:
         end_pos = pos[end] # endposition
         span = node_or_axes_span(start_pos, end_pos, k)
         if span > 1:
-            if (start_pos - end_pos) % k < (end_pos - start_pos) % k or (start_pos - end_pos) % k == (end_pos - start_pos) % k: # richtung start -> ende, clockwise oder span cw = span ccw
+            if (start_pos - end_pos) % k > (end_pos - start_pos) % k or (start_pos - end_pos) % k == (end_pos - start_pos) % k: # richtung start -> ende
                 clockwise_count(start_pos, edge[0], edge[1], span)
-            elif (start_pos - end_pos) % k > (end_pos - start_pos) % k: # richtung ende <- start, counter cw
+            elif (start_pos - end_pos) % k < (end_pos - start_pos) % k: # richtung ende <- start, counter cw
                 counter_clockwise_count(start_pos, edge[0], edge[1], span)
-
+        elif span == 0:
+            intra_candidate_list.append(edge) # sammelt span 0 kanten
+        zero_span_subgraph = nx.Graph()
+        zero_span_subgraph.add_edges_from(intra_candidate_list)
+        ignore_set = set()
+        for edge in intra_candidate_list:
+            if is_mixed(edge[0], layout) or is_mixed(edge[1], layout):
+                for node in edge:
+                    ignore_set.update(nx.node_connected_component(zero_span_subgraph, node))
+        for edge in intra_candidate_list:
+            if edge[0] not in ignore_set and edge[1] not in ignore_set:
+                start = node_to_axis(edge[0], layout.node_groups) # startachse
+                end = node_to_axis(edge[1], layout.node_groups)
+                layout.intra_axis_edges.append(edge)
+                layout.graph.remove_edge(edge[0], edge[1])
+                if edge[0] not in layout.intra_axis_nodes[start]: 
+                    layout.intra_axis_nodes[start].append(edge[0]) # start = end (span = 0)
+                    intra_axis_nodes.add(edge[0])
+                if edge[1] not in layout.intra_axis_nodes[end]: 
+                    layout.intra_axis_nodes[end].append(edge[1]) # start = end (span = 0)
+                    intra_axis_nodes.add(edge[1])
+        # elif span == 0 and not is_mixed(edge[0], layout) and not is_mixed(edge[1], layout):
+        #     layout.intra_axis_edges.append(edge)
+        #     layout.graph.remove_edge(edge[0], edge[1])
+        #     if edge[0] not in layout.intra_axis_nodes[start]: # sicherstellen, dass jeder intra-axis knoten nur einmal pro achse gezählt wird
+        #         layout.intra_axis_nodes[start].append(edge[0]) # start = end (span = 0)
+        #         intra_axis_nodes.add(edge[0])
+        #     if edge[1] not in layout.intra_axis_nodes[end]: # sicherstellen, dass jeder intra-axis knoten nur einmal pro achse gezählt wird
+        #         layout.intra_axis_nodes[end].append(edge[1]) # start = end (span = 0)
+        #         intra_axis_nodes.add(edge[1])
+    for axis, nodes in layout.node_groups.items():
+        layout.node_groups[axis] = [inter_node for inter_node in nodes if inter_node not in intra_axis_nodes]
 
 def parse_dummy_name(name: str) -> tuple[int, int, int]:
     """Zerlegt den Namen eines Dummyknotens in seine Bestandteile: Startknoten, Endknoten und Sequenznummer. (siehe make_dummy_name Funktion für Namensschema)
@@ -146,7 +188,7 @@ def edge_direction(start_pos: int, end_pos: int, k: int) -> int:
         print(f"Der Span ist kleiner 1. Die Kante endet entweder auf einem Nachbarn oder ist intra-axis.")
         return end_pos
 
-def _remove_isolated_nodes(graph: nx.Graph, node_groups: dict[str, list[int]]) -> dict[str, list[int]]:
+def _remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) -> dict[int, list[int]]:
     """Die Funktion ermöglicht das Entfernen aller isolierten Knoten aus der persitenten node_group des HivePlotLayouts.
 
     Args:
@@ -167,16 +209,24 @@ def _remove_isolated_nodes(graph: nx.Graph, node_groups: dict[str, list[int]]) -
         node_groups[key] = non_isolated_node_groups
     return isolated_node_groups
 
-def _return_isolated_nodes(node_groups: dict[str, list[int]], isolated_node_groups: dict[str, list[int]]) -> None:
-    """Fügt die isolierten Knoten wieder in die Knotenlisten auf den Achsen hinzu.
+def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: dict[str, list[int]]) -> None:
+    def _attach_intra_axis_order():
+        merged = {key: layout.intra_axis_nodes[key] + layout.node_groups[key] for key in layout.node_groups}
+        return merged
+    def _attach_isolated_nodes(node_groups: dict[str, list[int]], isolated_node_groups: dict[str, list[int]]) -> None:
+        """Fügt die isolierten Knoten wieder in die Knotenlisten auf den Achsen hinzu.
 
-    Args:
-        node_groups (dict[str, list[int]]): Die persistente Kontenliste des HivePlotLayouts.
-        isolated_node_groups (dict[str, list[int]]): Die isolierten Knoten und ihre Achsenzuordnung.
-    """
-    for key in node_groups:
-        node_groups[key].extend(isolated_node_groups[key])
-
+        Args:
+            node_groups (dict[str, list[int]]): Die persistente Kontenliste des HivePlotLayouts.
+            isolated_node_groups (dict[str, list[int]]): Die isolierten Knoten und ihre Achsenzuordnung.
+        """
+        for key in node_groups:
+            node_groups[key].extend(isolated_node_groups[key])
+    def _recover_edges():
+        layout.graph.add_edges_from(layout.intra_axis_edges)
+    layout.node_groups = _attach_intra_axis_order()
+    _attach_isolated_nodes(layout.node_groups, isolated_node_groups)
+    _recover_edges
 
 def _sweep(layout: HivePlotLayout, threshold = float("inf"), real: bool = True) -> None:
     node_groups = layout.node_groups
@@ -267,8 +317,40 @@ def _sweep(layout: HivePlotLayout, threshold = float("inf"), real: bool = True) 
                 # print(f"CCW: order nachher {dummy_node_groups[axis]} (Achse {axis})")
             # print(changed)  
 
-# def _gap_handling(): VERMUTLICH NICHT NOWENDIG; DA REAL UND VIRTUELL SAUBER GETRENNT UND G=1
-#     pass
+def intra_axis_handler(layout: HivePlotLayout) -> None:
+    def reconstructed_intra_axis_graph():
+        G = nx.Graph()
+        for key in intra_nodes:
+            G.add_nodes_from(intra_nodes[key], subset=key)
+        G.add_edges_from(intra_edges)
+        return G
+    
+    def intra_node_to_axis(node):
+        for key in intra_nodes:
+            if node in intra_nodes[key]:
+                return key
+        raise ValueError(f"Knoten {node} keiner intra-axis-Achse zugeordnet")
+    
+    intra_nodes = layout.intra_axis_nodes
+    intra_edges = layout.intra_axis_edges
+    intra_axis_graph = reconstructed_intra_axis_graph()
+    sorted_intra_nodes_long = {key: [] for key in intra_nodes} # > 2
+    sorted_intra_nodes_short = {key: [] for key in intra_nodes} # = 2
+    for component in nx.connected_components(intra_axis_graph):
+        path = sorted(component)
+        if not path:
+            raise ValueError("Leere Zusammenhangskomponente gefunden.")
+        axis = intra_node_to_axis(path[0])
+        if len(path) > 2: # nicht triviale inter axis pfade und keine doppelung der pfade TODO: robustheitsprüfung zweiter teil!
+            sorted_intra_nodes_long[axis].extend(path)
+        elif len(path) == 2:
+            sorted_intra_nodes_short[axis].extend(path)
+        else:
+            raise ValueError(f"Bei {path} handelt es sich um einen isolierten Knoten oder etwas Seltsames!!")
+    
+    layout.intra_axis_nodes = {key: sorted_intra_nodes_short[key] + sorted_intra_nodes_long[key] for key in intra_nodes} # vorarbeit zum finish der achsenordnung ->  triviale intra-axis| cluster intra-axis
+
+    
 
 def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int]) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
@@ -289,24 +371,31 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
     return position
 
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold=float("inf")):
-    isolated = _remove_isolated_nodes(layout.graph, layout.node_groups)
+    # pipeline 3a
+    isolated_nodes = _remove_isolated_nodes(layout.graph, layout.node_groups)
     _subdivide_long_edges(layout)
-    print(f"layout.node_groups_dummies: {layout.node_groups_dummies}") # debugging
+    # print(f"layout.node_groups_dummies: {layout.node_groups_dummies}") # debugging
     # fused_nodes = layout.fuse_node_groups_with_dummies()
     layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
-    _sweep(layout, threshold=threshold, real=True)
-    _sweep(layout, threshold=threshold, real=False)
-    _return_isolated_nodes(layout.node_groups, isolated)
+    _sweep(layout, threshold=threshold, real=True) # nur real
+    _sweep(layout, threshold=threshold, real=False) # nur virtuell (dummies)
+    #pipeline 3b
+    intra_axis_handler(layout)
+    finish_structured_axis_orders(layout, isolated_nodes)
+
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 1
+    printer = 1# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    # graph_mode = 0 # standard
+    graph_mode = 1 # mit intr
+    # graph_mode = 2 # dummy test
     from src.graphs import sample_graph_selfconstructed, sample_graph_multipartite, sample_graph_caveman
     from src.hiveplot import HivePlotLayout
     # # from src.partitioning import louvain_community_detection
     from src.debug_renderer import render_debug
     # # logging.basicConfig(level=logging.DEBUG)
-    G = graphs.sample_graph_selfconstructed_extended()
+    G = graphs.sample_graph_selfconstructed_extended(graph_mode)
     nodes = list(G.nodes(data="subset"))
     axes = native_order(nodes)
     ng = node_groups(nodes)
@@ -319,16 +408,16 @@ if __name__ == "__main__":
     )
     print(hpl)
     if printer == 1:
-        render_debug(hpl, title="ORIGINAL") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ORIGINAL
+        render_debug(hpl, title="ORIGINAL") 
     hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     if printer == 1:
-        render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< OHNE PIPELINE - OPTIMIZED
+        render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     # barycenter_crossmin_pipeline(hpl, threshold=10)
     barycenter_crossmin_pipeline(hpl)
     hpl.node_groups = hpl.fuse_node_groups_with_dummies() # ACHTUNG: FÜR RENDERING NÖTIG, FÜR WEITERE PIPELINE-OPERATIONEN NICHT NÖTIG, DA DUMMYS IN SEPARATEN STRUKTUREN GEHALTEN WERDEN
     if printer == 1:
-        render_debug(hpl, title="PIPELINE ABGESCHLOSSEN") # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PIPELINE ABGESCHLOSSEN
+        render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print("Layout NACH OPTIMIERUNG")
     print(hpl)
     print(hpl.edges())

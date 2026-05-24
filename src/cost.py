@@ -50,7 +50,7 @@ def cost_function_whole(ordering: list[int], node_grps: dict, edges: list) -> in
     cost = 0
     for i in range(k):
         for j in range(i + 1, k):
-            # print(f"{ordering[i]} -> {ordering[j]}") # debugging
+            # print(f"{ordering[i]} -> {ordering[j]}") # debuggingdd
             # print(f"{edges_between_axes(node_grps, edges, ordering[i], ordering[j])* node_or_axes_span(i, j, k)}") # debugging
             cost += (edges_between_axes(node_grps, edges, ordering[i], ordering[j]) * node_or_axes_span(i, j, k))
     return cost

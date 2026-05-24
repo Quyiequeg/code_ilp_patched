@@ -48,9 +48,9 @@ def node_to_axis(node, node_grps, position = False): # alpha(u)
         int: Achsen ID
     """
     axis = None
-    for subset, nds in node_grps.items():
-        if node in nds:
-            axis = subset
+    for axes, nodes in node_grps.items():
+        if node in nodes:
+            axis = axes
             break
     if axis is None:
         raise ValueError(f"Knoten {node} keiner Achse zugeordnet.")

@@ -40,7 +40,7 @@ def sample_graph_selfconstructed():
     G.add_edges_from([(0, 2), (0,5), (1, 3), (2, 4), (2, 7)])
     return G
 
-def sample_graph_selfconstructed_extended():
+def sample_graph_selfconstructed_extended(mode: int = 0):
     """Erzeugt einen etwas größeren Graphen für Pipelinetests (Barycenter/ILP).
 
     Kennzahlen:
@@ -52,24 +52,59 @@ def sample_graph_selfconstructed_extended():
         nx.Graph: selbst konstruierter Graph
     """
     G = nx.Graph()
-    G.add_nodes_from([0, 1, 2], subset=0)
-    G.add_nodes_from([3, 4, 5], subset=1)
-    G.add_nodes_from([6, 7, 8], subset=2)
-    G.add_nodes_from([9, 10, 11, 12], subset=3) # + isolierter Knoten
+    if mode == 0: # standard
+        G.add_nodes_from([0, 1, 2], subset=0)
+        G.add_nodes_from([3, 4, 5], subset=1)
+        G.add_nodes_from([6, 7, 8], subset=2)
+        G.add_nodes_from([9, 10, 11, 12], subset=3) # + isolierter Knoten
 
-    G.add_edges_from([(0, 5), (1, 3), (2, 4)])
-    # G.add_edges_from([(3, 8), (4, 6), (5, 7)])
-    G.add_edges_from([(6, 11), (7, 9), (8, 10)])
-    G.add_edges_from([(0, 10), (2, 9)])
-    # G.add_edges_from([(4, 10), (1, 7), (5, 11)]) # lange kanten
-    G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
+        G.add_edges_from([(0, 5), (1, 3), (2, 4)])
+        G.add_edges_from([(6, 11), (7, 9), (8, 10)])
+        G.add_edges_from([(0, 10), (2, 9)])
+        G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
+    elif mode == 1: # intra-axis tests
+        G.add_nodes_from([0, 1, 2], subset=0)
+        G.add_nodes_from([3, 4, 5], subset=1)
+        G.add_nodes_from([6, 7, 8], subset=2)
+        G.add_nodes_from([9, 10, 11, 12], subset=3) # + isolierter Knoten
+        G.add_nodes_from([13, 14, 15, 16, 17, 18], subset=4) # + isolierte Knoten + intra-axis
+
+        G.add_edges_from([(0, 5), (1, 3), (2, 4)])
+        G.add_edges_from([(6, 11), (7, 9), (8, 10)])
+        G.add_edges_from([(0, 10), (2, 9)])
+        G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
+        G.add_edges_from([(13, 14), (15, 16), (17, 18), (14,15)]) # intra-axis kanten
+        G.add_edges_from([(9, 13)]) # 13 ist jetzt inter und intra knoten 
+        # G.add_edges_from([(14, 16)]) # verzweigung der intra axis komponente
+        G.add_nodes_from([19, 20, 21, 22, 23, 24], subset=5) # weitere intra axis knoten zum testen
+        G.add_edges_from([(19, 20), (20, 21), (21, 22), (22, 23)]) # weitere intra-axis kanten
+    elif mode == 2: # solo kante
+        G.add_nodes_from([0, 1, 2], subset=0)
+        G.add_nodes_from([3, 4, 5], subset=1)
+        G.add_nodes_from([6, 7, 8], subset=2)
+        G.add_nodes_from([9, 10, 11, 12], subset=3)
+
+        G.add_edges_from([(0, 6), (3,9)]) # span 2
+        G.add_edges_from([(1, 4), (7,10), (2, 11), (5, 8)]) # span 1
+
     return G
 
 if __name__ == "__main__":
-    G = sample_graph_multipartite()
-    C = sample_graph_caveman(4, 10)
+    # G = sample_graph_multipartite()
+    # C = sample_graph_caveman(4, 10)
+    D = sample_graph_selfconstructed_extended(1)
     print("##########################################")
-    print(f"Multi: Knoten: {G.number_of_nodes()}, Kanten: {G.number_of_edges()}")
+    # print(f"Multi: Knoten: {G.number_of_nodes()}, Kanten: {G.number_of_edges()}")
+    # print(f"Caveman: Knoten: {C.number_of_nodes()}, Kanten: {C.number_of_edges()}")
+    print(f"Self-constructed: Knoten: {D.number_of_nodes()}, Kanten: {D.number_of_edges()}")
     print("##########################################")
-    print(f"Caveman: Knoten: {C.number_of_nodes()}, Kanten: {C.number_of_edges()}")
-    print("##########################################")
+    print(nx.single_source_shortest_path_length(D, 16))
+    print(nx.shortest_path(D, 16))
+    print(nx.shortest_path(D, 16).values())
+    node_list = list(nx.shortest_path(D, 16).values())
+    print(node_list)
+    singleton_list = set()
+    for elem in node_list:
+        for single in elem:
+            singleton_list.add(single)
+    print(singleton_list)
