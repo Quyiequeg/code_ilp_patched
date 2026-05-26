@@ -1,4 +1,5 @@
 import networkx as nx
+import src.hiveplot as hpl
 
 def sample_graph_multipartite(sizes=(10, 10, 10)):
     """Erzeugt einen vollständigen multipartiten Testgraphen. Diese Funktion dient dem Testen und Debugging.
@@ -74,11 +75,11 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(0, 10), (2, 9)])
         G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
         G.add_edges_from([(13, 14), (15, 16), (17, 18), (14,15)]) # intra-axis kanten
-        G.add_edges_from([(9, 13)]) # 13 ist jetzt inter und intra knoten 
-        # G.add_edges_from([(14, 16)]) # verzweigung der intra axis komponente
-        G.add_nodes_from([19, 20, 21, 22, 23, 24], subset=5) # weitere intra axis knoten zum testen
-        G.add_edges_from([(19, 20), (20, 21), (21, 22), (22, 23)]) # weitere intra-axis kanten
-    elif mode == 2: # solo kante
+        G.add_edges_from([(9, 13)]) # 13 ist jetzt inter und intra 
+        # G.add_edges_from([(14, 16)]) # verzweigung der intra axis komponente knoten 14-15-16 bilden jetzt einen kreis
+        # G.add_nodes_from([19, 20, 21, 22, 23, 24], subset=5) # testfall: langer intra axis pfad
+        # G.add_edges_from([(19, 20), (20, 21), (21, 22), (22, 23)]) # testfall: langer intra axis pfad
+    elif mode == 2: # solo kante, achsen im graph im gleichgewicht vor manipulation
         G.add_nodes_from([0, 1, 2], subset=0)
         G.add_nodes_from([3, 4, 5], subset=1)
         G.add_nodes_from([6, 7, 8], subset=2)

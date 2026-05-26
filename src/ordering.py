@@ -1,6 +1,7 @@
 from itertools import permutations
 
 from src.graphs import sample_graph_selfconstructed
+from src.hiveplot import HivePlotLayout
 
 def native_order(nodes):
     """Bekommt einen NodeView übergeben und wandelt diese über ein Set in eine Liste um, die alle Subsetnumnern enthält. Diese Subsets spiegeln die Achsen wieder. Die Liste dient als Initialisierung zur Berechnung von Phi. Es handelt sich als o
@@ -33,8 +34,32 @@ def node_groups(nodes: list[tuple[int, int]], ): # alpha, Mapping von Knoten zu 
         node_groups[subset].append(node)
     return node_groups
 
+def node_to_axis_maps(layout: HivePlotLayout, fused_node_groups: dict[int, list[int | str]]) -> tuple[dict[int | str, int],  dict[int | str, int]]: # alpha(u)
+    """Die Funktion berechnet zwei Maps um für einen gegeben Knoten sehr schnell 1. alpha(Knoten) und 2. phi[alpha(Knoten)] zu bestimmen.
+
+    Args:
+        layout (HivePlotLayout): Das Hiveplotlayout
+        fused_node_groups (dict[int, list[int  |  str]]): Achse: Knotenliste (virtuell und real)
+
+    Returns:
+        tuple[dict[int | str, int],  dict[int | str, int]]: Knoten: Achse & Knoten: Achsenposition in Phi
+    """
+    phi = layout.axis_order
+    axis_index_map = {}
+    node_axis_map = {}
+    node_position_map = {}
+    index = 0
+    for axis in phi:
+        axis_index_map[axis] = index
+        index += 1
+    for key in fused_node_groups:
+        for node in fused_node_groups[key]:
+            node_position_map[node] = axis_index_map[key]
+            node_axis_map[node] = key
+    return node_position_map, node_axis_map
+
 def node_to_axis(node, node_grps, position = False): # alpha(u)
-    """Gibt an auf welcher Achse sich ein Knoten befindet.
+    """Gibt an auf welcher Achse sich ein Knoten befindet. Funktion wird nur zum Initialisieren verwendet. Für Iterationen in der Pipeline ist sie nicht performant. Dafür werden Mappings benutzt (z.B. siehe ordering.node_to_axis_maps)
 
     Args:
         node (int): Knoten ID
@@ -58,7 +83,7 @@ def node_to_axis(node, node_grps, position = False): # alpha(u)
         return axis
     elif position == True:
         return list(node_grps.keys()).index(axis)
-    
+
 def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> tuple[int, ...]:
     """Für kleine k und zum Entwickeln der Pipeline vermeide ich zuerst die Auseinandersetzung mit dem Solver.
     Diese Funktion dient dem schnellen Berechnen von Pipelineschritt 2: günstigste Achsenanordnung finden. 

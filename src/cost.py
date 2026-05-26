@@ -1,4 +1,4 @@
-from src.ordering import node_to_axis
+from src.ordering import node_to_axis_maps, node_to_axis
 
 def node_or_axes_span(n1, n2, k): #Span von Knoten u,v oder Achsen a_i,a_j
     """Berechnet den Spann zweier Knoten oder Achsen

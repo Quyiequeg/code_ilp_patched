@@ -77,6 +77,20 @@ class HivePlotLayout:
         """
         return list(self.graph.edges())
 
+    def updated_nodes(self, fused_node_groups) -> list[int]:
+        """Gibt die Knotenliste des Graphen zurück. Notwendig, weil die Knoten sich ändern und je nach Pipelineschritt die Knoten geupdated werden müssen.
+
+        Args:
+            fused_node_groups (dict[int, list[int | str]]): AchsenID: Knotenliste (real und virtuell)
+        Returns:
+            list[int]: Liste der realen und virtuellen Knoten
+        """
+        updated_node_list = []
+        for key in fused_node_groups:
+            for node in fused_node_groups[key]:
+                updated_node_list.append(node)
+        return updated_node_list
+
     def nodes_on_axis(self, axis: int, include_dummies: bool = False) -> list[int]:
         """Gibt die Knoten einer bestimmten Achse zurück.
 
@@ -115,23 +129,39 @@ class HivePlotLayout:
         fused_edges = direct_edges + self.dummy_edge_segments
         return fused_edges
     
-    def get_proper_neighbors(self, node: int | str, fused_list: list[tuple[int | str, int | str]]) -> list[int | str]: # prüfen: typsicherheit?
-        """Die Funktion gibt eine Liste aller Nachbarknoten von node zurück. 
+    def get_proper_neighborhood_map(self, fused_edge_list: list[tuple[int | str, int | str]]) -> dict[int | str: list[int | str]]:
+        """Die Funktion ermittelt eine Liste, die jeden Knoten (sowohl real als auch virtuell) auf eine Liste seiner Nachbarn mappt.
 
         Args:
-            node (int | str): Der zu untersuchende Knoten.
-            fused_list (list[tuple[int  |  str, int  |  str]]): Liste aller kurzen Kanten des HivePlotLayouts (inklusive Dummykanten).
-
+            fused_edge_list: list[tuple[int | str, int | str]]: Liste der realen und virtuellen Kantentupel
         Returns:
-            list[int | str]: Liste aller Nachbarknoten von node.
+            dict[int | str: list[int | str]]: KnotenID: Nachbarliste
         """
-        neighbors_list = []
-        for edge in fused_list:
-            if edge[0] == node:
-                neighbors_list.append(edge[1])
-            elif edge[1] == node:
-                neighbors_list.append(edge[0])
-        return list(dict.fromkeys(neighbors_list)) # entfernen von duplikaten, da sonst die Barycenter positionen falsch berechnet werden.
+        neighbor_map = {}
+        fused_node_groups = self.fuse_node_groups_with_dummies()
+        node_list = self.updated_nodes(fused_node_groups)
+        for node in node_list:
+            neighbor_map[node] = set()
+        for edge in fused_edge_list:
+            neighbor_map[edge[0]].add(edge[1])
+            neighbor_map[edge[1]].add(edge[0])
+        return neighbor_map
+        #     if edge[0] == node:
+        #         neighbors_set.add(edge[1])
+        #     elif edge[1] == node:
+        #         neighbors_set.add(edge[0])
+        #     neighbor_list_int = []
+        #     neighbor_list_string = []
+        #     for neighbor in neighbors_set:
+        #         if isinstance(neighbor, int):
+        #             neighbor_list_int.append(neighbor)
+        #         elif isinstance(neighbor, str):
+        #             neighbor_list_string.append(neighbor)
+        #     neighbor_list_int.sort()
+        #     neighbor_list_string.sort()
+        #     neighbors_set = neighbor_list_int + neighbor_list_string
+        #     neighbor_map[node] = neighbors_set
+        # return neighbor_map
 
 if __name__ == "__main__":
     from src.graphs import sample_graph_multipartite

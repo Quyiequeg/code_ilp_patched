@@ -25,7 +25,7 @@ from pyvis import node
 
 from src import graphs
 from src.cost import node_or_axes_span
-from src.ordering import brute_force_ordering, native_order, node_groups, node_to_axis, reordered_node_groups
+from src.ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
 import networkx as nx
 # import logging
 # logging.basicConfig(
@@ -39,7 +39,7 @@ import networkx as nx
 # logger = logging.getLogger(__name__)
 
 
-def _subdivide_long_edges(layout: HivePlotLayout) -> None:
+def _subdivide_long_edges(layout: HivePlotLayout, node_position_map, node_axis_map) -> None:
     """Funktion dient dem Einfügen von Dummyknoten für lange Kanten (span > 1) auf den Achsen zwischen Start- und Endknoten. Schema: d_[Startknoten]_[Endknoten]_[Sequenznummer]: z.B. d_5_10_2 ist der zweite Dummyknoten auf der zerlegten langen Kante von 5 nach 10. Die lange Kante kann dann folgendermaßen beschrieben werden:
     Startknoten - d_5_10_1 - d_5_10_2 - ... - d_5_10_(span-1) - Endknoten. Die Funktion schreibt direkt in layout.node_groups_dummies.
 
@@ -91,11 +91,12 @@ def _subdivide_long_edges(layout: HivePlotLayout) -> None:
         dummy_edges.append((previous, end_node))
     
     def is_mixed(node, layout): # check ob ein knoten sowohl intra als auch inter ist
-        axis = node_to_axis(node, layout.node_groups)
-        return any(
-            node_to_axis(neighbor, layout.node_groups) != axis
-            for neighbor in layout.graph.neighbors(node)
-        )
+        # axis = node_position_map[node]
+        # return any(
+        #     node_to_axis(neighbor, layout.node_groups) != axis
+        #     for neighbor in layout.graph.neighbors(node)
+        # )
+        return False
     
     layout.intra_axis_nodes = {key: [] for key in layout.node_groups}
     k = layout.num_axes
@@ -105,50 +106,40 @@ def _subdivide_long_edges(layout: HivePlotLayout) -> None:
     dummies = layout.node_groups_dummies
     for axis in layout.axis_order: # initialisiere dummyliste, schreibt explizit in die HivePlotLayout Instanz
         dummies[axis] = []
-    pos = {axis: i for i, axis in enumerate(layout.axis_order)} # umrechnen von achsen zu positionen value phi(i), value pos(i)
     intra_axis_nodes = set()
     intra_candidate_list = []
     for edge in edges:
-        start = node_to_axis(edge[0], layout.node_groups) # startachse
-        end = node_to_axis(edge[1], layout.node_groups) # endachse
-        start_pos = pos[start] # startpositioon
-        end_pos = pos[end] # endposition
+        start = node_axis_map[edge[0]] # startachse
+        end = node_axis_map[edge[1]] # endachse
+        start_pos = node_position_map[edge[0]] # startpositioon
+        end_pos = node_position_map[edge[1]] # endposition
         span = node_or_axes_span(start_pos, end_pos, k)
         if span > 1:
             if (start_pos - end_pos) % k > (end_pos - start_pos) % k or (start_pos - end_pos) % k == (end_pos - start_pos) % k: # richtung start -> ende
                 clockwise_count(start_pos, edge[0], edge[1], span)
             elif (start_pos - end_pos) % k < (end_pos - start_pos) % k: # richtung ende <- start, counter cw
                 counter_clockwise_count(start_pos, edge[0], edge[1], span)
-        elif span == 0:
-            intra_candidate_list.append(edge) # sammelt span 0 kanten
-        zero_span_subgraph = nx.Graph()
-        zero_span_subgraph.add_edges_from(intra_candidate_list)
-        ignore_set = set()
-        for edge in intra_candidate_list:
-            if is_mixed(edge[0], layout) or is_mixed(edge[1], layout):
-                for node in edge:
-                    ignore_set.update(nx.node_connected_component(zero_span_subgraph, node))
-        for edge in intra_candidate_list:
-            if edge[0] not in ignore_set and edge[1] not in ignore_set:
-                start = node_to_axis(edge[0], layout.node_groups) # startachse
-                end = node_to_axis(edge[1], layout.node_groups)
-                layout.intra_axis_edges.append(edge)
-                layout.graph.remove_edge(edge[0], edge[1])
-                if edge[0] not in layout.intra_axis_nodes[start]: 
-                    layout.intra_axis_nodes[start].append(edge[0]) # start = end (span = 0)
-                    intra_axis_nodes.add(edge[0])
-                if edge[1] not in layout.intra_axis_nodes[end]: 
-                    layout.intra_axis_nodes[end].append(edge[1]) # start = end (span = 0)
-                    intra_axis_nodes.add(edge[1])
-        # elif span == 0 and not is_mixed(edge[0], layout) and not is_mixed(edge[1], layout):
-        #     layout.intra_axis_edges.append(edge)
-        #     layout.graph.remove_edge(edge[0], edge[1])
-        #     if edge[0] not in layout.intra_axis_nodes[start]: # sicherstellen, dass jeder intra-axis knoten nur einmal pro achse gezählt wird
-        #         layout.intra_axis_nodes[start].append(edge[0]) # start = end (span = 0)
-        #         intra_axis_nodes.add(edge[0])
-        #     if edge[1] not in layout.intra_axis_nodes[end]: # sicherstellen, dass jeder intra-axis knoten nur einmal pro achse gezählt wird
-        #         layout.intra_axis_nodes[end].append(edge[1]) # start = end (span = 0)
-        #         intra_axis_nodes.add(edge[1])
+        # elif span == 0:
+        #     intra_candidate_list.append(edge) # sammelt span 0 kanten
+        # zero_span_subgraph = nx.Graph()
+        # zero_span_subgraph.add_edges_from(intra_candidate_list)
+        # ignore_set = set()
+        # for edge in intra_candidate_list:
+        #     if is_mixed(edge[0], layout) or is_mixed(edge[1], layout):
+        #         for node in edge:
+        #             ignore_set.update(nx.node_connected_component(zero_span_subgraph, node))
+        # for edge in intra_candidate_list:
+        #     if edge[0] not in ignore_set and edge[1] not in ignore_set:
+        #         start = node_axis_map[edge[0]] # startachse
+        #         end = node_axis_map[edge[1]]
+        #         layout.intra_axis_edges.append(edge)
+        #         layout.graph.remove_edge(edge[0], edge[1])
+        #         if edge[0] not in layout.intra_axis_nodes[start]: 
+        #             layout.intra_axis_nodes[start].append(edge[0]) # start = end (span = 0)
+        #             intra_axis_nodes.add(edge[0])
+        #         if edge[1] not in layout.intra_axis_nodes[end]: 
+        #             layout.intra_axis_nodes[end].append(edge[1]) # start = end (span = 0)
+        #             intra_axis_nodes.add(edge[1])
     for axis, nodes in layout.node_groups.items():
         layout.node_groups[axis] = [inter_node for inter_node in nodes if inter_node not in intra_axis_nodes]
 
@@ -228,94 +219,88 @@ def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: 
     _attach_isolated_nodes(layout.node_groups, isolated_node_groups)
     _recover_edges
 
-def _sweep(layout: HivePlotLayout, threshold = float("inf"), real: bool = True) -> None:
-    node_groups = layout.node_groups
+def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int, list[int | str]], node_position_map, node_axis_map, fused_list, threshold = float("inf"), real: bool = True) -> None:
+    # initialiserung logik parameter
+    changed = True # 1. abbruchbedingung: keine Änderung nach einem sweep-durchgang mehr festgestellt
+    threshold_run = 0 # 2. abbruchbedingung: anzahl durchläufe erreicht
+    # initialisierung layout parameter
     phi = layout.axis_order
-    changed = True
-    threshold_run = 1
-    fused_edge_list = layout.fuse_edges_with_edge_dummies()
+    reversed_phi = list(reversed(phi))
+    node_groups = layout.node_groups
     dummy_node_groups = layout.node_groups_dummies
-    # print(f"INIT: threshold={threshold}")
+    # sweep-logik für reale knoten:
     if real == True:
-        while  threshold_run <= threshold and changed == True: # 1 schleifendurchlauf: cw+ccw sweep mit anschließender abbruchprüfung
-            # print(f"RUN {threshold_run}")
+        while  threshold_run < threshold and changed == True:
             threshold_run += 1
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>REAL--------------------------")
+            print(f"|REAL RUN: {threshold_run}/{threshold}")
             changed = False
-            reversed_phi = list(reversed(phi))
-            for i, axis in enumerate(phi): # clockwise sweep
-             # print(f"ORDER: {phi}")
+            for axis in phi: # clockwise
                 bary_axis_order = node_groups[axis]
                 bary_positions_axis = []
                 for node in bary_axis_order:
-                    node_neighbors = layout.get_proper_neighbors(node, fused_edge_list)
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors))
-                ziped_list = zip(bary_axis_order, bary_positions_axis) # (node, position)
-                sorted_pairs = sorted(ziped_list, key=lambda pair: pair[1]) # nach position aufsteigend sortieren
-                new_order = [node for node, _ in sorted_pairs] # neue ordnung der achse ohne dummies
-
+                    node_neighbors = neighborhood_map[node]
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                print(f"|BC ORDER{bary_axis_order}")
+                print(f"|BC WERTE{bary_positions_axis}")
+                # umsortierung der knotenliste nach positionen
+                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                print(f"|Real CW -> VORHER: {node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
-                # print(f"CW: order vorher {node_groups[axis]} (Achse {axis})")
                 node_groups[axis] = new_order
-                # print(f"CW: order nachher {node_groups[axis]} (Achse {axis})")
-            # print(changed)
-
-            for i, axis in enumerate(reversed_phi): # counterclockwise sweep
-                # print(f"ORDER: {reversed_phi}")
+            print("--------------------------CCW---------------------------")
+            for axis in reversed_phi: # counter clockwise
                 bary_axis_order = node_groups[axis]
                 bary_positions_axis = []
                 for node in bary_axis_order:
-                    node_neighbors = layout.get_proper_neighbors(node, fused_edge_list)
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors))
-                ziped_list = zip(bary_axis_order, bary_positions_axis) # (node, position)
-                sorted_pairs = sorted(ziped_list, key=lambda pair: pair[1]) # nach position aufsteigend sortieren
-                new_order = [node for node, _ in sorted_pairs] # neue ordnung der achse ohne dummies
-                if node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
+                    node_neighbors = neighborhood_map[node]
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                print(f"|BC ORDER{bary_axis_order}")
+                print(f"|BC WERTE{bary_positions_axis}")
+                # umsortierung der knotenliste nach positionen
+                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                print(f"|Real CCW -> VORHER: {node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
+                if node_groups[axis] != new_order and changed == True: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
-                # print(f"CCW: order vorher {node_groups[axis]} (Achse {axis})")
                 node_groups[axis] = new_order
-                # print(f"CCW: order nachher {node_groups[axis]} (Achse {axis})")
-            # print(changed)
+            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
     elif real == False:
-        while  threshold_run <= threshold and changed == True: # 1 schleifendurchlauf: cw+ccw sweep mit anschließender abbruchprüfung
-            print(f"RUN {threshold_run}")
+        while  threshold_run < threshold and changed == True:
             threshold_run += 1
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>VIRTUAL-----------------------")
+            print(f"|VIRTUAL RUN: {threshold_run}/{threshold}")
             changed = False
-            reversed_phi = list(reversed(phi))
-            for i, axis in enumerate(phi): # clockwise sweep
-             # print(f"ORDER: {phi}")
+            for axis in phi: # clockwise
                 bary_axis_order = dummy_node_groups[axis]
                 bary_positions_axis = []
                 for node in bary_axis_order:
-                    node_neighbors = layout.get_proper_neighbors(node, fused_edge_list)
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors))
-                ziped_list = zip(bary_axis_order, bary_positions_axis) # (node, position)
-                sorted_pairs = sorted(ziped_list, key=lambda pair: pair[1]) # nach position aufsteigend sortieren
-                new_order = [node for node, _ in sorted_pairs] # neue ordnung der achse ohne dummies
-
+                    node_neighbors = neighborhood_map[node]
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                print(f"|BC ORDER{bary_axis_order}")
+                print(f"|BC WERTE{bary_positions_axis}")
+                # umsortierung der knotenliste nach positionen
+                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                print(f"|Virtuell CW -> VORHER: {dummy_node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if dummy_node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
-                # print(f"CW: order vorher {dummy_node_groups[axis]} (Achse {axis})")
                 dummy_node_groups[axis] = new_order
-                # print(f"CW: order nachher {dummy_node_groups[axis]} (Achse {axis})")
-            # print(changed)
-
-            for i, axis in enumerate(reversed_phi): # counterclockwise sweep
-                # print(f"ORDER: {reversed_phi}")
+            print("--------------------------CCW---------------------------")
+            for axis in reversed_phi: # counter clockwise
                 bary_axis_order = dummy_node_groups[axis]
                 bary_positions_axis = []
                 for node in bary_axis_order:
-                    node_neighbors = layout.get_proper_neighbors(node, fused_edge_list)
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors))
-                ziped_list = zip(bary_axis_order, bary_positions_axis) # (node, position)
-                sorted_pairs = sorted(ziped_list, key=lambda pair: pair[1]) # nach position aufsteigend sortieren
-                new_order = [node for node, _ in sorted_pairs] # neue ordnung der achse ohne dummies
+                    node_neighbors = neighborhood_map[node]
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                print(f"|BC ORDER{bary_axis_order}")
+                print(f"|BC WERTE{bary_positions_axis}")
+                # umsortierung der knotenliste nach positionen
+                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                print(f"|Virtuell CCW -> VORHER: {dummy_node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if dummy_node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
-                # print(f"CCW: order vorher {dummy_node_groups[axis]} (Achse {axis})")
                 dummy_node_groups[axis] = new_order
-                # print(f"CCW: order nachher {dummy_node_groups[axis]} (Achse {axis})")
-            # print(changed)  
+            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
 def intra_axis_handler(layout: HivePlotLayout) -> None:
     def reconstructed_intra_axis_graph():
@@ -352,7 +337,7 @@ def intra_axis_handler(layout: HivePlotLayout) -> None:
 
     
 
-def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int]) -> float:
+def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
 
     Args:
@@ -362,31 +347,54 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
     Returns:
         float: Barycenterposition
     """
-    fused_list = layout.fuse_node_groups_with_dummies()
     neighbor_sum = 0
+    real_nodes = layout.node_groups
+    virtual_nodes = layout.node_groups_dummies
     for neighbor in neighbor_group:
-        node_axis_name = node_to_axis(neighbor, fused_list)
-        neighbor_sum += fused_list[node_axis_name].index(neighbor)/len(fused_list[node_axis_name])
+        node_axis_name = node_axis_map[neighbor]
+        axis_len = len(real_nodes[node_axis_name]) + len(virtual_nodes[node_axis_name])
+        if isinstance(neighbor, int):
+            neighbor_sum += real_nodes[node_axis_name].index(neighbor)/axis_len # index teuer, ggf. map!
+        elif isinstance(neighbor, str):
+            neighbor_sum += (len(real_nodes[node_axis_name]) +(virtual_nodes[node_axis_name].index(neighbor)))/axis_len # index teuer, ggf. map!
     position = 1/len(neighbor_group) * neighbor_sum
     return position
 
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold=float("inf")):
     # pipeline 3a
+    # print("11")
     isolated_nodes = _remove_isolated_nodes(layout.graph, layout.node_groups)
-    _subdivide_long_edges(layout)
+    print("1")
+    fused_node_list = layout.fuse_node_groups_with_dummies()
+    node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+    print("2")
+    _subdivide_long_edges(layout, node_position_map, node_axis_map)
+    print("3")
+    fused_edge_list = layout.fuse_edges_with_edge_dummies()
+    print("4")
+    fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
+    node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
+    neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
+    print("5")
+    
     # print(f"layout.node_groups_dummies: {layout.node_groups_dummies}") # debugging
     # fused_nodes = layout.fuse_node_groups_with_dummies()
     layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
-    _sweep(layout, threshold=threshold, real=True) # nur real
-    _sweep(layout, threshold=threshold, real=False) # nur virtuell (dummies)
+    print("6")
+    _sweep(layout, neighborhood_map, node_position_map, node_axis_map, fused_node_list, threshold=threshold, real=True) # nur real
+    print("7")
+    _sweep(layout, neighborhood_map,node_position_map, node_axis_map,  fused_node_list, threshold=threshold, real=False) # nur virtuell (dummies)
+    print("8")
     #pipeline 3b
     intra_axis_handler(layout)
     finish_structured_axis_orders(layout, isolated_nodes)
+    print("9")
+    # print("10")
 
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 1# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0 # standard
     graph_mode = 1 # mit intr
     # graph_mode = 2 # dummy test
@@ -413,8 +421,10 @@ if __name__ == "__main__":
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     if printer == 1:
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
-    # barycenter_crossmin_pipeline(hpl, threshold=10)
-    barycenter_crossmin_pipeline(hpl)
+    print("Pipeline -> Start")
+    barycenter_crossmin_pipeline(hpl, threshold=10)
+    # barycenter_crossmin_pipeline(hpl)
+    print("Pipeline -> Ende")
     hpl.node_groups = hpl.fuse_node_groups_with_dummies() # ACHTUNG: FÜR RENDERING NÖTIG, FÜR WEITERE PIPELINE-OPERATIONEN NICHT NÖTIG, DA DUMMYS IN SEPARATEN STRUKTUREN GEHALTEN WERDEN
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
