@@ -110,6 +110,7 @@ def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> t
     return optimal_perm
 
 def reordered_node_groups(node_grps: dict[int, list[int]], new_order: tuple[int, ...]) -> dict[int, list[int]]: # ermöglicht schnelles umordnen nach optimierung der achsenordnung
+    """Schnelles Umordnen nach Optimierung der Achsenordnung."""
     return {axis: node_grps[axis] for axis in new_order}
 
 if __name__ == "__main__":
