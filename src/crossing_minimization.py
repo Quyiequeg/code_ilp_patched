@@ -39,7 +39,7 @@ import networkx as nx
 # logger = logging.getLogger(__name__)
 
 
-def _subdivide_long_edges(layout: HivePlotLayout, node_position_map, node_axis_map) -> None:
+def _subdivide_long_edges(layout: HivePlotLayout, node_position_map, node_axis_map, neighborhood_map) -> None:
     """Funktion dient dem Einfügen von Dummyknoten für lange Kanten (span > 1) auf den Achsen zwischen Start- und Endknoten. Schema: d_[Startknoten]_[Endknoten]_[Sequenznummer]: z.B. d_5_10_2 ist der zweite Dummyknoten auf der zerlegten langen Kante von 5 nach 10. Die lange Kante kann dann folgendermaßen beschrieben werden:
     Startknoten - d_5_10_1 - d_5_10_2 - ... - d_5_10_(span-1) - Endknoten. Die Funktion schreibt direkt in layout.node_groups_dummies.
 
@@ -90,13 +90,13 @@ def _subdivide_long_edges(layout: HivePlotLayout, node_position_map, node_axis_m
         long_edges.add((start_node, end_node))
         dummy_edges.append((previous, end_node))
     
-    def is_mixed(node, layout): # check ob ein knoten sowohl intra als auch inter ist
-        # axis = node_position_map[node]
-        # return any(
-        #     node_to_axis(neighbor, layout.node_groups) != axis
-        #     for neighbor in layout.graph.neighbors(node)
-        # )
-        return False
+    def is_mixed(node, node_position_map, neighborhood_map): # check ob ein knoten sowohl intra als auch inter ist
+        neighbors = neighborhood_map[node]
+        is_mixed = False
+        for neighbor in neighbors:
+            if node_position_map[node] != node_position_map[neighbor]:
+                is_mixed = True
+        return is_mixed
     
     layout.intra_axis_nodes = {key: [] for key in layout.node_groups}
     k = layout.num_axes
@@ -106,42 +106,42 @@ def _subdivide_long_edges(layout: HivePlotLayout, node_position_map, node_axis_m
     dummies = layout.node_groups_dummies
     for axis in layout.axis_order: # initialisiere dummyliste, schreibt explizit in die HivePlotLayout Instanz
         dummies[axis] = []
-    intra_axis_nodes = set()
-    intra_candidate_list = []
-    for edge in edges:
+    # intra_axis_node_set = set()
+    intra_candidate_edge_list = layout.intra_axis_edges # alle kandidaten aufnehmen und nach reinen intra axis filtern
+    intra_candidate_node_list = [] # alle kandidaten aufnehmen und nach reinen intra axis filtern
+    for edge in edges: # 
         start = node_axis_map[edge[0]] # startachse
         end = node_axis_map[edge[1]] # endachse
         start_pos = node_position_map[edge[0]] # startpositioon
         end_pos = node_position_map[edge[1]] # endposition
         span = node_or_axes_span(start_pos, end_pos, k)
-        if span > 1:
+        if span > 1: # direkte behandlung von langen kanten (dummy knoten erzeugen), proper ignorieren
             if (start_pos - end_pos) % k > (end_pos - start_pos) % k or (start_pos - end_pos) % k == (end_pos - start_pos) % k: # richtung start -> ende
                 clockwise_count(start_pos, edge[0], edge[1], span)
             elif (start_pos - end_pos) % k < (end_pos - start_pos) % k: # richtung ende <- start, counter cw
                 counter_clockwise_count(start_pos, edge[0], edge[1], span)
-        # elif span == 0:
-        #     intra_candidate_list.append(edge) # sammelt span 0 kanten
-        # zero_span_subgraph = nx.Graph()
-        # zero_span_subgraph.add_edges_from(intra_candidate_list)
-        # ignore_set = set()
-        # for edge in intra_candidate_list:
-        #     if is_mixed(edge[0], layout) or is_mixed(edge[1], layout):
-        #         for node in edge:
-        #             ignore_set.update(nx.node_connected_component(zero_span_subgraph, node))
-        # for edge in intra_candidate_list:
-        #     if edge[0] not in ignore_set and edge[1] not in ignore_set:
-        #         start = node_axis_map[edge[0]] # startachse
-        #         end = node_axis_map[edge[1]]
-        #         layout.intra_axis_edges.append(edge)
-        #         layout.graph.remove_edge(edge[0], edge[1])
-        #         if edge[0] not in layout.intra_axis_nodes[start]: 
-        #             layout.intra_axis_nodes[start].append(edge[0]) # start = end (span = 0)
-        #             intra_axis_nodes.add(edge[0])
-        #         if edge[1] not in layout.intra_axis_nodes[end]: 
-        #             layout.intra_axis_nodes[end].append(edge[1]) # start = end (span = 0)
-        #             intra_axis_nodes.add(edge[1])
-    for axis, nodes in layout.node_groups.items():
-        layout.node_groups[axis] = [inter_node for inter_node in nodes if inter_node not in intra_axis_nodes]
+        elif span == 0: # intra axis candidaten sammeln und im anschluss nach komponenten ohne mixed knoten filtern
+            intra_candidate_edge_list.append(edge) # sammelt span 0 kanten
+            for node in edge:
+                if node not in intra_candidate_node_list:
+                    intra_candidate_node_list.append(node) # sammelt intra axis knoten
+    zero_span_subgraph = nx.Graph() # knoten aus intra axis knoten initialisieren
+    zero_span_subgraph.add_edges_from(intra_candidate_edge_list) # kanten automatisch einfügen, kanten aus möglichen kandidaten für intra axis beziehen
+    ignore_set = set() # komponenten, die einen mixed knoten haben (sollen nicht angefasst werden)
+    for node in intra_candidate_node_list:
+        if is_mixed(node, node_axis_map, neighborhood_map) and node not in ignore_set:
+                ignore_set.update(nx.node_connected_component(zero_span_subgraph, node))
+    for node in ignore_set: # listen nach reinen intra axis knoten filtern
+        intra_candidate_node_list.remove(node) # mögliche fehlerquelle, falls elemente anderer achsen in komponenten rutschen, sollte aber ausgeschlossen sein, prüfen!
+        edges_copy = intra_candidate_edge_list.copy()
+        for edge_candidate in edges_copy:
+            if node in edge_candidate:
+                intra_candidate_edge_list.remove(edge_candidate)
+    for node in intra_candidate_node_list:
+        axis = node_axis_map[node]
+        layout.intra_axis_nodes[axis].append(node)
+        layout.node_groups[axis].remove(node)
+    layout.graph.remove_edges_from(intra_candidate_edge_list)
 
 def parse_dummy_name(name: str) -> tuple[int, int, int]:
     """Zerlegt den Namen eines Dummyknotens in seine Bestandteile: Startknoten, Endknoten und Sequenznummer. (siehe make_dummy_name Funktion für Namensschema)
@@ -228,9 +228,15 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int, list[int | str]],
     reversed_phi = list(reversed(phi))
     node_groups = layout.node_groups
     dummy_node_groups = layout.node_groups_dummies
+    state_set = set() # states sammeln um osszilation von zuständen zu erkennen
     # sweep-logik für reale knoten:
     if real == True:
         while  threshold_run < threshold and changed == True:
+            state = tuple(tuple(node_groups[axis]) for axis in phi) # aktueller zustand
+            if state in state_set: # falls aktueller zustand schon einmal gesehen
+                print("ZUSTAND WIEDERERKANNT")
+                break
+            state_set.add(state)
             threshold_run += 1
             print(">>>>>>>>>>>>>>>>>>>>>>>>>REAL--------------------------")
             print(f"|REAL RUN: {threshold_run}/{threshold}")
@@ -244,7 +250,7 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int, list[int | str]],
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
-                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
                 print(f"|Real CW -> VORHER: {node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
@@ -259,14 +265,19 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int, list[int | str]],
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
-                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                # besser (stable sort mit Tiebreak auf aktuelle Position):
+                new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
                 print(f"|Real CCW -> VORHER: {node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
-                if node_groups[axis] != new_order and changed == True: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
+                if node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
                 node_groups[axis] = new_order
             print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
     elif real == False:
         while  threshold_run < threshold and changed == True:
+            state = tuple(tuple(node_groups[axis]) for axis in phi) # aktueller zustand
+            if state in state_set: # falls aktueller zustand schon einmal gesehen
+                print("ZUSTAND WIEDERERKANNT")
+                break
             threshold_run += 1
             print(">>>>>>>>>>>>>>>>>>>>>>>>>VIRTUAL-----------------------")
             print(f"|VIRTUAL RUN: {threshold_run}/{threshold}")
@@ -280,7 +291,7 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int, list[int | str]],
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
-                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
                 print(f"|Virtuell CW -> VORHER: {dummy_node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if dummy_node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
@@ -295,7 +306,7 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int, list[int | str]],
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
-                new_order = [node for position, node in sorted(zip(bary_positions_axis, bary_axis_order), key=lambda t: t[0])]# (position, node), soertierung explizit nach BC-position
+                new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
                 print(f"|Virtuell CCW -> VORHER: {dummy_node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if dummy_node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
@@ -335,8 +346,6 @@ def intra_axis_handler(layout: HivePlotLayout) -> None:
     
     layout.intra_axis_nodes = {key: sorted_intra_nodes_short[key] + sorted_intra_nodes_long[key] for key in intra_nodes} # vorarbeit zum finish der achsenordnung ->  triviale intra-axis| cluster intra-axis
 
-    
-
 def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
 
@@ -365,14 +374,16 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold=float("inf"))
     # print("11")
     isolated_nodes = _remove_isolated_nodes(layout.graph, layout.node_groups)
     print("1")
-    fused_node_list = layout.fuse_node_groups_with_dummies()
-    node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+    # fused_node_list = layout.fuse_node_groups_with_dummies()
+    # fused_edge_list = layout.fuse_edges_with_edge_dummies()
+    node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
+    neighborhood_map = layout.get_proper_neighborhood_map(layout.edges())
     print("2")
-    _subdivide_long_edges(layout, node_position_map, node_axis_map)
+    _subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
     print("3")
     fused_edge_list = layout.fuse_edges_with_edge_dummies()
-    print("4")
     fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
+    print("4")
     node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
     neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
     print("5")
@@ -394,10 +405,10 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold=float("inf"))
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
-    # graph_mode = 0 # standard
-    graph_mode = 1 # mit intr
-    # graph_mode = 2 # dummy test
+    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    # graph_mode = 0
+    # graph_mode = 1
+    graph_mode = 2
     from src.graphs import sample_graph_selfconstructed, sample_graph_multipartite, sample_graph_caveman
     from src.hiveplot import HivePlotLayout
     # # from src.partitioning import louvain_community_detection
@@ -422,8 +433,8 @@ if __name__ == "__main__":
     if printer == 1:
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     print("Pipeline -> Start")
-    barycenter_crossmin_pipeline(hpl, threshold=10)
-    # barycenter_crossmin_pipeline(hpl)
+    # barycenter_crossmin_pipeline(hpl, threshold=5)
+    barycenter_crossmin_pipeline(hpl)
     print("Pipeline -> Ende")
     hpl.node_groups = hpl.fuse_node_groups_with_dummies() # ACHTUNG: FÜR RENDERING NÖTIG, FÜR WEITERE PIPELINE-OPERATIONEN NICHT NÖTIG, DA DUMMYS IN SEPARATEN STRUKTUREN GEHALTEN WERDEN
     if printer == 1:

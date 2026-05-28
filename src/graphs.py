@@ -42,12 +42,7 @@ def sample_graph_selfconstructed():
     return G
 
 def sample_graph_selfconstructed_extended(mode: int = 0):
-    """Erzeugt einen etwas größeren Graphen für Pipelinetests (Barycenter/ILP).
-
-    Kennzahlen:
-    - 12 Knoten
-    - 4 Achsen mit je 3 Knoten → Phi = (0, 1, 2, 3)
-    - optimierte ordnung:
+    """Verschiedene Testgraphen für Pipelinetests (Barycenter/ILP). Dient größtenteils für Proof of Concept bei Nichenfällen, deshalb während des Debuggens ständig verändert und erweitert.
 
     Returns:
         nx.Graph: selbst konstruierter Graph
@@ -57,13 +52,21 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_nodes_from([0, 1, 2], subset=0)
         G.add_nodes_from([3, 4, 5], subset=1)
         G.add_nodes_from([6, 7, 8], subset=2)
+
+        G.add_edges_from([(0, 5), (1, 3), (2, 4)])
+        G.add_edges_from([(3, 6), (1, 7)])
+    elif mode == 1: # intra-axis tests
+        G.add_nodes_from([0, 1, 2], subset=0)
+        G.add_nodes_from([3, 4, 5], subset=1)
+        G.add_nodes_from([6, 7, 8], subset=2)
         G.add_nodes_from([9, 10, 11, 12], subset=3) # + isolierter Knoten
+        # G.add_nodes_from([13, 14, 15, 16, 17, 18], subset=4) # + isolierte Knoten + intra-axis
 
         G.add_edges_from([(0, 5), (1, 3), (2, 4)])
         G.add_edges_from([(6, 11), (7, 9), (8, 10)])
         G.add_edges_from([(0, 10), (2, 9)])
         G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
-    elif mode == 1: # intra-axis tests
+    elif mode == 2: # intra axis tests
         G.add_nodes_from([0, 1, 2], subset=0)
         G.add_nodes_from([3, 4, 5], subset=1)
         G.add_nodes_from([6, 7, 8], subset=2)
@@ -74,19 +77,15 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(6, 11), (7, 9), (8, 10)])
         G.add_edges_from([(0, 10), (2, 9)])
         G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
-        G.add_edges_from([(13, 14), (15, 16), (17, 18), (14,15)]) # intra-axis kanten
-        G.add_edges_from([(9, 13)]) # 13 ist jetzt inter und intra 
-        # G.add_edges_from([(14, 16)]) # verzweigung der intra axis komponente knoten 14-15-16 bilden jetzt einen kreis
-        # G.add_nodes_from([19, 20, 21, 22, 23, 24], subset=5) # testfall: langer intra axis pfad
-        # G.add_edges_from([(19, 20), (20, 21), (21, 22), (22, 23)]) # testfall: langer intra axis pfad
-    elif mode == 2: # solo kante, achsen im graph im gleichgewicht vor manipulation
-        G.add_nodes_from([0, 1, 2], subset=0)
-        G.add_nodes_from([3, 4, 5], subset=1)
-        G.add_nodes_from([6, 7, 8], subset=2)
-        G.add_nodes_from([9, 10, 11, 12], subset=3)
+        G.add_edges_from([(13, 14), (15, 16), (17, 18), (14,15)]) # intra-axis kanten, OSZILLATION BEI (17, 18) -> MÖGLICHER FIX: states hashen
+        G.add_edges_from([(9, 16)]) # 13 ist jetzt inter und intra 
 
-        G.add_edges_from([(0, 6), (3,9)]) # span 2
-        G.add_edges_from([(1, 4), (7,10), (2, 11), (5, 8)]) # span 1
+        G.add_edges_from([(14, 16)]) # verzweigung der intra axis komponente knoten 14-15-16 bilden jetzt einen kreis
+        G.add_nodes_from([19, 20, 21, 22, 23, 24], subset=5) # testfall: langer intra axis pfad
+        G.add_edges_from([(19, 20), (20, 21),  (22, 23)]) # testfall: langer intra axis pfad
+        # G.add_edges_from([(19, 20), (20, 21), (21, 22), (21, 22), (23, 24)]) # testfall: nur intra lang + kurz
+        # G.add_edges_from([(20, 22), (7, 19)]) # testfall: kreis + mixed kante innerhalb einer komponente
+        G.add_edges_from([(19, 21), (7, 20), (0, 24)]) # testfälle: kreis+solo+mixed auf einer kante
 
     return G
 
