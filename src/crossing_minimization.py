@@ -39,7 +39,7 @@ import networkx as nx
 # logger = logging.getLogger(__name__)
 
 
-def _subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | str, int], node_axis_map: dict[int | str, int], neighborhood_map: dict[int | str, list[int | str]]) -> None:
+def subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | str, int], node_axis_map: dict[int | str, int], neighborhood_map: dict[int | str, list[int | str]]) -> None:
     """Funktion dient dem Einfügen von Dummyknoten für lange Kanten (span > 1) auf den Achsen zwischen Start- und Endknoten. Schema: d_[Startknoten]_[Endknoten]_[Sequenznummer]: z.B. d_5_10_2 ist der zweite Dummyknoten auf der zerlegten langen Kante von 5 nach 10. Die lange Kante kann dann folgendermaßen beschrieben werden:
     Startknoten - d_5_10_1 - d_5_10_2 - ... - d_5_10_(span-1) - Endknoten. Außerdem werden die inter axis Knoten (Span = 0) ermittelt und gefiltert, um später die Achsenreihenfolge sauber zu ermitteln und die Pipelineschritte zu Initialisieren. Gefiltert bedeutet hier:
     1. nur intra axis die nicht mixed sind (vgl. nested: is_mixed, werden in 3b behandelt)
@@ -201,7 +201,7 @@ def edge_direction(start_pos: int, end_pos: int, k: int) -> int:
         print(f"Der Span ist kleiner 1. Die Kante endet entweder auf einem Nachbarn oder ist intra-axis.")
         return end_pos
 
-def _remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) -> dict[int, list[int]]:
+def remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) -> dict[int, list[int]]:
     """Die Funktion entfernt alle isolierten Knoten aus der persitenten node_group des HivePlotLayouts.
 
     Args:
@@ -449,11 +449,11 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
     """
     # pipeline 3a <<<<<<<<<<<<
     # 1.
-    isolated_nodes = _remove_isolated_nodes(layout.graph, layout.node_groups)
+    isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups)
     # 2.
     node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
     neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
-    _subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+    subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
     # 3.
     fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
     fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
