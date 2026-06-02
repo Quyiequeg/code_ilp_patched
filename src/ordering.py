@@ -10,7 +10,7 @@ def native_order(nodes):
         nodes (NodeDataView): siehe networkx.graph.nodes
 
     Returns:
-        list: zyklische Achsenanordnung mit Achsennummern
+        list: zyklische Achsenanordnung mit Achsen-IDs
     """
     ordered_set = set(t[1] for t in nodes) # zweites tupel-element ist subset
     ordered_list = list(ordered_set)

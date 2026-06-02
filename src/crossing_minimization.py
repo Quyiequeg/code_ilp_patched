@@ -202,7 +202,7 @@ def edge_direction(start_pos: int, end_pos: int, k: int) -> int:
         return end_pos
 
 def remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) -> dict[int, list[int]]:
-    """Die Funktion entfernt alle isolierten Knoten aus der persitenten node_group des HivePlotLayouts.
+    """Die Funktion entfernt alle isolierten Knoten aus der persistenten node_group des HivePlotLayouts.
 
     Args:
         graph (nx.Graph): Der zugrundeliegende Graph aus dem HivePlotLayout.
