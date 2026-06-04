@@ -469,6 +469,8 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
     # 6.
     finish_structured_axis_orders(layout, isolated_nodes)
 
+def expand_axes():
+    pass
 
 if __name__ == "__main__":
     print("##########################################")
@@ -503,7 +505,6 @@ if __name__ == "__main__":
     # barycenter_crossmin_pipeline(hpl, threshold=5)
     barycenter_crossmin_pipeline(hpl)
     print("Pipeline -> Ende")
-    # hpl.node_groups = hpl.fuse_node_groups_with_dummies() # ACHTUNG: FÜR RENDERING NÖTIG, LETZTE AKTUALISIERUNG VOR DER VISUALISIERUNG (Erweiterung der Achs)
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print("Layout NACH OPTIMIERUNG")

@@ -81,12 +81,12 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(9, 16)]) # 13 ist jetzt inter und intra 
 
         G.add_edges_from([(14, 16)]) # verzweigung der intra axis komponente knoten 14-15-16 bilden jetzt einen kreis
-        G.add_nodes_from([19, 20, 21, 22, 23, 24, 25, 26], subset=5) # testfall: langer intra axis pfad
+        G.add_nodes_from([19, 20, 21, 22, 23, 24, 25, 26, 27, 28], subset=5) # testfall: langer intra axis pfad
         # G.add_edges_from([(19, 20), (20, 21),  (22, 23)]) # testfall: langer intra axis pfad
         G.add_edges_from([(19, 20), (20, 21), (21, 22), (21, 22), (23, 24)]) # testfall: nur intra lang + kurz
-        # G.add_edges_from([(20, 22), (7, 19)]) # testfall: kreis + mixed kante innerhalb einer komponente
-        G.add_edges_from([(19, 21), (24, 25), (0, 24), (5, 18)]) # testfälle: kreis+solo+mixed auf einer kante
-        # G.add_edges_from([(1, 24), (2, 19)])
+        G.add_edges_from([(19, 21), (24, 25), (5, 18)]) # testfälle: kreis+solo auf einer kante
+        G.add_edges_from([(0, 24)]) # testfälle: erweitert vorherigen fall um mixed
+        G.add_edges_from([(27, 28)])
 
     return G
 

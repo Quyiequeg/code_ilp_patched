@@ -5,10 +5,44 @@ from src.ordering import brute_force_ordering, native_order, node_groups, node_t
 import networkx as nx
 import pulp as pp
 
-def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map, node_axis_map, threshold: int = int(10)) -> None:
-    # ähnlich barycenter sweep: cw + ccw = 1 sweep. berechnung von: achsenordnung pi_i variabel, pi^+/pi^- fixiert
-    # hiveplot attribute
-    def sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis):
+def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dict[str|int, list[int | str]], node_axis_map: dict[str | int, int], threshold: int = int(10)) -> None:
+    """Enthält die gesamte Logik, um das One Layer Two Sided Integer Linear Program (1L2S ILP) zu definieren und zu berechnen. Die Funktion verändert das HiveplotLayout in-place. Die Pipeline besteht aus Sweeps.
+    Ein Sweep umfasst eine clockwise und eine counterclockwise Berechnung über jede Achse des Hiveplots. Folgende Schritte werden in der Funktion durchgeführt:
+    1. Initialisierung der Ordnungsvariablen (delta^i_u,v) durch delta_mapping()
+    2. Initialisierung der Sweepschleife, Abbruch bei Erreichen eines Thresholds
+    3. Danach schließt sich ein Sweep an erst in clockwise dann counterclockwise Richtung, beide habe das gleiche Schema:
+        a. Erstellen einer Probleminstanz und einer Kopie für die aktuelle Achse
+        b. Initialisierung der Ordnungsvariablen für die aktuelle Achse (virtuelle und reale Knotenordnung werden in einem Schritt berechnet, aber die Achsenordnung real < virtuell muss berücksichtigt werden, da Gaps nicht explizit behandelt werden)
+            I: Ordnungsvariablen getrennt für reale und virtuelle Achsenabschnitte
+            II: Ordnungsvariablen für real < virtuell = konstant 1
+            III: Ordnungsvariablen für virtuell < real = konstant 0
+        c. Erstellen der Zielfunktion speziell für die variable Achse
+        d. Erstellen der Nebenbedingungen für:
+            I: Antisymmetrie (im Paper implizit behandelt)
+            II: Transitivität
+        e. Lösen des ILP
+        f. Synchroniesieren der Lösung mit delta
+    4. Aktualisieren des Layouts durch Übersetzung von delta zurück in die Achsenordnung, da die variable Achse auf einem geupdateten Stand ermittelt werden muss, wird dies am Ende eines Sweeps durchgeführt
+
+    Args:
+        layout (HivePlotLayout): _description_das zugrundeliegende HivePlotLayout
+        neighborhood_map (dict[str | int, list[int  |  str]]): KnotenID: Liste von proper Nachbarn
+        node_axis_map (dict[str  | int, int]): KnotenID: Achse
+        threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10
+    """
+    def sorted_neighbor_map(neighborhood_map: dict[str |int, list[int | str]], node_axis_map: dict[str |int, int], pi_var: list[int|str], pi_plus_axis: int, pi_minus_axis: int) -> dict[int, list[int | str]]:
+        """Erzeugt ein dict, das für jeden Knoten in pi_var die Nachbarn auf der pi^+ und pi^- Achse enthält. Wird für die Zielfunktion benötigt, da hierdurch die Nachbarachsen von pi_var fixiert werden.
+
+        Args:
+            neighborhood_map (dict[str  | int, list[int | str]]): KnotenID: Liste von proper Nachbarn
+            node_axis_map (dict[str  | int, int]): KnotenID: Achse
+            pi_var (list[int | str]): variable Achsenordnung pi_i
+            pi_plus_axis (int): fixierte Nachbarachse pi^+
+            pi_minus_axis (int): fixierte Nachbarachse pi^-
+
+        Returns:
+            dict[int, list[int | str]]: (pi^+/pi^- ID, node aus pi_i): Liste der Nachbarn von node auf der jeweiligen Achse
+        """
         sorted_neighbors = {}
         for node in pi_var:
             plus_list = []
@@ -23,7 +57,16 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map, nod
             sorted_neighbors[(pi_plus_axis, node)] = plus_list
         return sorted_neighbors
     
-    def delta_to_order(delta, fused_groups):
+    def delta_to_order(delta: dict[tuple[int|str, int|str, int], int], fused_groups: dict[int, list[int|str]]) -> tuple[dict[int, list[int|str]], dict[int, list[int|str]]]:
+        """Übersetzt und schreibt am Ende des Sweeps delta wieder zurück in das Layout.
+
+        Args:
+            delta (dict[tuple[int | str, int | str, int], int]): delta^i_u,v: 1 | 0
+            fused_groups (dict[int, list[int | str]]): AchsenID: Knotenliste
+
+        Returns:
+            tuple[dict[int, list[int|str]], dict[int, list[int|str]]]: node_groups, node_groups_dummies 
+        """
         new_node_groups = {}
         new_dummy_groups = {}
         for axis, nodes in fused_groups.items():
@@ -70,14 +113,14 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map, nod
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
-            for i in range(len(pi_var)): # antisymmetrie, im paper 
+            for i in range(len(pi_var)): 
                 for j in range(i+1, len(pi_var)):
                     u, v = pi_var[i], pi_var[j]
                     uv = delta_static[(u, v, axis)]
                     vu = delta_static[(v, u, axis)]
                     if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable):
-                        prob += uv + vu == 1
-            for i in range(len(pi_var)):
+                        prob += uv + vu == 1 # antisymmetrie, im paper implizit angenommen
+            for i in range(len(pi_var)): # transitivitätsbedingungen
                 for j in range(i+1, len(pi_var)):
                     for k in range(j+1, len(pi_var)):
                         u, v, w = pi_var[i], pi_var[j], pi_var[k]
@@ -148,7 +191,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map, nod
         fused_groups = layout.fuse_node_groups_with_dummies() # variable achse muss auf geupdatetem stand ermittelt werden
     # print(f"DELTA >>>>>>> {delta}")
 
-def delta_mapping(fused_groups: dict[int | str, list[int | str]]) -> dict[tuple[int | str, ...], 0 | 1]:
+def delta_mapping(fused_groups: dict[int|str, list[int|str]]) -> dict[tuple[int|str, ...], 0|1]:
     """Dient der Initialisierung der Ordnungsvariablen (delta^i_u,v) für das 1L2S-ILP. Erzeugt aus der Vereinigung von virtuellen und realen Knoten das Mapping.
 
     Args:
@@ -172,21 +215,24 @@ def delta_mapping(fused_groups: dict[int | str, list[int | str]]) -> dict[tuple[
                 delta[(nodes[j], nodes[i], axis)] = 0
     return delta
 
-# def natural_order(delta, node_groups) -> dict[tuple[int | str, ...], int]:
-#     # delta_native[key] = 0 | 1 (spiegelt die initiale ordnung auf den nodegroups wieder)
-#     def key_to_constant(delta_key, order):
-#         pass
-#     delta_native = {}
-#     current_axis = None
-#     for key in delta:
-#         if key[2] != current_axis:
-#             current_axis = key[2]
-#             order = node_groups[key[2]]
-#         delta_native[key] = key_to_constant(key, order)
-#     # return delta_native
-#     pass
+def induced_crossings(delta_static: dict[tuple[int|str, int|str, int|str], int], sorted_neighbors: dict[int, list[int|str]], pi_fix: int, pi_var_id: int, pi_var: list[int|str]) -> pp.lpSum: # C(pi, pi^+/-), Zielfunktion
+    """Bildet die C(pi_i, pi^+/-) Zielfunktion nach. Die Funktion arbeitet folgendermaßen:
+    1. Betrachte paarweise Knoten u, v auf variabler Achse und ermittle die Ordungsvariablen uv und vu
+    2. bestimme alle Nachbarn s von u und t von v auf der fixierten Achse und iteriere über alle Paare (s, t) mit s != t
+    3. bestimme die Ordnungsvariablen st und ts
+    4. Füge den Kreuzungsterm del_uv * del_ts + del_vu * del_st zur Zielfunktion hinzu
+    5. Rückgabe der Summe aller Kreuzungsterme als Pulp-Ausdruck
 
-def induced_crossings(delta_static, sorted_neighbors, pi_fix, pi_var_id, pi_var): # C(pi, pi^+/-), Zielfunktion
+    Args:
+        delta_static (dict[tuple[int | str, int | str, int | str], int]): ordnungsvariable: belegung
+        sorted_neighbors (dict[int, list[int | str]]): (pi^+/pi^- ID, node aus pi_i): Liste der Nachbarn von node auf der jeweiligen Achse
+        pi_fix (int): AchsenID der fixierten Nachbarachse
+        pi_var_id (int): AchsenID der variablen Achse
+        pi_var (int): Liste der Knoten auf der variablen Achse
+
+    Returns:
+        pp.lpSum: Anzahl der induzierten Kreuzungen zwischen pi_var und pi_fix
+    """
     terms = []
     for i in range(len(pi_var)):
         for j in range(i+1, len(pi_var)):
@@ -205,15 +251,18 @@ def induced_crossings(delta_static, sorted_neighbors, pi_fix, pi_var_id, pi_var)
                     terms.append(del_uv * del_ts + del_vu * del_st)
     return pp.lpSum(terms)
 
+def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10)) -> None:
+    """Die Funktion führt die gesamte Pipeline zur Kreuzungsminimierung durch, inklusive der Berechnung des 1L2S-ILP. Alle Schritte werden in-place am HivePlotLayout durchgeführt. Ablauf:
+    1. isolierte Knoten entfernen
+    2. lange Kanten unterteilen
+    3. 1L2S-ILP berechnen
+    4. Behandlung der intra-axis Kreuzungen
+    5. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.
 
-        # if key[0] == pi_fix:
-        #         u = key[1]
-        #         nbr = sorted_neighbors[key]
-        #         for n in nbr:
-        #             del_uv = delta_static[u, n, pi_var_id]
-        #             del_ts = delta_static[u, n, pi_fix]
-
-def ip_model_pipeline(layout: HivePlotLayout, threshold: float = float("inf")) -> None:
+    Args:
+        layout (HivePlotLayout): das zugrundeliegende Hiveplotlayout
+        threshold (int, optional): Anzahl der Sweeps bis zum Abbruch, Defaultwert ist 10.
+    """
     # pipeline 3a <<<<<<<<<<<<
     # 1.
     isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
@@ -228,11 +277,11 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: float = float("inf")) -
     fused_groups = layout.fuse_node_groups_with_dummies()
     neighborhood_map = layout.get_proper_neighborhood_map(layout.fuse_edges_with_edge_dummies())
     node_position_map, node_axis_map = node_to_axis_maps(layout, fused_groups)
-    onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map)
-    print(f"REAL: {layout.node_groups}")
-    print(f"DUMMY: {layout.node_groups_dummies}")
+    onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
+    # print(f"REAL: {layout.node_groups}")
+    # print(f"DUMMY: {layout.node_groups_dummies}")
     # 5.
-    # cm.intra_axis_handler(layout)
+    cm.intra_axis_handler(layout)
     # 6.
     cm.finish_structured_axis_orders(layout, isolated_nodes)
 
@@ -267,7 +316,6 @@ if __name__ == "__main__":
     if printer == 1:
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     ip_model_pipeline(hpl, threshold=1)
-    # hpl.node_groups = hpl.fuse_node_groups_with_dummies() # ACHTUNG: FÜR RENDERING NÖTIG, LETZTE AKTUALISIERUNG VOR DER VISUALISIERUNG (Erweiterung der Achs)
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print(hpl)

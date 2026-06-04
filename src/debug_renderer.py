@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
+from prompt_toolkit import layout
 
 from src.hiveplot import HivePlotLayout
 
@@ -222,7 +223,8 @@ def _draw_hive(
             ax.text(x + 0.03, y + 0.03, str(node),
                     fontsize=6, zorder=4, color="#333333")
             
-    edges_to_draw = (layout.dummy_edge_segments or list(G.edges())) + layout.intra_axis_edges 
+    direct_edges = [e for e in G.edges() if e not in layout.long_edges and (e[1], e[0]) not in layout.long_edges]
+    edges_to_draw = direct_edges + layout.dummy_edge_segments + layout.intra_axis_edges
     # Kanten zeichnen
     edge_set = set()
     if highlight_edges:
