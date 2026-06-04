@@ -408,7 +408,7 @@ def intra_axis_handler(layout: HivePlotLayout) -> None:
             raise ValueError(f"Bei {path} handelt es sich um einen isolierten Knoten oder etwas Seltsames!!")
     
     layout.intra_axis_nodes = {key: sorted_intra_nodes_short[key] + sorted_intra_nodes_long[key] for key in intra_nodes} # vorarbeit zum finish der achsenordnung ->  triviale intra-axis| cluster intra-axis
-
+    ########################## //\\ ########################## FEHLT IM ILP!!!!!!!!!!!!!!!!!!!
 def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
 

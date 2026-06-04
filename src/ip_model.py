@@ -23,7 +23,17 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map, nod
             sorted_neighbors[(pi_plus_axis, node)] = plus_list
         return sorted_neighbors
     
-    node_groups = layout.node_groups
+    def delta_to_order(delta, fused_groups):
+        new_node_groups = {}
+        new_dummy_groups = {}
+        for axis, nodes in fused_groups.items():
+            positions = {u: sum(delta[(v, u, axis)] for v in nodes if v != u) for u in nodes} # rang = anzahl knoten die vor u kommen
+            sorted_nodes = sorted(nodes, key=lambda u: positions[u])
+            new_node_groups[axis]  = [n for n in sorted_nodes if isinstance(n, int)]
+            new_dummy_groups[axis] = [n for n in sorted_nodes if isinstance(n, str)]
+        return new_node_groups, new_dummy_groups
+
+    # node_groups = layout.node_groups
     fused_groups =  layout.fuse_node_groups_with_dummies()
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
@@ -60,6 +70,13 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map, nod
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
+            for i in range(len(pi_var)): # antisymmetrie, im paper 
+                for j in range(i+1, len(pi_var)):
+                    u, v = pi_var[i], pi_var[j]
+                    uv = delta_static[(u, v, axis)]
+                    vu = delta_static[(v, u, axis)]
+                    if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable):
+                        prob += uv + vu == 1
             for i in range(len(pi_var)):
                 for j in range(i+1, len(pi_var)):
                     for k in range(j+1, len(pi_var)):
@@ -77,16 +94,59 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map, nod
                     val = pp.value(delta_static[key])
                     if val is not None:
                         delta[key] = int(val)
-    print(f"DELTA >>>>>>> {delta}")
-        # for axis in reversed_phi:
-        #     # probleminstanz
-        #     prob = pp.LpProblem(f"1S2L_ILP_counter_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
-        #     # variablen: in delta abgelegt
-        #     # zielfunktion
-        #     # nebenbedingungen
-        #     # lösen
-        #     prob.solve(pp.PULP_CBC_CMD(msg=True))
-        #     # schreibe problem um nach delta
+        for axis in reversed_phi:
+            # probleminstanz
+            prob = pp.LpProblem(f"1S2L_ILP_counter_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
+            # variablen: in delta abgelegt
+            delta_static = delta.copy() # aktuelle ordnungsmap
+            for key in delta:
+                if key[2] != axis: # nur zu optimierende Achse
+                    continue
+                if (isinstance(key[0], int) and isinstance(key[1], int)) or (isinstance(key[0], str) and isinstance(key[1], str)): 
+                    delta_static[key] = pp.LpVariable(f"{key[0]}_{key[1]}_{key[2]}", cat="Binary")
+                elif isinstance(key[0], int) and isinstance(key[1], str): # real < virtuell =  1
+                    delta_static[key] = 1
+                elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
+                    delta_static[key] = 0
+            # zielfunktion
+            pi_plus_idx = (phi_index_map[axis]+1) % len(phi) # achsen index in phi
+            pi_plus_axis = phi[pi_plus_idx]
+            pi_minus_idx = (phi_index_map[axis]-1) % len(phi)
+            pi_minus_axis = phi[pi_minus_idx]
+            pi_var = fused_groups[axis] # knotenliste von pi
+            # pi_var = node_groups[axis] # knotenliste von pi
+            sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
+            prob += (induced_crossings(delta_static, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            # print(f"Zielfunktion: {prob.objective}")
+            # print(f"Nachbarn Beispiel: {sorted_neighbors}")
+            # nebenbedingungen
+            for i in range(len(pi_var)): # antisymmetrie, im paper 
+                for j in range(i+1, len(pi_var)):
+                    u, v = pi_var[i], pi_var[j]
+                    uv = delta_static[(u, v, axis)]
+                    vu = delta_static[(v, u, axis)]
+                    if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable):
+                        prob += uv + vu == 1
+            for i in range(len(pi_var)):
+                for j in range(i+1, len(pi_var)):
+                    for k in range(j+1, len(pi_var)):
+                        u, v, w = pi_var[i], pi_var[j], pi_var[k]
+                        prob += delta_static[(u,v,axis)] + delta_static[(v,w,axis)] - delta_static[(u,w,axis)] <= 1
+                        prob += delta_static[(u,v,axis)] + delta_static[(v,w,axis)] - delta_static[(u,w,axis)] >= 0 # prüfen: binärvariablen zwangsweise nicht negativ, ggf performanceleck
+            
+            # lösen
+            # prob.solve(pp.PULP_CBC_CMD(msg=True))
+            prob.solve(pp.PULP_CBC_CMD(msg=False))
+            # schreibe problem um nach delta
+            # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
+            for key in delta:
+                if key[2] == axis and isinstance(delta_static[key], pp.LpVariable):
+                    val = pp.value(delta_static[key])
+                    if val is not None:
+                        delta[key] = int(val)
+        layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
+        fused_groups = layout.fuse_node_groups_with_dummies() # variable achse muss auf geupdatetem stand ermittelt werden
+    # print(f"DELTA >>>>>>> {delta}")
 
 def delta_mapping(fused_groups: dict[int | str, list[int | str]]) -> dict[tuple[int | str, ...], 0 | 1]:
     """Dient der Initialisierung der Ordnungsvariablen (delta^i_u,v) für das 1L2S-ILP. Erzeugt aus der Vereinigung von virtuellen und realen Knoten das Mapping.
@@ -166,27 +226,19 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: float = float("inf")) -
     # print(f"DUMMIES: {layout.node_groups_dummies}")
     # 3.
     fused_groups = layout.fuse_node_groups_with_dummies()
-    # delta = delta_mapping(fused_groups)
     neighborhood_map = layout.get_proper_neighborhood_map(layout.fuse_edges_with_edge_dummies())
     node_position_map, node_axis_map = node_to_axis_maps(layout, fused_groups)
     onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map)
-    # fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
-    # fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
-    # node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
-    # neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
-    # layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
-    # 4.
-    # _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
-    # _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False) # nur virtuell (dummies)
-    #pipeline 3b <<<<<<<<<<<<
+    print(f"REAL: {layout.node_groups}")
+    print(f"DUMMY: {layout.node_groups_dummies}")
     # 5.
-    # intra_axis_handler(layout)
+    # cm.intra_axis_handler(layout)
     # 6.
-    # cm.finish_structured_axis_orders(layout, isolated_nodes)
+    cm.finish_structured_axis_orders(layout, isolated_nodes)
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
@@ -210,12 +262,14 @@ if __name__ == "__main__":
     # print(hpl)
     if printer == 1:
         render_debug(hpl, title="ORIGINAL") 
-    # hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
-    # hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
+    hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
+    hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     if printer == 1:
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     ip_model_pipeline(hpl, threshold=1)
     # hpl.node_groups = hpl.fuse_node_groups_with_dummies() # ACHTUNG: FÜR RENDERING NÖTIG, LETZTE AKTUALISIERUNG VOR DER VISUALISIERUNG (Erweiterung der Achs)
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
+    print(hpl)
+    print(hpl.edges())
     print("##########################################")
