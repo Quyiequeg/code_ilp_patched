@@ -271,7 +271,8 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
     # initialisierung layout parameter
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
-    node_groups = layout.node_groups
+    # node_groups = layout.node_groups OHNE EXPANDED!
+    node_groups = layout.node_groups_expanded
     dummy_node_groups = layout.node_groups_dummies
     state_set = set() # states sammeln um osszilation von zuständen zu erkennen
     # sweep-logik für reale knoten:
@@ -408,7 +409,7 @@ def intra_axis_handler(layout: HivePlotLayout) -> None:
             raise ValueError(f"Bei {path} handelt es sich um einen isolierten Knoten oder etwas Seltsames!!")
     
     layout.intra_axis_nodes = {key: sorted_intra_nodes_short[key] + sorted_intra_nodes_long[key] for key in intra_nodes} # vorarbeit zum finish der achsenordnung ->  triviale intra-axis| cluster intra-axis
-    ########################## //\\ ########################## FEHLT IM ILP!!!!!!!!!!!!!!!!!!!
+
 def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
 
@@ -453,12 +454,15 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
     # 2.
     node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
     neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+    layout.expand_axes(node_axis_map)
+    node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # FÜR EXPAND
+    neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), expanded=True) # FÜR EXPAND
     subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
     # 3.
     fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
     fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
     node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
-    neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
+    neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=True)
     layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
     # 4.
     _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
@@ -469,12 +473,10 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
     # 6.
     finish_structured_axis_orders(layout, isolated_nodes)
 
-def expand_axes():
-    pass
-
 if __name__ == "__main__":
+    from src.cost import cost_function_whole
     print("##########################################")
-    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
@@ -495,6 +497,8 @@ if __name__ == "__main__":
         node_groups=ng
     )
     print(hpl)
+    print("cost vorher")
+    # print(cost_function_whole(hpl.axis_order, hpl.fuse_node_groups_with_dummies(), hpl.fuse_edges_with_edge_dummies()))
     if printer == 1:
         render_debug(hpl, title="ORIGINAL") 
     hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
@@ -510,4 +514,6 @@ if __name__ == "__main__":
     print("Layout NACH OPTIMIERUNG")
     print(hpl)
     print(hpl.edges())
+    print("cost nachher")
+    # print(cost_function_whole(hpl.axis_order, hpl.fuse_node_groups_with_dummies(), hpl.fuse_edges_with_edge_dummies()))
     print("##########################################")
