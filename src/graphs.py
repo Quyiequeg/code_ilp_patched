@@ -86,7 +86,7 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(19, 20), (20, 21), (21, 22), (21, 22), (23, 24)]) # testfall: nur intra lang + kurz
         G.add_edges_from([(19, 21), (24, 25), (5, 18)]) # testfälle: kreis+solo auf einer kante
         G.add_edges_from([(0, 24)]) # testfälle: erweitert vorherigen fall um mixed
-        G.add_edges_from([(27, 28)])
+        G.add_edges_from([(27, 28)]) # testfälle: erweitert vorherigen fall um short intra axis, dient test der korrekten reihenfolge vorm rendern
 
     return G
 

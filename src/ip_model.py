@@ -286,6 +286,7 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10)) -> None:
     cm.finish_structured_axis_orders(layout, isolated_nodes)
 
 if __name__ == "__main__":
+    from src.cost import cost_function_whole
     print("##########################################")
     printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0
@@ -306,7 +307,9 @@ if __name__ == "__main__":
         num_axes=len(axes),
         axis_order=axes,
         node_groups=ng
-    )
+    ) 
+    print("cost vorher")
+    print(cost_function_whole(hpl.axis_order, hpl.fuse_node_groups_with_dummies(), hpl.fuse_edges_with_edge_dummies()))
     # delta = delta_mapping(hpl)
     # print(hpl)
     if printer == 1:
@@ -320,4 +323,6 @@ if __name__ == "__main__":
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print(hpl)
     print(hpl.edges())
+    print("cost nachher")
+    print(cost_function_whole(hpl.axis_order, hpl.fuse_node_groups_with_dummies(), hpl.fuse_edges_with_edge_dummies()))
     print("##########################################")
