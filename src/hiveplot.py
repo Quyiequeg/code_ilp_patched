@@ -37,8 +37,8 @@ class HivePlotLayout:
     node_order: dict[int, list[int]] = field(default_factory=dict)
 
     # unabhängige Kopien für pi+ und pi-, da diese sich im erweiterten Modell unterscheiden können
-    node_order_plus:  dict[int, list[int]] = field(default_factory=dict) # +
-    node_order_minus: dict[int, list[int]] = field(default_factory=dict) # -
+    node_groups_expanded:  dict[int, list[int | str]] = field(default_factory=dict)
+    edges_expanded: list[tuple[int | str, int | str]] = field(default_factory=list)
 
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
@@ -62,8 +62,8 @@ class HivePlotLayout:
             f"  Intra-Axis Edges: {self.intra_axis_edges}",
             f"  Long Edges: {self.long_edges}",
             f"  Node Order (pi_i): {self.node_order}",
-            f"  Node Order Plus (pi_i^+): {self.node_order_plus}",
-            f"  Node Order Minus (pi_i^-): {self.node_order_minus}",
+            f"  node_groups_expanded: {self.node_groups_expanded}",
+            f"  edges_expanded: {self.edges_expanded}",
             f"  Crossings (standard): {self.crossings}",
             f"  Crossings (erweitert): {self.crossings_extended}"
         ]
