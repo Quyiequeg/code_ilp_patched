@@ -106,20 +106,26 @@ class HivePlotLayout:
         else:
             return self.node_groups.get(axis, [])
     
-    def fuse_node_groups_with_dummies(self) -> dict[int, list[int]]:
+    def fuse_node_groups_with_dummies(self, expanded: bool = False) -> dict[int, list[int]]:
         """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.
-
+        Args:
+            expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
         Returns:
             dict[int, list[int]]: Vereinigung der Knoten und Dummyknoten pro Achse.
         """
         fused_groups = {}
         for axis in self.axis_order:
-            original_nodes = self.node_groups.get(axis, [])
-            dummy_nodes = self.node_groups_dummies.get(axis, [])
-            fused_groups[axis] = list(original_nodes) + list(dummy_nodes)
+            if expanded:
+                original_nodes = self.node_groups_expanded.get(axis, [])
+                dummy_nodes = self.node_groups_dummies.get(axis, [])
+                fused_groups[axis] = list(original_nodes) + list(dummy_nodes)
+            else:
+                original_nodes = self.node_groups.get(axis, [])
+                dummy_nodes = self.node_groups_dummies.get(axis, [])
+                fused_groups[axis] = list(original_nodes) + list(dummy_nodes)
         return fused_groups
 
-    def fuse_edges_with_edge_dummies(self) -> list[tuple[int, int]]:
+    def fuse_edges_with_edge_dummies(self, expanded: bool = False) -> list[tuple[int, int]]:
         """Erzeugt eine Liste die alle kurzen Kanten und Dummykanten vereinigt zurückgibt.
 
         Returns:
@@ -129,16 +135,17 @@ class HivePlotLayout:
         fused_edges = direct_edges + self.dummy_edge_segments
         return fused_edges
     
-    def get_proper_neighborhood_map(self, fused_edge_list: list[tuple[int | str, int | str]]) -> dict[int | str: list[int | str]]:
+    def get_proper_neighborhood_map(self, fused_edge_list: list[tuple[int | str, int | str]], expanded: bool = False) -> dict[int | str: list[int | str]]:
         """Die Funktion ermittelt eine Liste, die jeden Knoten (sowohl real als auch virtuell) auf eine Liste seiner Nachbarn mappt.
 
         Args:
             fused_edge_list: list[tuple[int | str, int | str]]: Liste der realen und virtuellen Kantentupel
+            expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
         Returns:
             dict[int | str: list[int | str]]: KnotenID: Nachbarliste
         """
         neighbor_map = {}
-        fused_node_groups = self.fuse_node_groups_with_dummies()
+        fused_node_groups = self.fuse_node_groups_with_dummies(expanded)
         node_list = self.updated_nodes(fused_node_groups)
         for node in node_list:
             neighbor_map[node] = set()
@@ -190,7 +197,6 @@ class HivePlotLayout:
                 new_intra_edges.append((-edge[0], edge[1]))
                 new_intra_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_intra_edges)
-        
         for axis in inter_expandables:
             self.graph.remove_edges_from(inter_expandables[axis])
             new_inter_edges = []
@@ -219,7 +225,12 @@ class HivePlotLayout:
                         elif span_uv < span_vu: # v auf expandierter achse und v -> u
                             new_inter_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_inter_edges)
-        # die mit expandierten achsen verbundenen kanten in neues format bringen und wieder in das hiveplotlayout schreiben
+        # self.graph neue knoten auf expandierten achsen wieder einem neuen subset zuordnen
+        for axis_id, nodes in self.node_groups_expanded.items():
+            for node in nodes:
+                if node not in self.graph.nodes: # negative knotenids auf expandierten achsen behandeln
+                    self.graph.add_node(node)
+                self.graph.nodes[node]['subset'] = axis_id
         
 
 

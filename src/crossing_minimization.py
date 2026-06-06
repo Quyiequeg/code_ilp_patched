@@ -39,7 +39,7 @@ import networkx as nx
 # logger = logging.getLogger(__name__)
 
 
-def subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | str, int], node_axis_map: dict[int | str, int], neighborhood_map: dict[int | str, list[int | str]]) -> None:
+def subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | str, int], node_axis_map: dict[int | str, int], neighborhood_map: dict[int | str, list[int | str]], expanded: bool = False) -> None:
     """Funktion dient dem Einfügen von Dummyknoten für lange Kanten (span > 1) auf den Achsen zwischen Start- und Endknoten. Schema: d_[Startknoten]_[Endknoten]_[Sequenznummer]: z.B. d_5_10_2 ist der zweite Dummyknoten auf der zerlegten langen Kante von 5 nach 10. Die lange Kante kann dann folgendermaßen beschrieben werden:
     Startknoten - d_5_10_1 - d_5_10_2 - ... - d_5_10_(span-1) - Endknoten. Außerdem werden die inter axis Knoten (Span = 0) ermittelt und gefiltert, um später die Achsenreihenfolge sauber zu ermitteln und die Pipelineschritte zu Initialisieren. Gefiltert bedeutet hier:
     1. nur intra axis die nicht mixed sind (vgl. nested: is_mixed, werden in 3b behandelt)
@@ -51,7 +51,8 @@ def subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | s
         node_position_map (dict[int | str, int]): Knoten-ID: Achsenindex in phi.
         node_axis_map (dict[int | str, int]): Knoten-ID: Achse
         neighborhood_map (neighborhood_map: dict[int | str, list[int | str]]): Knoten-ID: Nachbarknoten (:= proper = Span = 1)
-    
+        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+
     Return:
         None. Die Funktion arbeitet in-place auf dem übergebenen Layout!
     """
@@ -207,7 +208,6 @@ def remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) ->
     Args:
         graph (nx.Graph): Der zugrundeliegende Graph aus dem HivePlotLayout.
         node_groups (dict[str, list[int]]): Die persistente Knotenlisten der Achsen.
-
     Returns:
         dict[str, list[int]]: Ein dict mit den isolierten Knoten pro Achse, key: Achse, value: Listen mit isolierten Knoten.
     """
@@ -222,7 +222,7 @@ def remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) ->
         node_groups[key] = non_isolated_node_groups
     return isolated_node_groups
 
-def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: dict[str, list[int]]) -> None:
+def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: dict[str, list[int]], expanded: bool = False) -> None:
     """Finalisiert die Achsenordnungen nach der Barycenter-Pipeline.
 
     Die Funktion fügt zunächst intra-axis Knoten und verbleibende Knoten pro Achse zusammen, hängt danach die zuvor entfernten isolierten Knoten wieder an und stellt sicher, dass intra-axis Kanten im Graphen rekonstruiert werden.
@@ -231,6 +231,7 @@ def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: 
     Args:
         layout: Das HivePlotLayout, dessen node_groups und Kanten finalisiert werden.
         isolated_node_groups: Pro Achse die während der Pipeline entfernten isolierten Knoten, die wieder angehängt werden sollen.
+    
     """
     def _attach_intra_axis_order():
         """Stellt Reihenfolge in node_groups pro Achse her: reine intra axis Knoten | mixed intra axis Knoten | inter axis Knoten (real)"""
@@ -248,12 +249,17 @@ def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: 
     def _recover_edges():
         """Fügt die im Subdivide Schritt aus dem Graphen gefilterten reinen intra axis Kanten wieder dem nx.Graphmodell hinzu."""
         layout.graph.add_edges_from(layout.intra_axis_edges)
-    layout.node_groups = _attach_intra_axis_order() # intra axis + mixed intra axis + inter axis (real)
-    _attach_isolated_nodes(layout.node_groups, isolated_node_groups) # + isolierte Knoten
-    layout.node_groups = layout.fuse_node_groups_with_dummies() # + inter axis (virtuell)
-    _recover_edges
+    
+    if expanded:
+        _attach_isolated_nodes(layout.node_groups_expanded, isolated_node_groups) # + isolierte Knoten
+        layout.node_groups_expanded = layout.fuse_node_groups_with_dummies(expanded=expanded) # + inter axis (virtuell)
+    else:
+        layout.node_groups = _attach_intra_axis_order() # intra axis + mixed intra axis + inter axis (real)
+        _attach_isolated_nodes(layout.node_groups, isolated_node_groups) # + isolierte Knoten
+        layout.node_groups = layout.fuse_node_groups_with_dummies() # + inter axis (virtuell)
+        _recover_edges
 
-def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | str]], node_axis_map: dict[int | str, int], threshold = float("inf"), real: bool = True) -> None:
+def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | str]], node_axis_map: dict[int | str, int], threshold = float("inf"), real: bool = True, expanded: bool = False) -> None:
     """Führt wiederholte Barycenter-Sweeps im und gegen den Uhrzeigersinn über alle Achsen aus. Abhängig vom Parameter real werden entweder die realen Knoten (node_groups)
     oder die Dummy-Knoten (node_groups_dummies) pro Achse entsprechend der Barycenterposition ihrer Nachbarn umsortiert. Der Sweep endet, wenn keine Änderung mehr auftritt oder der threshold an Iterationen erreicht ist. Es kann zu Osszilationen im Sweep kommen, wenn
     z.B. wenn zwei Knoten die gleiche Barycenter Position haben oder in den Sweeps einfach nur ihre Positionen hin- und hertauschen. Dies führt dazu, dass die Schleife nie terminiert. In state_set werden dementsprechend alle erreichten Zustände gehasht und beim Wiederkehren eines zuvor errechneten Zustands kann die Schleife vor einem neuen Durchgang abbrechen.
@@ -264,6 +270,8 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
         node_axis_map: Map von Knoten auf Achsen in phi.
         threshold: Maximale Anzahl Sweep-Durchläufe, bevor abgebrochen wird.
         real: True, um reale Knoten zu sortieren; False, um Dummy-Knoten zu sortieren.
+        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+
     """
     # initialiserung logik parameter
     changed = True # 1. abbruchbedingung: keine Änderung nach einem sweep-durchgang mehr festgestellt
@@ -271,7 +279,10 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
     # initialisierung layout parameter
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
-    node_groups = layout.node_groups
+    if expanded:
+        node_groups = layout.node_groups_expanded
+    else:
+        node_groups = layout.node_groups
     dummy_node_groups = layout.node_groups_dummies
     state_set = set() # states sammeln um osszilation von zuständen zu erkennen
     # sweep-logik für reale knoten:
@@ -291,7 +302,7 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
                 bary_positions_axis = []
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
@@ -306,7 +317,7 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
                 bary_positions_axis = []
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
@@ -332,7 +343,7 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
                 bary_positions_axis = []
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
@@ -347,7 +358,7 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
                 bary_positions_axis = []
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
-                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map))
+                    bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
                 print(f"|BC ORDER{bary_axis_order}")
                 print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
@@ -408,19 +419,22 @@ def intra_axis_handler(layout: HivePlotLayout) -> None:
             raise ValueError(f"Bei {path} handelt es sich um einen isolierten Knoten oder etwas Seltsames!!")
     
     layout.intra_axis_nodes = {key: sorted_intra_nodes_short[key] + sorted_intra_nodes_long[key] for key in intra_nodes} # vorarbeit zum finish der achsenordnung ->  triviale intra-axis| cluster intra-axis
-    ########################## //\\ ########################## FEHLT IM ILP!!!!!!!!!!!!!!!!!!!
-def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map) -> float:
+
+def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map, expanded: bool = False) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
 
     Args:
         layout (HivePlotLayout): das zu berechnende HivePlotLayout
         neighbor_group (list[int]): Liste der Nachbarknoten
-
+        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     Returns:
         float: Barycenterposition
     """
     neighbor_sum = 0
-    real_nodes = layout.node_groups
+    if expanded:
+        real_nodes = layout.node_groups_expanded
+    else:
+        real_nodes = layout.node_groups
     virtual_nodes = layout.node_groups_dummies
     for neighbor in neighbor_group:
         node_axis_name = node_axis_map[neighbor]
@@ -446,29 +460,33 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
     Args:
         layout (HivePlotLayout): Das zu optimierende HivePlotLayout.
         threshold(int): Optionaler Abbruchschwellwert für die Anzahl der Sweep-Durchläufe.
+        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     """
     if expanded:
         # pipeline 3a <<<<<<<<<<<<
         # 1.
-        isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups)
-        # 2.
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        layout.expand_axes(node_axis_map)
+        # 2.
+        isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
+        node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), expanded=expanded) # UPDATE
         subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
         # 3.
         fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
-        fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
+        fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
-        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
+        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
         layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
         # 4.
-        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
-        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False) # nur virtuell (dummies)
+        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, expanded=expanded) # nur real
+        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, expanded=expanded) # nur virtuell (dummies)
         #pipeline 3b <<<<<<<<<<<<
         # 5.
-        intra_axis_handler(layout)
+        # intra_axis_handler(layout)
         # 6.
-        finish_structured_axis_orders(layout, isolated_nodes)
+        finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
     else:
         # pipeline 3a <<<<<<<<<<<<
         # 1.
@@ -524,8 +542,8 @@ if __name__ == "__main__":
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     print("Pipeline -> Start")
     # barycenter_crossmin_pipeline(hpl, threshold=5)
-    # barycenter_crossmin_pipeline(hpl)
-    barycenter_crossmin_pipeline(hpl, expanded=True)
+    barycenter_crossmin_pipeline(hpl)
+    # barycenter_crossmin_pipeline(hpl, expanded=True)
     print("Pipeline -> Ende")
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
