@@ -146,22 +146,7 @@ class HivePlotLayout:
             neighbor_map[edge[0]].add(edge[1])
             neighbor_map[edge[1]].add(edge[0])
         return neighbor_map
-        #     if edge[0] == node:
-        #         neighbors_set.add(edge[1])
-        #     elif edge[1] == node:
-        #         neighbors_set.add(edge[0])
-        #     neighbor_list_int = []
-        #     neighbor_list_string = []
-        #     for neighbor in neighbors_set:
-        #         if isinstance(neighbor, int):
-        #             neighbor_list_int.append(neighbor)
-        #         elif isinstance(neighbor, str):
-        #             neighbor_list_string.append(neighbor)
-        #     neighbor_list_int.sort()
-        #     neighbor_list_string.sort()
-        #     neighbors_set = neighbor_list_int + neighbor_list_string
-        #     neighbor_map[node] = neighbors_set
-        # return neighbor_map
+
 
     def expand_axes(self, node_axis_map) -> None:
         edge_axis_map = {edge: (node_axis_map[edge[0]], node_axis_map[edge[1]]) for edge in self.edges()} # initialisiere kanten zu achsen map
@@ -188,8 +173,8 @@ class HivePlotLayout:
             if key not in expandable_axes_map:
                 node_groups_expanded[key] = node_groups[key]
             elif key in expandable_axes_map:
-                node_groups_expanded[(key, 0)] = node_groups[key] # pi^- links
-                node_groups_expanded[(key, 1)] = [-node for node in node_groups[key]] # pi^- rechts
+                node_groups_expanded[key] = node_groups[key] # pi^- links
+                node_groups_expanded[-key] = [-node for node in node_groups[key]] # pi^- rechts
         print(f"node_groups_expanded:{node_groups_expanded}")
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
@@ -197,7 +182,6 @@ class HivePlotLayout:
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
             axis_position_map[axis] = i
         print(f"axis_position_map:{axis_position_map}")
-
         # die mit expandierten achsen verbundenen kanten aus dem hiveplotlayout entfernen und in korrektem format wieder hineinschreiben
         for axis in expandable_axes_map:
             self.graph.remove_edges_from(expandable_axes_map[axis])
@@ -232,7 +216,7 @@ class HivePlotLayout:
                     elif axis_v == axis:
                         if span_vu <= span_uv: # v auf expandierter achse und u -> v
                             new_inter_edges.append((edge[0], edge[1]))
-                        elif span_vu < span_uv: # v auf expandierter achse und v -> u
+                        elif span_uv < span_vu: # v auf expandierter achse und v -> u
                             new_inter_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_inter_edges)
         # die mit expandierten achsen verbundenen kanten in neues format bringen und wieder in das hiveplotlayout schreiben
@@ -245,6 +229,7 @@ class HivePlotLayout:
 if __name__ == "__main__":
     from src.graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
     from src.ordering import native_order, node_groups, node_to_axis_maps, brute_force_ordering, reordered_node_groups
+    from src.debug_renderer import render_debug
     graph_mode = 2
     G = sample_graph_selfconstructed_extended(graph_mode)
     nodes = list(G.nodes(data="subset"))
@@ -262,8 +247,9 @@ if __name__ == "__main__":
     # isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
     node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
     hpl.expand_axes(node_axis_map)
-    # print(hpl)
-    print(hpl.edges())
+    render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
+    print(hpl)
+    # print(hpl.edges())
     print("##########################################")
     print("##########################################")
     # print("##########################################")

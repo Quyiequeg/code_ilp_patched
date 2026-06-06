@@ -432,7 +432,7 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
     position = 1/len(neighbor_group) * neighbor_sum
     return position
 
-def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = float("inf")) -> None:
+def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = float("inf"), expanded: bool = False) -> None:
     """Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).
 
     Die Pipeline umfasst:
@@ -447,30 +447,51 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         layout (HivePlotLayout): Das zu optimierende HivePlotLayout.
         threshold(int): Optionaler Abbruchschwellwert für die Anzahl der Sweep-Durchläufe.
     """
-    # pipeline 3a <<<<<<<<<<<<
-    # 1.
-    isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups)
-    # 2.
-    node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
-    neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
-    subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-    # 3.
-    fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
-    fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
-    node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
-    neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
-    layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
-    # 4.
-    _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
-    _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False) # nur virtuell (dummies)
-    #pipeline 3b <<<<<<<<<<<<
-    # 5.
-    intra_axis_handler(layout)
-    # 6.
-    finish_structured_axis_orders(layout, isolated_nodes)
+    if expanded:
+        # pipeline 3a <<<<<<<<<<<<
+        # 1.
+        isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups)
+        # 2.
+        node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+        # 3.
+        fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
+        fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
+        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
+        layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
+        # 4.
+        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
+        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False) # nur virtuell (dummies)
+        #pipeline 3b <<<<<<<<<<<<
+        # 5.
+        intra_axis_handler(layout)
+        # 6.
+        finish_structured_axis_orders(layout, isolated_nodes)
+    else:
+        # pipeline 3a <<<<<<<<<<<<
+        # 1.
+        isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups)
+        # 2.
+        node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+        # 3.
+        fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
+        fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
+        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
+        layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
+        # 4.
+        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
+        _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False) # nur virtuell (dummies)
+        #pipeline 3b <<<<<<<<<<<<
+        # 5.
+        intra_axis_handler(layout)
+        # 6.
+        finish_structured_axis_orders(layout, isolated_nodes)
 
-def expand_axes():
-    pass
 
 if __name__ == "__main__":
     print("##########################################")
@@ -503,7 +524,8 @@ if __name__ == "__main__":
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     print("Pipeline -> Start")
     # barycenter_crossmin_pipeline(hpl, threshold=5)
-    barycenter_crossmin_pipeline(hpl)
+    # barycenter_crossmin_pipeline(hpl)
+    barycenter_crossmin_pipeline(hpl, expanded=True)
     print("Pipeline -> Ende")
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")

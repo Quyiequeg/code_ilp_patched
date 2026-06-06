@@ -87,6 +87,7 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(19, 21), (24, 25), (5, 18)]) # testfälle: kreis+solo auf einer kante
         G.add_edges_from([(0, 24)]) # testfälle: erweitert vorherigen fall um mixed
         G.add_edges_from([(27, 28)])
+        G.add_edges_from([(7, 16), (18, 28)])
 
     return G
 

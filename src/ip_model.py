@@ -251,7 +251,7 @@ def induced_crossings(delta_static: dict[tuple[int|str, int|str, int|str], int],
                     terms.append(del_uv * del_ts + del_vu * del_st)
     return pp.lpSum(terms)
 
-def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10)) -> None:
+def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded: bool = False) -> None:
     """Die Funktion führt die gesamte Pipeline zur Kreuzungsminimierung durch, inklusive der Berechnung des 1L2S-ILP. Alle Schritte werden in-place am HivePlotLayout durchgeführt. Ablauf:
     1. isolierte Knoten entfernen
     2. lange Kanten unterteilen
@@ -263,27 +263,50 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10)) -> None:
         layout (HivePlotLayout): das zugrundeliegende Hiveplotlayout
         threshold (int, optional): Anzahl der Sweeps bis zum Abbruch, Defaultwert ist 10.
     """
-    # pipeline 3a <<<<<<<<<<<<
-    # 1.
-    isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
-    # 2.
-    node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
-    neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
-    cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-    # print(f"DELTAGROUPS: {delta}")
-    # print(f"ISOLATED NODES: {isolated_nodes}")
-    # print(f"DUMMIES: {layout.node_groups_dummies}")
-    # 3.
-    fused_groups = layout.fuse_node_groups_with_dummies()
-    neighborhood_map = layout.get_proper_neighborhood_map(layout.fuse_edges_with_edge_dummies())
-    node_position_map, node_axis_map = node_to_axis_maps(layout, fused_groups)
-    onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
-    # print(f"REAL: {layout.node_groups}")
-    # print(f"DUMMY: {layout.node_groups_dummies}")
-    # 5.
-    cm.intra_axis_handler(layout)
-    # 6.
-    cm.finish_structured_axis_orders(layout, isolated_nodes)
+    if expanded:
+        # pipeline 3a <<<<<<<<<<<<
+        # 1.
+        isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
+        # 2.
+        node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+        # print(f"DELTAGROUPS: {delta}")
+        # print(f"ISOLATED NODES: {isolated_nodes}")
+        # print(f"DUMMIES: {layout.node_groups_dummies}")
+        # 3.
+        fused_groups = layout.fuse_node_groups_with_dummies()
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.fuse_edges_with_edge_dummies())
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_groups)
+        onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
+        # print(f"REAL: {layout.node_groups}")
+        # print(f"DUMMY: {layout.node_groups_dummies}")
+        # 5.
+        cm.intra_axis_handler(layout)
+        # 6.
+        cm.finish_structured_axis_orders(layout, isolated_nodes)
+    else:
+        # pipeline 3a <<<<<<<<<<<<
+        # 1.
+        isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
+        # 2.
+        node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+        # print(f"DELTAGROUPS: {delta}")
+        # print(f"ISOLATED NODES: {isolated_nodes}")
+        # print(f"DUMMIES: {layout.node_groups_dummies}")
+        # 3.
+        fused_groups = layout.fuse_node_groups_with_dummies()
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.fuse_edges_with_edge_dummies())
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_groups)
+        onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
+        # print(f"REAL: {layout.node_groups}")
+        # print(f"DUMMY: {layout.node_groups_dummies}")
+        # 5.
+        cm.intra_axis_handler(layout)
+        # 6.
+        cm.finish_structured_axis_orders(layout, isolated_nodes)
 
 if __name__ == "__main__":
     print("##########################################")
@@ -315,7 +338,8 @@ if __name__ == "__main__":
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     if printer == 1:
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
-    ip_model_pipeline(hpl, threshold=1)
+    ip_model_pipeline(hpl, threshold=1, expanded=True)
+    # ip_model_pipeline(hpl, threshold=1)
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print(hpl)

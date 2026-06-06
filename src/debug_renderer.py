@@ -64,24 +64,13 @@ def _node_color_spring(
     layout: HivePlotLayout,
     highlight_nodes: list | None,
 ) -> str:
-    """Bestimmt die Farbe eines Knotens im Spring-Layout.
-
-    Rot für highlight_nodes, sonst achsenbasierte Farbe aus node_groups.
-
-    Args:
-        node: Knoten-ID
-        layout (HivePlotLayout): Das aktuelle Layout.
-        highlight_nodes (list | None): Hervorgehobene Knoten.
-
-    Returns:
-        str: Hex-Farbwert.
-    """
     if highlight_nodes and node in highlight_nodes:
         return "#e03c3c"
-    if layout.node_groups:
-        for axis_id, nodes in layout.node_groups.items():
+    groups = layout.node_groups_expanded if layout.node_groups_expanded else layout.node_groups
+    if groups:
+        for axis_id, nodes in groups.items():
             if node in nodes:
-                return _AXIS_COLORS[axis_id % len(_AXIS_COLORS)]
+                return _AXIS_COLORS[abs(axis_id) % len(_AXIS_COLORS)]
     return "#4f98a3"
 
 
@@ -92,20 +81,10 @@ def _draw_spring(
     highlight_nodes: list | None,
     highlight_edges: list[tuple] | None,
 ) -> None:
-    """Zeichnet den Spring-Layout-Plot (links).
-
-    Nutzt nx.spring_layout. Knoten werden nach node_groups eingefärbt.
-    highlight_nodes erscheinen rot, highlight_edges ebenfalls rot.
-
-    Args:
-        ax: matplotlib Axes-Objekt.
-        layout (HivePlotLayout): Das aktuelle Layout.
-        title (str): Subplot-Titel.
-        highlight_nodes (list | None): Hervorgehobene Knoten.
-        highlight_edges (list[tuple] | None): Hervorgehobene Kanten.
-    """
     G = layout.graph
     pos = nx.spring_layout(G, seed=42)
+
+    groups = layout.node_groups_expanded if layout.node_groups_expanded else layout.node_groups
 
     node_colors = [
         _node_color_spring(n, layout, highlight_nodes)
@@ -133,14 +112,13 @@ def _draw_spring(
         width=1.5,
     )
 
-    # Legende: eine Farbe pro Achse
     if layout.node_groups:
         patches = [
             mpatches.Patch(
-                color=_AXIS_COLORS[i % len(_AXIS_COLORS)],
+                color=_AXIS_COLORS[abs(i) % len(_AXIS_COLORS)],
                 label=f"Achse {i}"
             )
-            for i in sorted(layout.node_groups.keys())
+            for i in sorted(groups.keys())
         ]
         if highlight_nodes:
             patches.append(mpatches.Patch(color="#e03c3c", label="highlight"))
@@ -177,8 +155,8 @@ def _draw_hive(
         ax.set_title("Kein axis_order vorhanden", fontsize=10)
         return
 
-    angles = {axis_id: 2 * np.pi * idx / k
-               for idx, axis_id in enumerate(layout.axis_order)}
+    angles = {axis_id: np.pi / 2 - 2 * np.pi * idx / k
+           for idx, axis_id in enumerate(layout.axis_order)}
 
     ax.set_aspect("equal")
     ax.axis("off")
@@ -202,11 +180,8 @@ def _draw_hive(
         )
 
         # Knotenreihenfolge: node_order > node_groups
-        ordered_nodes = (
-            layout.node_order.get(axis_id)
-            or layout.node_groups.get(axis_id)
-            or []
-        )
+        source = layout.node_groups_expanded if layout.node_groups_expanded else layout.node_groups
+        ordered_nodes = source.get(axis_id) or []
 
         n = len(ordered_nodes)
         for rank, node in enumerate(ordered_nodes):
