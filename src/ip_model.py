@@ -5,7 +5,7 @@ from src.ordering import brute_force_ordering, native_order, node_groups, node_t
 import networkx as nx
 import pulp as pp
 
-def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dict[str|int, list[int | str]], node_axis_map: dict[str | int, int], threshold: int = int(10)) -> None:
+def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dict[str|int, list[int | str]], node_axis_map: dict[str | int, int], threshold: int = int(10), expanded: bool = False) -> None:
     """Enthält die gesamte Logik, um das One Layer Two Sided Integer Linear Program (1L2S ILP) zu definieren und zu berechnen. Die Funktion verändert das HiveplotLayout in-place. Die Pipeline besteht aus Sweeps.
     Ein Sweep umfasst eine clockwise und eine counterclockwise Berechnung über jede Achse des Hiveplots. Folgende Schritte werden in der Funktion durchgeführt:
     1. Initialisierung der Ordnungsvariablen (delta^i_u,v) durch delta_mapping()
@@ -29,6 +29,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
         neighborhood_map (dict[str | int, list[int  |  str]]): KnotenID: Liste von proper Nachbarn
         node_axis_map (dict[str  | int, int]): KnotenID: Achse
         threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10
+        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     """
     def sorted_neighbor_map(neighborhood_map: dict[str |int, list[int | str]], node_axis_map: dict[str |int, int], pi_var: list[int|str], pi_plus_axis: int, pi_minus_axis: int) -> dict[int, list[int | str]]:
         """Erzeugt ein dict, das für jeden Knoten in pi_var die Nachbarn auf der pi^+ und pi^- Achse enthält. Wird für die Zielfunktion benötigt, da hierdurch die Nachbarachsen von pi_var fixiert werden.
@@ -77,7 +78,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
         return new_node_groups, new_dummy_groups
 
     # node_groups = layout.node_groups
-    fused_groups =  layout.fuse_node_groups_with_dummies()
+    fused_groups =  layout.fuse_node_groups_with_dummies(expanded=expanded)
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
     phi_index_map = {}
@@ -266,25 +267,26 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
     if expanded:
         # pipeline 3a <<<<<<<<<<<<
         # 1.
-        isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
-        # 2.
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        layout.expand_axes(node_axis_map)
+        # 2.
+        isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
+        node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), expanded=expanded) # UPDATE
         cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        # print(f"DELTAGROUPS: {delta}")
-        # print(f"ISOLATED NODES: {isolated_nodes}")
-        # print(f"DUMMIES: {layout.node_groups_dummies}")
         # 3.
-        fused_groups = layout.fuse_node_groups_with_dummies()
-        neighborhood_map = layout.get_proper_neighborhood_map(layout.fuse_edges_with_edge_dummies())
-        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_groups)
-        onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
+        fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
+        fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
+        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
+        onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold, expanded=expanded)
         # print(f"REAL: {layout.node_groups}")
         # print(f"DUMMY: {layout.node_groups_dummies}")
         # 5.
         cm.intra_axis_handler(layout)
         # 6.
-        cm.finish_structured_axis_orders(layout, isolated_nodes)
+        cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
     else:
         # pipeline 3a <<<<<<<<<<<<
         # 1.
@@ -297,16 +299,17 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # print(f"ISOLATED NODES: {isolated_nodes}")
         # print(f"DUMMIES: {layout.node_groups_dummies}")
         # 3.
-        fused_groups = layout.fuse_node_groups_with_dummies()
-        neighborhood_map = layout.get_proper_neighborhood_map(layout.fuse_edges_with_edge_dummies())
-        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_groups)
+        fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
+        fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
+        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
         onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
         # print(f"REAL: {layout.node_groups}")
         # print(f"DUMMY: {layout.node_groups_dummies}")
         # 5.
-        cm.intra_axis_handler(layout)
+        # cm.intra_axis_handler(layout)
         # 6.
-        cm.finish_structured_axis_orders(layout, isolated_nodes)
+        cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
 
 if __name__ == "__main__":
     print("##########################################")

@@ -478,7 +478,7 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
-        layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
+        # layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
         # 4.
         _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, expanded=expanded) # nur real
         _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, expanded=expanded) # nur virtuell (dummies)
@@ -542,8 +542,8 @@ if __name__ == "__main__":
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     print("Pipeline -> Start")
     # barycenter_crossmin_pipeline(hpl, threshold=5)
-    barycenter_crossmin_pipeline(hpl)
-    # barycenter_crossmin_pipeline(hpl, expanded=True)
+    # barycenter_crossmin_pipeline(hpl)
+    barycenter_crossmin_pipeline(hpl, expanded=True)
     print("Pipeline -> Ende")
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
