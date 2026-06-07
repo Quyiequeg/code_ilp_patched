@@ -188,8 +188,11 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
                     val = pp.value(delta_static[key])
                     if val is not None:
                         delta[key] = int(val)
-        layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
-        fused_groups = layout.fuse_node_groups_with_dummies() # variable achse muss auf geupdatetem stand ermittelt werden
+        if expanded:
+            layout.node_groups_expanded, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
+        else:
+            layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
+        fused_groups = layout.fuse_node_groups_with_dummies(expanded=expanded) # variable achse muss auf geupdatetem stand ermittelt werden
     # print(f"DELTA >>>>>>> {delta}")
 
 def delta_mapping(fused_groups: dict[int|str, list[int|str]]) -> dict[tuple[int|str, ...], 0|1]:
@@ -284,7 +287,7 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # print(f"REAL: {layout.node_groups}")
         # print(f"DUMMY: {layout.node_groups_dummies}")
         # 5.
-        cm.intra_axis_handler(layout)
+        # cm.intra_axis_handler(layout)
         # 6.
         cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
     else:
