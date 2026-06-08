@@ -313,10 +313,13 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # cm.intra_axis_handler(layout)
         # 6.
         cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
+        # print("NODE_AXIS_MAP")
+        # print(node_axis_map)
+        # print(len(node_axis_map))
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
@@ -344,10 +347,15 @@ if __name__ == "__main__":
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     if printer == 1:
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
-    ip_model_pipeline(hpl, threshold=1, expanded=True)
-    # ip_model_pipeline(hpl, threshold=1)
+    ip_model_pipeline(hpl, threshold=1)
+    # ip_model_pipeline(hpl, threshold=1, expanded=True)
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
-    print(hpl)
-    print(hpl.edges())
+    # print(hpl)
+    # print(hpl.fuse_edges_with_edge_dummies())
+    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    hpl.post_processing_expansion(node_axis_map)
+    render_debug(hpl, title="EXPANDED")
+    # print(hpl.node_groups)
+    # print(hpl.fuse_node_groups_with_dummies())
     print("##########################################")

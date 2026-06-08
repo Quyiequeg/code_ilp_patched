@@ -500,6 +500,7 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
+        dummy_edge_copy = layout.dummy_edge_segments.copy() # für die pipeline wird dummy.edge_segments mit den normalen kanten des graphen verschmolzen, für die expansion am ende wird aber eine reine dummyliste benötigt
         layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
         # 4.
         _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
@@ -509,11 +510,15 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         intra_axis_handler(layout)
         # 6.
         finish_structured_axis_orders(layout, isolated_nodes)
+        #
+        print("NODE_AXIS_MAP")
+        print(node_axis_map)
+        print(len(node_axis_map))
 
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
@@ -542,12 +547,19 @@ if __name__ == "__main__":
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
     print("Pipeline -> Start")
     # barycenter_crossmin_pipeline(hpl, threshold=5)
-    # barycenter_crossmin_pipeline(hpl)
-    barycenter_crossmin_pipeline(hpl, expanded=True)
+    barycenter_crossmin_pipeline(hpl)
+    # barycenter_crossmin_pipeline(hpl, expanded=True)
     print("Pipeline -> Ende")
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print("Layout NACH OPTIMIERUNG")
     print(hpl)
-    print(hpl.edges())
+    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    hpl.post_processing_expansion(node_axis_map) # fügt die expandierten Achsen mit den intra axis Knoten hinzu, damit die Visualisierung direkt mit expandierten Achsen startet, ohne dass die Pipeline erneut durchlaufen werden muss
+    # hpl.dummy_edge_segments = []
+    render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
+    print(hpl)
+    # print(hpl.edges())
+    # print(hpl.node_groups)
+    # print(hpl.fuse_node_groups_with_dummies())
     print("##########################################")

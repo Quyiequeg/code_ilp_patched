@@ -88,7 +88,14 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(0, 24)]) # testfälle: erweitert vorherigen fall um mixed
         G.add_edges_from([(27, 28)])
         G.add_edges_from([(7, 16), (18, 28)])
-
+    elif mode == 3: # post processing test graph
+        G.add_nodes_from([0, 1, 2, 'd_4_11_1', 'd_5_11_1'], subset=0)
+        G.add_nodes_from([3, 4, 5, 'd_0_24_1'], subset=1)
+        G.add_nodes_from([6, 7, 8, 'd_9_16_1'], subset=2)
+        G.add_nodes_from([9, 10, 11, 12, 'd_1_7_1', 'd_2_8_1'], subset=3) # + isolierter Knoten
+        G.add_nodes_from([13, 14, 15, 16, 17, 18], subset=4) # + isolierte Knoten + intra-axis
+        G.add_nodes_from([19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 'd_5_18_1'], subset=5) # testfall: langer intra axis pfad
+        G.add_edges_from([(19, 20), (19, 21), (20, 21), (21, 22), (0, 5), (0, 10), (1, 3), (2, 4), (2, 9), (2, 11), (6, 11), (7, 9), (7, 16), (8, 10), (13, 14), (14, 15), (14, 16), (15, 16), (17, 18), (18, 28), (23, 24), (24, 25), (27, 28), (0, 'd_0_24_1'), ('d_0_24_1', 24), (1, 'd_1_7_1'), ('d_1_7_1', 7), (2, 'd_2_8_1'), ('d_2_8_1', 8), (4, 'd_4_11_1'), ('d_4_11_1', 11), (5, 'd_5_11_1'), ('d_5_11_1', 11), (5, 'd_5_18_1'), ('d_5_18_1', 18), (9, 'd_9_16_1'), ('d_9_16_1', 16)])
     return G
 
 if __name__ == "__main__":

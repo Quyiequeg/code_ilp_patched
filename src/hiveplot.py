@@ -167,7 +167,7 @@ class HivePlotLayout:
             if edge_positions[0] == edge_positions[1]:
                  expandable_axes_map.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
         print(f"Expandable axes:{expandable_axes_map}")
-        for edge in edge_axis_map:
+        for edge in edge_axis_map: # erst möglich nach dem filtern der einen intra kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
                 pass
@@ -178,9 +178,9 @@ class HivePlotLayout:
         print(f"Inter-expandables:{inter_expandables}")
         for key in node_groups:
             if key not in expandable_axes_map:
-                node_groups_expanded[key] = node_groups[key]
+                node_groups_expanded[key] = node_groups[key].copy()
             elif key in expandable_axes_map:
-                node_groups_expanded[key] = node_groups[key] # pi^- links
+                node_groups_expanded[key] = node_groups[key].copy() # pi^- links
                 node_groups_expanded[-key] = [-node for node in node_groups[key]] # pi^- rechts
         print(f"node_groups_expanded:{node_groups_expanded}")
         self.axis_order = list(node_groups_expanded.keys())
@@ -226,12 +226,144 @@ class HivePlotLayout:
                             new_inter_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_inter_edges)
         # self.graph neue knoten auf expandierten achsen wieder einem neuen subset zuordnen
-        for axis_id, nodes in self.node_groups_expanded.items():
+        for axis, nodes in self.node_groups_expanded.items():
             for node in nodes:
                 if node not in self.graph.nodes: # negative knotenids auf expandierten achsen behandeln
                     self.graph.add_node(node)
-                self.graph.nodes[node]['subset'] = axis_id
+                self.graph.nodes[node]['subset'] = axis
         
+    def post_processing_expansion(self, node_axis_map, dummy_copy: list[tuple[int | str, int | str]] = None) -> None:
+        from src.crossing_minimization import parse_dummy_name
+        if dummy_copy is None:
+            dummy_edges = self.dummy_edge_segments
+        else:
+            dummy_edges = dummy_copy
+        edge_axis_map = {edge: (node_axis_map[edge[0]], node_axis_map[edge[1]]) for edge in self.edges()} # initialisiere kanten zu achsen map
+        intra_expandables = {}
+        inter_expandables = {}
+        node_groups_expanded = self.node_groups_expanded
+        node_groups = self.node_groups
+        # print(f"edge axis:{edge_axis_map}")
+        for edge in edge_axis_map: # key = knotenpaar, filter nach intra axis kanten
+            edge_positions = edge_axis_map[edge]
+            if edge_positions[0] == edge_positions[1]:
+                intra_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
+        # print(f"Intra-expandables:{intra_expandables}")
+        for edge in edge_axis_map: # erst möglich nach dem filtern der einen intra kanten
+            edge_positions = edge_axis_map[edge]
+            if edge_positions[0] == edge_positions[1]:
+                pass
+            elif edge_positions[0] in intra_expandables:
+                inter_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
+            elif edge_positions[1] in intra_expandables:
+                inter_expandables.setdefault(edge_positions[1], []).append(edge) # check ob key vorhandenen + append
+        print(f"Inter-expandables:{inter_expandables}")
+        for axis in node_groups:
+            if axis not in intra_expandables:
+                node_groups_expanded[axis] = node_groups[axis].copy()
+            elif axis in intra_expandables:
+                node_groups_expanded[axis] = node_groups[axis].copy() # linke achsenkopie
+                node_groups_expanded[-axis] = [] # rechte achsenkopie
+                for node in node_groups[axis]:
+                    if isinstance(node, int): # realer knoten
+                        node_groups_expanded[-axis].append(-node)
+                    elif isinstance(node, str): # virtueller knoten
+                        dummy_node = parse_dummy_name(node)
+                        node_groups_expanded[-axis].append(f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}") # dummy signatur behalten und sequenznummer um eins erhöhen
+                        dummy_edges.append((node, f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}")) # kante zwischen expandierten dummyknoten neu erstellen
+        # print(f"node_groups_expanded:{node_groups_expanded}")
+        # update hpl phi & k
+        
+        print(self.axis_order)
+        print(self.num_axes)
+        # achsen und knotenexpansion abgeschlossen, folgend kantenexpansion
+        axis_position_map = {}
+        for i, axis in enumerate(self.axis_order): # achsenid: position in phi
+            axis_position_map[axis] = i
+        # print(f"axis_position_map:{axis_position_map}")
+        # intra axis kanten aus dem hiveplotlayout entfernen und in expandierter wieder hineinschreiben
+        for axis in intra_expandables:
+            self.graph.remove_edges_from(intra_expandables[axis])
+            new_intra_edges = []
+            for edge in intra_expandables[axis]: # expandierte achse und ihre intra knoten
+                new_intra_edges.append((-edge[0], edge[1]))
+                new_intra_edges.append((edge[0], -edge[1]))
+            self.graph.add_edges_from(new_intra_edges)
+        print(f"EDGES:{self.edges()}") # expandierte achsen + reine intra axis kanten
+        # print(f"DUMMY EDGES:{dummy_edges}") # dummy segmente + expandiert
+        new_inter_edges = []
+        for axis in inter_expandables:
+            self.graph.remove_edges_from(inter_expandables[axis])
+            for edge in inter_expandables[axis]:
+                if edge_axis_map[edge][0] in inter_expandables and edge_axis_map[edge][1] in inter_expandables: # beide knoten auf expandierter achse
+                    first_node = edge[0]
+                    first_edge_position = axis_position_map[edge_axis_map[edge][0]]
+                    second_node = edge[1]
+                    second_edge_position = axis_position_map[edge_axis_map[edge][1]]
+                    if first_edge_position - 1 == second_edge_position or first_edge_position - 1 < 0: # erster knoten rechts
+                        if isinstance(second_node, int):
+                            new_inter_edges.append((-second_node, first_node)) 
+                        elif isinstance(second_node, str):
+                            dummy_node = parse_dummy_name(second_node)
+                            dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
+                            new_inter_edges.append((dummy_node_incremented, first_node))
+                    elif first_edge_position + 1 == second_edge_position or first_edge_position + 1 == self.num_axes: # zweiter knoten rechts
+                        if isinstance(first_node, int):
+                            new_inter_edges.append((-first_node, second_node))
+                        elif isinstance(first_node, str):
+                            dummy_node = parse_dummy_name(first_node)
+                            dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
+                            new_inter_edges.append((dummy_node_incremented, second_node))
+                elif edge_axis_map[edge][0] in inter_expandables and edge_axis_map[edge][1] not in inter_expandables: # erster knoten auf expandierter achse = startknoten
+                    start_node = edge[0]
+                    start_position = axis_position_map[edge_axis_map[edge][0]] # achsen position in phi von startknoten achse
+                    end_node = edge[1]
+                    end_position = axis_position_map[edge_axis_map[edge][1]] # achsen position in phi von endknoten achse
+                elif edge_axis_map[edge][0] not in inter_expandables and edge_axis_map[edge][1] in inter_expandables: # zweiter knoten auf expandierter achse = startknoten
+                    start_node = edge[1]
+                    start_position = axis_position_map[edge_axis_map[edge][1]]
+                    end_node = edge[0]
+                    end_position = axis_position_map[edge_axis_map[edge][0]]
+                # CHECK: beides expandierte achsen?
+                if start_position - 1 == end_position or start_position - 1 < 0 : # endknoten liegt links der expandierten achse oder letzte achse der ordnung
+                    new_inter_edges.append(edge) # kann einfach übernommen werden
+                elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
+                    if isinstance(start_node, int):
+                        new_inter_edges.append((-start_node, end_node)) 
+                    elif isinstance(start_node, str):
+                        dummy_node = parse_dummy_name(start_node)
+                        dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
+                        new_inter_edges.append((dummy_node_incremented, end_node))
+        self.graph.add_edges_from(new_inter_edges)
+        self.axis_order = list(node_groups_expanded.keys())
+        self.num_axes = len(self.axis_order)
+                
+
+
+        ############################################
+        # inter kanten aufspalten, dummy kanten spalten
+        # for axis in node_groups: # nodegroups ist basis für node_groups_expanded
+        #     if intra_axis_nodes[axis]: # kante hat intra axis knoten
+        #         node_groups_expanded[axis] = node_groups[axis].copy() # linke achsenkopie
+        #         node_groups_expanded[-axis] = [] # rechte achsenkopie
+        #         for node in node_groups[axis]:
+        #             if isinstance(node, int): # realer knoten
+        #                 node_groups_expanded[-axis].append(-node)
+        #             elif isinstance(node, str): # virtueller knoten
+        #                 dummy_node = parse_dummy_name(node)
+        #                 node_groups_expanded[-axis].append(f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}") # dummy signatur behalten und sequenznummer um eins erhöhen
+        #     else:
+        #         node_groups_expanded[axis] = node_groups[axis].copy()
+        # self.axis_order = list(node_groups_expanded.keys())
+        # # kanten expandieren
+                        
+                        
+
+
+
+
+
+            
 
 
 
@@ -241,26 +373,31 @@ if __name__ == "__main__":
     from src.graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
     from src.ordering import native_order, node_groups, node_to_axis_maps, brute_force_ordering, reordered_node_groups
     from src.debug_renderer import render_debug
-    graph_mode = 2
+    graph_mode = 3
     G = sample_graph_selfconstructed_extended(graph_mode)
     nodes = list(G.nodes(data="subset"))
-    axes = native_order(nodes)
-    ng = node_groups(nodes)
+    axes = [0, 1, 5, 4, 2, 3]
+    # ng = node_groups(nodes)
+    ng = {0: [1, 2, 0, 'd_4_11_1', 'd_5_11_1'], 1: [3, 4, 5, 'd_0_24_1'], 5: [19, 20, 21, 22, 24, 23, 25, 27, 28, 26, 'd_5_18_1'], 4: [14, 16, 15, 13, 17, 18], 2: [7, 6, 8, 'd_9_16_1'], 3: [9, 10, 11, 12, 'd_1_7_1', 'd_2_8_1']}
     # print("Layout ORIGINAL")
     hpl = HivePlotLayout(
         graph=G,
         num_axes=len(axes),
         axis_order=axes,
-        node_groups=ng
+        node_groups=ng,
+        dummy_edge_segments=[(0, 'd_0_24_1'), ('d_0_24_1', 24), (1, 'd_1_7_1'), ('d_1_7_1', 7), (2, 'd_2_8_1'), ('d_2_8_1', 8), (4, 'd_4_11_1'), ('d_4_11_1', 11), (5, 'd_5_11_1'), ('d_5_11_1', 11), (5, 'd_5_18_1'), ('d_5_18_1', 18), (9, 'd_9_16_1'), ('d_9_16_1', 16)]
     )
-    hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
-    hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
+    # hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
+    # hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     # isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
     node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    hpl.expand_axes(node_axis_map)
-    render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
-    print(hpl)
+    # hpl.expand_axes(node_axis_map)
+    
+    hpl.post_processing_expansion(node_axis_map)
+    render_debug(hpl, title="Post-processing-test")
+    # print(hpl)
     # print(hpl.edges())
+    # print(hpl.graph.nodes)
     print("##########################################")
     print("##########################################")
     # print("##########################################")
