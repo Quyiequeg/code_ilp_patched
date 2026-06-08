@@ -257,7 +257,7 @@ def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: 
         layout.node_groups = _attach_intra_axis_order() # intra axis + mixed intra axis + inter axis (real)
         _attach_isolated_nodes(layout.node_groups, isolated_node_groups) # + isolierte Knoten
         layout.node_groups = layout.fuse_node_groups_with_dummies() # + inter axis (virtuell)
-        _recover_edges
+        _recover_edges()
 
 def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | str]], node_axis_map: dict[int | str, int], threshold = float("inf"), real: bool = True, expanded: bool = False) -> None:
     """Führt wiederholte Barycenter-Sweeps im und gegen den Uhrzeigersinn über alle Achsen aus. Abhängig vom Parameter real werden entweder die realen Knoten (node_groups)
@@ -510,10 +510,23 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         intra_axis_handler(layout)
         # 6.
         finish_structured_axis_orders(layout, isolated_nodes)
+        # layout.dummy_edge_segments = dummy_edge_copy
+        fused_groups = layout.fuse_node_groups_with_dummies()
+        fused_edges = hpl.fuse_edges_with_edge_dummies()
+        print("VORHER")
+        print(hpl.edges())
+        for edge in fused_edges:
+            if edge not in hpl.edges():
+                hpl.graph.add_edge(edge[0], edge[1])
+        node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+        # node_position_map, node_axis_map = node_to_axis_maps(hpl, fused_groups)
+        hpl.post_processing_expansion(node_axis_map) # fügt die expandierten Achsen mit den intra axis Knoten hinzu, damit die Visualisierung direkt mit expandierten Achsen startet, ohne dass die Pipeline erneut durchlaufen werden muss
+        print("NACHHER")
+        print(hpl.edges())
         #
-        print("NODE_AXIS_MAP")
-        print(node_axis_map)
-        print(len(node_axis_map))
+        # print("NODE_AXIS_MAP")
+        # print(node_axis_map)
+        # print(len(node_axis_map))
 
 
 if __name__ == "__main__":
@@ -553,13 +566,13 @@ if __name__ == "__main__":
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print("Layout NACH OPTIMIERUNG")
-    print(hpl)
-    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    hpl.post_processing_expansion(node_axis_map) # fügt die expandierten Achsen mit den intra axis Knoten hinzu, damit die Visualisierung direkt mit expandierten Achsen startet, ohne dass die Pipeline erneut durchlaufen werden muss
+    # print(hpl)
+    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    # hpl.post_processing_expansion(node_axis_map) # fügt die expandierten Achsen mit den intra axis Knoten hinzu, damit die Visualisierung direkt mit expandierten Achsen startet, ohne dass die Pipeline erneut durchlaufen werden muss
     # hpl.dummy_edge_segments = []
     render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     print(hpl)
-    # print(hpl.edges())
+    print(hpl.edges())
     # print(hpl.node_groups)
     # print(hpl.fuse_node_groups_with_dummies())
     print("##########################################")

@@ -271,12 +271,6 @@ class HivePlotLayout:
                         dummy_node = parse_dummy_name(node)
                         node_groups_expanded[-axis].append(f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}") # dummy signatur behalten und sequenznummer um eins erhöhen
                         dummy_edges.append((node, f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}")) # kante zwischen expandierten dummyknoten neu erstellen
-        # print(f"node_groups_expanded:{node_groups_expanded}")
-        # update hpl phi & k
-        
-        print(self.axis_order)
-        print(self.num_axes)
-        # achsen und knotenexpansion abgeschlossen, folgend kantenexpansion
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
             axis_position_map[axis] = i
@@ -294,6 +288,9 @@ class HivePlotLayout:
         new_inter_edges = []
         for axis in inter_expandables:
             self.graph.remove_edges_from(inter_expandables[axis])
+            for edge in inter_expandables[axis]:
+                if edge in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove(edge)
             for edge in inter_expandables[axis]:
                 if edge_axis_map[edge][0] in inter_expandables and edge_axis_map[edge][1] in inter_expandables: # beide knoten auf expandierter achse
                     first_node = edge[0]
@@ -314,29 +311,45 @@ class HivePlotLayout:
                             dummy_node = parse_dummy_name(first_node)
                             dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
                             new_inter_edges.append((dummy_node_incremented, second_node))
+                    # continue
                 elif edge_axis_map[edge][0] in inter_expandables and edge_axis_map[edge][1] not in inter_expandables: # erster knoten auf expandierter achse = startknoten
                     start_node = edge[0]
                     start_position = axis_position_map[edge_axis_map[edge][0]] # achsen position in phi von startknoten achse
                     end_node = edge[1]
                     end_position = axis_position_map[edge_axis_map[edge][1]] # achsen position in phi von endknoten achse
+                    if start_position - 1 == end_position or start_position - 1 < 0 : # endknoten liegt links der expandierten achse oder letzte achse der ordnung
+                        new_inter_edges.append(edge) # kann einfach übernommen werden
+                    elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
+                        if isinstance(start_node, int):
+                            new_inter_edges.append((-start_node, end_node)) 
+                        elif isinstance(start_node, str):
+                            dummy_node = parse_dummy_name(start_node)
+                            dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
+                            new_inter_edges.append((dummy_node_incremented, end_node))
+                    
                 elif edge_axis_map[edge][0] not in inter_expandables and edge_axis_map[edge][1] in inter_expandables: # zweiter knoten auf expandierter achse = startknoten
                     start_node = edge[1]
                     start_position = axis_position_map[edge_axis_map[edge][1]]
                     end_node = edge[0]
                     end_position = axis_position_map[edge_axis_map[edge][0]]
                 # CHECK: beides expandierte achsen?
-                if start_position - 1 == end_position or start_position - 1 < 0 : # endknoten liegt links der expandierten achse oder letzte achse der ordnung
-                    new_inter_edges.append(edge) # kann einfach übernommen werden
-                elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
-                    if isinstance(start_node, int):
-                        new_inter_edges.append((-start_node, end_node)) 
-                    elif isinstance(start_node, str):
-                        dummy_node = parse_dummy_name(start_node)
-                        dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
-                        new_inter_edges.append((dummy_node_incremented, end_node))
+                    if start_position - 1 == end_position or start_position - 1 < 0 : # endknoten liegt links der expandierten achse oder letzte achse der ordnung
+                        new_inter_edges.append(edge) # kann einfach übernommen werden
+                    elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
+                        if isinstance(start_node, int):
+                            new_inter_edges.append((-start_node, end_node)) 
+                        elif isinstance(start_node, str):
+                            dummy_node = parse_dummy_name(start_node)
+                            dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
+                            new_inter_edges.append((dummy_node_incremented, end_node))
         self.graph.add_edges_from(new_inter_edges)
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
+        # for axis, nodes in self.node_groups_expanded.items():
+        #     for node in nodes:
+        #         if node not in self.graph.nodes: # negative knotenids auf expandierten achsen behandeln
+        #             self.graph.add_node(node)
+        #         self.graph.nodes[node]['subset'] = axis
                 
 
 
@@ -392,11 +405,11 @@ if __name__ == "__main__":
     # isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
     node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
     # hpl.expand_axes(node_axis_map)
-    
+    hpl.dummy_edge_segments = []
     hpl.post_processing_expansion(node_axis_map)
     render_debug(hpl, title="Post-processing-test")
-    # print(hpl)
-    # print(hpl.edges())
+    print(hpl)
+    print(hpl.edges())
     # print(hpl.graph.nodes)
     print("##########################################")
     print("##########################################")
