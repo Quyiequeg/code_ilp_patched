@@ -154,10 +154,31 @@ class HivePlotLayout:
             neighbor_map[edge[1]].add(edge[0])
         return neighbor_map
 
+    def expand_axes(self, node_axis_map: dict[int | str, int]) -> None:
+        """Die Funktion dient der Umsetzung unterschiedlicher Knotenordnungen auf expandierten Achsen. Die Funktion ist ausschließlich zum pre-processing des Eingabegraphen bevor etwaige Berechnungen der Pipeline durchgeführt werden gedacht. Dazu wird die Achse i zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.
+        Folgende Schritte werden durchgeführt:
+        1. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)
+        2. Initialisieren der Map inter_expandables mit allen Kanten die genau einen Start oder Enknoten auf der expandierten Achse haben
+        3. Initielisieren der node_groups_expanded mit Keys ursprüngliche AchsenIDs und expandierte AchsenIDs und ihre in node_groups enthaltenen Knotenlisten (expandierte Achse -i bekommt alle Knoten von i zugeordnet, jedoch werden die KnotenIDs negativ gesetzt)
+        4. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl
+        5. Initialisieren einer axis_position_map mit Key AchsenID und Value ist Position der Achse in der neuen Achsenordnung
+        6. Behandlung der intra-axis Kanten
+            a. Entfernen der intra-axis Kanten aus dem Hiveplotlayout
+            b. Erstellen der neuen intra-axis Kanten zwischen den expandierten Achsen (Kante (u,v) auf Achse i wird symmetrisch gespiegelt zu den Kanten (-u, v) und (u, -v))
+            c. Einpflegen der neuen intra-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts
+        7. Behandlung der inter-axis Kanten
+            a. Entfernen der inter-axis Kanten aus dem Hiveplotlayout
+            b. Erstellen der neuen inter-axis Kanten:
+                I: Ziel- und Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v wenn i vor j in der Achsenordnung, Kante (u, v) zu (-u, v) andernfalls zu (u, -v) [i -> -i -> j -> -j]
+                II: Ziel- oder Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v (i expandiert), falls i vor j in der Achsenordnung (u,v) zu (-u, v), andernfalls Kante übernehmen [j -> i -> -i]
+            c. Einpflegen der neuen inter-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts
+        8. Einpflegen und Zuordnung zu Subsets der neuen Knoten in der Networkx Graphenstruktur des Hiveplotlayouts
 
-    def expand_axes(self, node_axis_map) -> None:
+        Args:
+            node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID
+        """
         edge_axis_map = {edge: (node_axis_map[edge[0]], node_axis_map[edge[1]]) for edge in self.edges()} # initialisiere kanten zu achsen map
-        expandable_axes_map = {}
+        intra_expandables = {}
         inter_expandables = {}
         node_groups_expanded = self.node_groups_expanded
         node_groups = self.node_groups
@@ -165,21 +186,21 @@ class HivePlotLayout:
         for edge in edge_axis_map: # key = knotenpaar, filter nach intra axis kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
-                 expandable_axes_map.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
-        print(f"Expandable axes:{expandable_axes_map}")
+                 intra_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
+        print(f"Expandable axes:{intra_expandables}")
         for edge in edge_axis_map: # erst möglich nach dem filtern der einen intra kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
                 pass
-            elif edge_positions[0] in expandable_axes_map:
+            elif edge_positions[0] in intra_expandables:
                 inter_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
-            elif edge_positions[1] in expandable_axes_map:
+            elif edge_positions[1] in intra_expandables:
                 inter_expandables.setdefault(edge_positions[1], []).append(edge) # check ob key vorhandenen + append
         print(f"Inter-expandables:{inter_expandables}")
         for key in node_groups:
-            if key not in expandable_axes_map:
+            if key not in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy()
-            elif key in expandable_axes_map:
+            elif key in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy() # pi^- links
                 node_groups_expanded[-key] = [-node for node in node_groups[key]] # pi^- rechts
         print(f"node_groups_expanded:{node_groups_expanded}")
@@ -190,10 +211,10 @@ class HivePlotLayout:
             axis_position_map[axis] = i
         print(f"axis_position_map:{axis_position_map}")
         # die mit expandierten achsen verbundenen kanten aus dem hiveplotlayout entfernen und in korrektem format wieder hineinschreiben
-        for axis in expandable_axes_map:
-            self.graph.remove_edges_from(expandable_axes_map[axis])
+        for axis in intra_expandables:
+            self.graph.remove_edges_from(intra_expandables[axis])
             new_intra_edges = []
-            for edge in expandable_axes_map[axis]: # expandierte achse und ihre intra knoten als
+            for edge in intra_expandables[axis]: # expandierte achse und ihre intra knoten als
                 new_intra_edges.append((-edge[0], edge[1]))
                 new_intra_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_intra_edges)
@@ -208,7 +229,7 @@ class HivePlotLayout:
                 pos_axis_v = axis_position_map.get(axis_v, axis_position_map.get((axis_v, 0)))
                 span_uv = (pos_axis_u - pos_axis_v) % k
                 span_vu = (pos_axis_v - pos_axis_u) % k
-                if axis_u in expandable_axes_map and axis_v in expandable_axes_map: # ziel- und startachse expandiert
+                if axis_u in intra_expandables and axis_v in intra_expandables: # ziel- und startachse expandiert
                     if span_uv <= span_vu: # v -> u + bei gleichstand immer links
                         new_inter_edges.append((edge[0], -edge[1]))
                     elif span_vu < span_uv: # u auf expandierter achse und u -> v
@@ -232,7 +253,33 @@ class HivePlotLayout:
                     self.graph.add_node(node)
                 self.graph.nodes[node]['subset'] = axis
         
-    def post_processing_expansion(self, node_axis_map, dummy_copy: list[tuple[int | str, int | str]] = None) -> None:
+    def post_processing_expansion(self, node_axis_map: dict[int | str, int], dummy_copy: list[tuple[int | str, int | str]] = None) -> None:
+        """Die Funktion dient dem post-processing des Eingabegraphen nach der Pipeline, sodass bei diesem die Achsen expandiert werden. Dazu wird die Achse i zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.
+        Folgende Schritte werden durchgeführt:
+        1. Initialiseren der Dummysegmente, diese werden in der Funktion mutiert
+        2. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)
+        3. Initialisieren der Map inter_expandables mit allen Kanten die genau einen Start oder Enknoten auf der expandierten Achse haben
+        4. Initielisieren der node_groups_expanded mit Keys ursprüngliche AchsenIDs und expandierte AchsenIDs und ihre in node_groups enthaltenen Knotenlisten (expandierte Achse -i bekommt alle Knoten von i zugeordnet, jedoch werden die KnotenIDs negativ gesetzt, für virtuelle Knoten wird die Sequenznummer inkrementiert und die neue Kante zwischen den virtuellen Knoten direkt in das Netwworkx Graphmodell hinzugefügt)
+        5. Initialisieren einer axis_position_map mit Key AchsenID und Value ist Position der Achse in der neuen Achsenordnung
+        6. Behandlung der intra-axis Kanten
+            a. Entfernen der intra-axis Kanten aus dem Hiveplotlayout
+            b. Erstellen der neuen intra-axis Kanten zwischen den expandierten Achsen (Kante (u,v) auf Achse i wird symmetrisch gespiegelt zu den Kanten (-u, v) und (u, -v))
+            c. Einpflegen der neuen intra-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts
+        7. Behandlung der inter-axis Kanten (Anmerkung: Im Sinne der Funktion müsste eigentlich vorher die edge_axis_map geupdated werden, das ist technisch jedoch sehr aufwendig. Deshalb wurden die Achsenpositionen der expandierten Achsen aus der relativen Lage in der nicht expandierten Knotenordnugn berechnet.)
+            a. Entfernen der inter-axis Kanten aus dem Hiveplotlayout und den Dummykantensegmenten
+            b. Erstellen der neuen inter-axis Kanten:
+                I: Ziel- und Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v wenn i vor j in der Achsenordnung, Kante (u, v) zu (-u, v) andernfalls zu (u, -v). Handelt es sich um virtuelle Knoten wird die ID nicht negativ gesetzt sondern die Sequenznummer inkrementiert.
+                II: Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v (i expandiert)
+                    i.) falls j vor i in der Achsenordnung: Kante übernehmen
+                    ii.) falls i vor j in der Achsenordnung: (u,v) zu (-u, v), andernfalls Kante übernehmen, bei virtuellen Knoten wird die Sequenznummer inkrementiert statt die Knoten-ID negativ zu setzen
+                III: Zielknoten auf expandierter Achse: Behandlung wie in II, jedoch mit vertauschten Knoten i und j
+            c. Einpflegen der neuen inter-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts
+        8. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl
+
+        Args:
+            node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID
+            dummy_copy (list[tuple[int  |  str, int  |  str]], optional): eine Aktuelle Kopie der Dummysegmente, Default ist None
+        """
         from src.crossing_minimization import parse_dummy_name
         if dummy_copy is None:
             dummy_edges = self.dummy_edge_segments
@@ -271,6 +318,9 @@ class HivePlotLayout:
                         dummy_node = parse_dummy_name(node)
                         node_groups_expanded[-axis].append(f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}") # dummy signatur behalten und sequenznummer um eins erhöhen
                         dummy_edges.append((node, f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}")) # kante zwischen expandierten dummyknoten neu erstellen
+                        ##########################################
+                        self.graph.add_edge(node, f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}")
+                        ##########################################
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
             axis_position_map[axis] = i
@@ -321,18 +371,16 @@ class HivePlotLayout:
                         new_inter_edges.append(edge) # kann einfach übernommen werden
                     elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
                         if isinstance(start_node, int):
-                            new_inter_edges.append((-start_node, end_node)) 
+                            new_inter_edges.append((-start_node, end_node))
                         elif isinstance(start_node, str):
                             dummy_node = parse_dummy_name(start_node)
                             dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
                             new_inter_edges.append((dummy_node_incremented, end_node))
-                    
                 elif edge_axis_map[edge][0] not in inter_expandables and edge_axis_map[edge][1] in inter_expandables: # zweiter knoten auf expandierter achse = startknoten
                     start_node = edge[1]
                     start_position = axis_position_map[edge_axis_map[edge][1]]
                     end_node = edge[0]
                     end_position = axis_position_map[edge_axis_map[edge][0]]
-                # CHECK: beides expandierte achsen?
                     if start_position - 1 == end_position or start_position - 1 < 0 : # endknoten liegt links der expandierten achse oder letzte achse der ordnung
                         new_inter_edges.append(edge) # kann einfach übernommen werden
                     elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
@@ -345,43 +393,7 @@ class HivePlotLayout:
         self.graph.add_edges_from(new_inter_edges)
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
-        # for axis, nodes in self.node_groups_expanded.items():
-        #     for node in nodes:
-        #         if node not in self.graph.nodes: # negative knotenids auf expandierten achsen behandeln
-        #             self.graph.add_node(node)
-        #         self.graph.nodes[node]['subset'] = axis
-                
 
-
-        ############################################
-        # inter kanten aufspalten, dummy kanten spalten
-        # for axis in node_groups: # nodegroups ist basis für node_groups_expanded
-        #     if intra_axis_nodes[axis]: # kante hat intra axis knoten
-        #         node_groups_expanded[axis] = node_groups[axis].copy() # linke achsenkopie
-        #         node_groups_expanded[-axis] = [] # rechte achsenkopie
-        #         for node in node_groups[axis]:
-        #             if isinstance(node, int): # realer knoten
-        #                 node_groups_expanded[-axis].append(-node)
-        #             elif isinstance(node, str): # virtueller knoten
-        #                 dummy_node = parse_dummy_name(node)
-        #                 node_groups_expanded[-axis].append(f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}") # dummy signatur behalten und sequenznummer um eins erhöhen
-        #     else:
-        #         node_groups_expanded[axis] = node_groups[axis].copy()
-        # self.axis_order = list(node_groups_expanded.keys())
-        # # kanten expandieren
-                        
-                        
-
-
-
-
-
-            
-
-
-
-
-    
 if __name__ == "__main__":
     from src.graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
     from src.ordering import native_order, node_groups, node_to_axis_maps, brute_force_ordering, reordered_node_groups

@@ -449,13 +449,21 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = float("inf"), expanded: bool = False) -> None:
     """Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).
 
-    Die Pipeline umfasst:
-      1. Entfernen isolierter Knoten auf den Achsen.
-      2. Einfügen von Dummy-Knoten für lange Kanten (Span > 1) und sortieren der inter axis Knoten (Span = 0).
-      3. Initialisierung des Sweeps und Updates der Datenstrukturen.
-      4. Mehrfache CW/CCW-Sweeps für reale und anschließend virtuelle Knoten, die die Barycenterpositionen ermitteln und die Achsen entsprechend sortieren.
-      5. Sortierung der reinen intra axis Knoten.
-      6. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.
+    Die Pipeline umfasst im expandierten Fall:
+    1. anfängliches Layout expandieren
+    2. Entfernen isolierter Knoten auf den Achsen.
+    3. Einfügen von Dummy-Knoten für lange Kanten (Span > 1) und sortieren der inter axis Knoten (Span = 0).
+    4. Initialisierung des Sweeps und Updates der Datenstrukturen.
+    5. Mehrfache CW/CCW-Sweeps für reale und anschließend virtuelle Knoten, die die Barycenterpositionen ermitteln und die Achsen entsprechend sortieren.
+    6. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.
+
+    Die Pipeline umfasst im nicht expandierten Fall:
+    1. Entfernen isolierter Knoten auf den Achsen.
+    2. Einfügen von Dummy-Knoten für lange Kanten (Span > 1) und sortieren der inter axis Knoten (Span = 0).
+    3. Initialisierung des Sweeps und Updates der Datenstrukturen.
+    4. Mehrfache CW/CCW-Sweeps für reale und anschließend virtuelle Knoten, die die Barycenterpositionen ermitteln und die Achsen entsprechend sortieren.
+    5. Sortierung der reinen intra axis Knoten.
+    6. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.
 
     Args:
         layout (HivePlotLayout): Das zu optimierende HivePlotLayout.
@@ -470,21 +478,18 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         layout.expand_axes(node_axis_map)
         # 2.
         isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
+        # 3.
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), expanded=expanded) # UPDATE
         subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        # 3.
+        # 4.
         fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
         fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
-        # layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
-        # 4.
+        # 5.
         _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, expanded=expanded) # nur real
         _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, expanded=expanded) # nur virtuell (dummies)
-        #pipeline 3b <<<<<<<<<<<<
-        # 5.
-        # intra_axis_handler(layout)
         # 6.
         finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
     else:
@@ -510,28 +515,10 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         intra_axis_handler(layout)
         # 6.
         finish_structured_axis_orders(layout, isolated_nodes)
-        # layout.dummy_edge_segments = dummy_edge_copy
-        fused_groups = layout.fuse_node_groups_with_dummies()
-        fused_edges = hpl.fuse_edges_with_edge_dummies()
-        print("VORHER")
-        print(hpl.edges())
-        for edge in fused_edges:
-            if edge not in hpl.edges():
-                hpl.graph.add_edge(edge[0], edge[1])
-        node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-        # node_position_map, node_axis_map = node_to_axis_maps(hpl, fused_groups)
-        hpl.post_processing_expansion(node_axis_map) # fügt die expandierten Achsen mit den intra axis Knoten hinzu, damit die Visualisierung direkt mit expandierten Achsen startet, ohne dass die Pipeline erneut durchlaufen werden muss
-        print("NACHHER")
-        print(hpl.edges())
-        #
-        # print("NODE_AXIS_MAP")
-        # print(node_axis_map)
-        # print(len(node_axis_map))
-
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
@@ -570,7 +557,16 @@ if __name__ == "__main__":
     # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
     # hpl.post_processing_expansion(node_axis_map) # fügt die expandierten Achsen mit den intra axis Knoten hinzu, damit die Visualisierung direkt mit expandierten Achsen startet, ohne dass die Pipeline erneut durchlaufen werden muss
     # hpl.dummy_edge_segments = []
-    render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
+    fused_groups = hpl.fuse_node_groups_with_dummies()
+    fused_edges = hpl.fuse_edges_with_edge_dummies()
+    for edge in fused_edges:
+        if edge not in hpl.edges():
+            hpl.graph.add_edge(edge[0], edge[1])
+    hpl.graph.remove_edges_from(hpl.long_edges)
+    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    node_position_map, node_axis_map = node_to_axis_maps(hpl, fused_groups)
+    hpl.post_processing_expansion(node_axis_map)
+    render_debug(hpl, title="PIPELINE ABGESCHLOSSEN", just_edges=True)
     print(hpl)
     print(hpl.edges())
     # print(hpl.node_groups)

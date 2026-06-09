@@ -6,19 +6,14 @@ Verwendung in beliebigen Modulen:
 
     render_debug(layout, title="nach subdivide", highlight_nodes=[...])
 
-Die Funktion zeigt zwei Plots nebeneinander:
-  Links  – networkx Spring-Layout (immer verfügbar)
-  Rechts – Hiveplot-Achsen-Layout (nur wenn node_groups + axis_order befüllt)
-
-Beide Plots berücksichtigen highlight_nodes und highlight_edges.
-Nach plt.show() läuft das Programm normal weiter.
+Die Funktion zeigt standardmäßig den Hiveplot-Achsen-Plot.
+Mit dem Flag just_edges=True können nur die Kanten aus dem Graphen gezeichnet werden.
 """
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
-from prompt_toolkit import layout
 
 from src.hiveplot import HivePlotLayout
 
@@ -33,11 +28,23 @@ def render_debug(
     highlight_nodes: list | None = None,
     highlight_edges: list[tuple] | None = None,
     save_path: str | None = None,
+    just_edges: bool = False,
 ) -> None:
+    """Rendert einen Hiveplot-Plot für das angegebene Layout.
+
+    Args:
+        layout: HivePlotLayout-Instanz.
+        title: Titel des Plots.
+        highlight_nodes: Liste von Knoten, die hervorgehoben werden sollen.
+        highlight_edges: Liste von Kanten, die hervorgehoben werden sollen.
+        save_path: Optionaler Pfad zum Speichern der Grafik.
+        just_edges: Wenn True, werden nur die Kanten aus layout.graph gezeichnet
+                    (keine dummy_edge_segments oder intra_axis_edges).
+    """
     fig, ax = plt.subplots(1, 1, figsize=(7, 6))
     fig.suptitle(title, fontsize=13, fontweight="bold")
 
-    _draw_hive(ax, layout, title, highlight_nodes, highlight_edges)
+    _draw_hive(ax, layout, title, highlight_nodes, highlight_edges, just_edges)
 
     plt.tight_layout()
 
@@ -47,11 +54,6 @@ def render_debug(
 
     plt.show()
 
-    if save_path:
-        plt.savefig(save_path, dpi=120, bbox_inches="tight")
-        print(f"  [debug_renderer] Gespeichert: {save_path}")
-
-    plt.show()
 
 _AXIS_COLORS = [
     "#4f98a3", "#e07b39", "#6daa45", "#a86fdf",
@@ -134,20 +136,21 @@ def _draw_hive(
     title: str,
     highlight_nodes: list | None,
     highlight_edges: list[tuple] | None,
+    just_edges: bool = False,
 ) -> None:
-    """Zeichnet den Hiveplot-Achsen-Plot (rechts).
+    """Zeichnet den Hiveplot-Achsen-Plot.
 
     Jede Achse aus axis_order wird als Strahl dargestellt.
-    Knoten aus node_groups werden auf ihrer Achse platziert.
-    Die Reihenfolge folgt node_order (falls befüllt), sonst node_groups.
+    Knoten aus node_groups (oder node_groups_expanded) werden auf ihrer Achse platziert.
     Kanten werden als gebogene Verbindungen gezeichnet.
 
     Args:
         ax: matplotlib Axes-Objekt.
-        layout (HivePlotLayout): Das aktuelle Layout.
-        title (str): Subplot-Titel.
-        highlight_nodes (list | None): Hervorgehobene Knoten.
-        highlight_edges (list[tuple] | None): Hervorgehobene Kanten.
+        layout: Das aktuelle HivePlotLayout.
+        title: Subplot-Titel.
+        highlight_nodes: Hervorgehobene Knoten.
+        highlight_edges: Hervorgehobene Kanten.
+        just_edges: Wenn True, nur Kanten aus G.edges() zeichnen.
     """
     G = layout.graph
     k = len(layout.axis_order)
@@ -155,8 +158,10 @@ def _draw_hive(
         ax.set_title("Kein axis_order vorhanden", fontsize=10)
         return
 
-    angles = {axis_id: np.pi / 2 - 2 * np.pi * idx / k
-           for idx, axis_id in enumerate(layout.axis_order)}
+    angles = {
+        axis_id: np.pi / 2 - 2 * np.pi * idx / k
+        for idx, axis_id in enumerate(layout.axis_order)
+    }
 
     ax.set_aspect("equal")
     ax.axis("off")
@@ -164,9 +169,10 @@ def _draw_hive(
 
     node_pos: dict = {}
 
+    # Achsen und Knoten zeichnen
     for axis_id in layout.axis_order:
         ang = angles[axis_id]
-        # Achse als Strahl zeichnen
+        # Achse als Strahl
         ax.plot(
             [0, np.cos(ang) * 1.1],
             [0, np.sin(ang) * 1.1],
@@ -179,7 +185,7 @@ def _draw_hive(
             color=_AXIS_COLORS[axis_id % len(_AXIS_COLORS)]
         )
 
-        # Knotenreihenfolge: node_order > node_groups
+        # Knotenreihenfolge: node_groups_expanded > node_groups
         source = layout.node_groups_expanded if layout.node_groups_expanded else layout.node_groups
         ordered_nodes = source.get(axis_id) or []
 
@@ -190,23 +196,36 @@ def _draw_hive(
             y = np.sin(ang) * r
             node_pos[node] = (x, y)
             is_dummy = isinstance(node, str) and node.startswith("d_")
-            color = ("#e03c3c"
+            color = (
+                "#e03c3c"
                 if (highlight_nodes and node in highlight_nodes) or is_dummy
                 else _AXIS_COLORS[axis_id % len(_AXIS_COLORS)]
             )
             ax.plot(x, y, "o", color=color, ms=7, zorder=3)
-            ax.text(x + 0.03, y + 0.03, str(node),
-                    fontsize=6, zorder=4, color="#333333")
-            
-    direct_edges = [e for e in G.edges() if e not in layout.long_edges and (e[1], e[0]) not in layout.long_edges]
-    edges_to_draw = direct_edges + layout.dummy_edge_segments + layout.intra_axis_edges
-    # Kanten zeichnen
+            ax.text(
+                x + 0.03, y + 0.03, str(node),
+                fontsize=6, zorder=4, color="#333333"
+            )
+
+    # Kanten vorbereiten
+    if just_edges:
+        edges_to_draw = list(G.edges())
+    else:
+        direct_edges = [
+            e for e in G.edges()
+            if e not in layout.long_edges
+            and (e[1], e[0]) not in layout.long_edges
+        ]
+        edges_to_draw = direct_edges + layout.dummy_edge_segments + layout.intra_axis_edges
+
+    # Hervorhebungskanten in Set
     edge_set = set()
     if highlight_edges:
         for u, v in highlight_edges:
             edge_set.add((u, v))
             edge_set.add((v, u))
 
+    # Kanten zeichnen
     for u, v in edges_to_draw:
         if u not in node_pos or v not in node_pos:
             continue
@@ -214,8 +233,8 @@ def _draw_hive(
         x1, y1 = node_pos[v]
         color = "#e03c3c" if (u, v) in edge_set or (v, u) in edge_set else "#01696f"
 
-        # Kreuzprodukt z-Komponente: positiv → v liegt links von u (aus Ursprung gesehen)
-        # → rad negativ damit Kurve nach außen wölbt, und umgekehrt
+        # Kreuzprodukt z-Komponente: positiv → v liegt links von u (vom Ursprung aus),
+        # rad entsprechend wählen, damit sich die Kurve nach außen wölbt.
         cross_z = x0 * y1 - y0 * x1
         rad = 0.25 if cross_z > 0 else -0.25
 

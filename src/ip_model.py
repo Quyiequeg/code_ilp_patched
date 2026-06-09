@@ -256,9 +256,17 @@ def induced_crossings(delta_static: dict[tuple[int|str, int|str, int|str], int],
     return pp.lpSum(terms)
 
 def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded: bool = False) -> None:
-    """Die Funktion führt die gesamte Pipeline zur Kreuzungsminimierung durch, inklusive der Berechnung des 1L2S-ILP. Alle Schritte werden in-place am HivePlotLayout durchgeführt. Ablauf:
+    """Die Funktion führt die gesamte Pipeline zur Kreuzungsminimierung durch, inklusive der Berechnung des 1L2S-ILP. Alle Schritte werden in-place am HivePlotLayout durchgeführt.
+    Ablauf expandiert:
+    1. anfängliches Layout expandieren
+    2. isolierte Knoten entfernen
+    3. lange Kanten unterteilen und Dummyknoten einfügen (virtuelle Knoten)
+    4. 1L2S-ILP berechnen
+    5. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.
+
+    Ablauf nicht expandiert:
     1. isolierte Knoten entfernen
-    2. lange Kanten unterteilen
+    2. lange Kanten unterteilen und Dummyknoten einfügen (virtuelle Knoten)
     3. 1L2S-ILP berechnen
     4. Behandlung der intra-axis Kreuzungen
     5. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.
@@ -266,6 +274,8 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
     Args:
         layout (HivePlotLayout): das zugrundeliegende Hiveplotlayout
         threshold (int, optional): Anzahl der Sweeps bis zum Abbruch, Defaultwert ist 10.
+        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+
     """
     if expanded:
         # pipeline 3a <<<<<<<<<<<<
@@ -319,7 +329,7 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 0 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
@@ -347,15 +357,15 @@ if __name__ == "__main__":
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     if printer == 1:
         render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
-    ip_model_pipeline(hpl, threshold=1)
-    # ip_model_pipeline(hpl, threshold=1, expanded=True)
+    # ip_model_pipeline(hpl, threshold=1)
+    ip_model_pipeline(hpl, threshold=1, expanded=True)
     if printer == 1:
         render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
     # print(hpl)
     # print(hpl.fuse_edges_with_edge_dummies())
-    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    hpl.post_processing_expansion(node_axis_map)
-    render_debug(hpl, title="EXPANDED")
+    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    # hpl.post_processing_expansion(node_axis_map)
+    # render_debug(hpl, title="EXPANDED")
     # print(hpl.node_groups)
     # print(hpl.fuse_node_groups_with_dummies())
     print("##########################################")
