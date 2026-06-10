@@ -328,44 +328,75 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # print(len(node_axis_map))
 
 if __name__ == "__main__":
+    # rr.hiveplot_renderer("IP_paperkonform", hpl, expanded=True)
+    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    # hpl.post_processing_expansion(node_axis_map)
     print("##########################################")
-    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    import src.renderer as rr
+    from src.hiveplot import HivePlotLayout
+    import src.crossing_minimization as cm
+
+    # PARAMETER
+    expanded = True
+    # expanded = False
+    expanded_afterwards = True
+    # expanded_afterwards = False
+
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
-    from src.graphs import sample_graph_selfconstructed, sample_graph_multipartite, sample_graph_caveman, sample_graph_selfconstructed_extended
-    from src.hiveplot import HivePlotLayout
-    # # from src.partitioning import louvain_community_detection
-    from src.debug_renderer import render_debug
-    # # logging.basicConfig(level=logging.DEBUG)
-    G = sample_graph_selfconstructed_extended(graph_mode)
+
+    #INITIALISIERUNG paperkonform
+    G = graphs.sample_graph_selfconstructed_extended(graph_mode)
     nodes = list(G.nodes(data="subset"))
     axes = native_order(nodes)
     ng = node_groups(nodes)
-    # print("Layout ORIGINAL")
     hpl = HivePlotLayout(
         graph=G,
         num_axes=len(axes),
         axis_order=axes,
         node_groups=ng
     )
-    # delta = delta_mapping(hpl)
-    # print(hpl)
-    if printer == 1:
-        render_debug(hpl, title="ORIGINAL") 
     hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
-    if printer == 1:
-        render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
-    # ip_model_pipeline(hpl, threshold=1)
-    ip_model_pipeline(hpl, threshold=1, expanded=True)
-    if printer == 1:
-        render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
-    # print(hpl)
-    # print(hpl.fuse_edges_with_edge_dummies())
-    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    # hpl.post_processing_expansion(node_axis_map)
-    # render_debug(hpl, title="EXPANDED")
-    # print(hpl.node_groups)
-    # print(hpl.fuse_node_groups_with_dummies())
+
+    # PIPELINE nicht expandiert
+    ip_model_pipeline(hpl, threshold=5)
+    cm.edge_cleanup(hpl)
+    rr.hiveplot_renderer("IP_paperkonform", hpl, expanded=False)
+
+    print("##########################################")
+    print("IP_paperkonform")
+    print(hpl)
+    print(hpl.edges())
+    
+    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    cm.edge_cleanup(hpl)
+    hpl.post_processing_expansion(node_axis_map)
+    rr.hiveplot_renderer("IP_paperkonform_expandiert", hpl, expanded=True)
+    print("##########################################")
+    print("IP_paperkonform_expandiert")
+    print(hpl)
+    print(hpl.edges())
+    # INITIALISIERUNG EXPANDIERT
+    G = graphs.sample_graph_selfconstructed_extended(graph_mode)
+    nodes = list(G.nodes(data="subset"))
+    axes = native_order(nodes)
+    ng = node_groups(nodes)
+    hpl_two = HivePlotLayout(
+        graph=G,
+        num_axes=len(axes),
+        axis_order=axes,
+        node_groups=ng
+    )
+    hpl_two.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
+    hpl_two.node_groups = reordered_node_groups(ng, hpl_two.axis_order)
+
+    ip_model_pipeline(hpl_two, threshold=1, expanded=True)
+    cm.edge_cleanup(hpl_two)
+    rr.hiveplot_renderer("IP_eigen", hpl_two, expanded=True)
+    print("##########################################")
+    print("Barycenter eigen")
+    print(hpl_two)
+    print(hpl_two.edges())
     print("##########################################")

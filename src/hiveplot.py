@@ -187,7 +187,7 @@ class HivePlotLayout:
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
                  intra_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
-        print(f"Expandable axes:{intra_expandables}")
+        # print(f"Expandable axes:{intra_expandables}")
         for edge in edge_axis_map: # erst möglich nach dem filtern der einen intra kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
@@ -196,20 +196,20 @@ class HivePlotLayout:
                 inter_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
             elif edge_positions[1] in intra_expandables:
                 inter_expandables.setdefault(edge_positions[1], []).append(edge) # check ob key vorhandenen + append
-        print(f"Inter-expandables:{inter_expandables}")
+        # print(f"Inter-expandables:{inter_expandables}")
         for key in node_groups:
             if key not in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy()
             elif key in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy() # pi^- links
                 node_groups_expanded[-key] = [-node for node in node_groups[key]] # pi^- rechts
-        print(f"node_groups_expanded:{node_groups_expanded}")
+        # print(f"node_groups_expanded:{node_groups_expanded}")
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
             axis_position_map[axis] = i
-        print(f"axis_position_map:{axis_position_map}")
+        # print(f"axis_position_map:{axis_position_map}")
         # die mit expandierten achsen verbundenen kanten aus dem hiveplotlayout entfernen und in korrektem format wieder hineinschreiben
         for axis in intra_expandables:
             self.graph.remove_edges_from(intra_expandables[axis])
@@ -304,7 +304,7 @@ class HivePlotLayout:
                 inter_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
             elif edge_positions[1] in intra_expandables:
                 inter_expandables.setdefault(edge_positions[1], []).append(edge) # check ob key vorhandenen + append
-        print(f"Inter-expandables:{inter_expandables}")
+        # print(f"Inter-expandables:{inter_expandables}")
         for axis in node_groups:
             if axis not in intra_expandables:
                 node_groups_expanded[axis] = node_groups[axis].copy()
@@ -333,7 +333,7 @@ class HivePlotLayout:
                 new_intra_edges.append((-edge[0], edge[1]))
                 new_intra_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_intra_edges)
-        print(f"EDGES:{self.edges()}") # expandierte achsen + reine intra axis kanten
+        # print(f"EDGES:{self.edges()}") # expandierte achsen + reine intra axis kanten
         # print(f"DUMMY EDGES:{dummy_edges}") # dummy segmente + expandiert
         new_inter_edges = []
         for axis in inter_expandables:

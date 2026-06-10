@@ -294,8 +294,6 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
                 break
             state_set.add(state)
             threshold_run += 1
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>REAL--------------------------")
-            print(f"|REAL RUN: {threshold_run}/{threshold}")
             changed = False
             for axis in phi: # clockwise
                 bary_axis_order = node_groups[axis]
@@ -303,40 +301,29 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
                     bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
-                print(f"|BC ORDER{bary_axis_order}")
-                print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
                 new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
-                print(f"|Real CW -> VORHER: {node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
                 node_groups[axis] = new_order
-            print("--------------------------CCW---------------------------")
             for axis in reversed_phi: # counter clockwise
                 bary_axis_order = node_groups[axis]
                 bary_positions_axis = []
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
                     bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
-                print(f"|BC ORDER{bary_axis_order}")
-                print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
                 # besser (stable sort mit Tiebreak auf aktuelle Position):
                 new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
-                print(f"|Real CCW -> VORHER: {node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
                 node_groups[axis] = new_order
-            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
     elif real == False:
         while  threshold_run < threshold and changed == True:
             state = tuple(tuple(node_groups[axis]) for axis in phi) # aktueller zustand
             if state in state_set: # falls aktueller zustand schon einmal gesehen
-                print("ZUSTAND WIEDERERKANNT")
                 break
             threshold_run += 1
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>VIRTUAL-----------------------")
-            print(f"|VIRTUAL RUN: {threshold_run}/{threshold}")
             changed = False
             for axis in phi: # clockwise
                 bary_axis_order = dummy_node_groups[axis]
@@ -344,30 +331,22 @@ def _sweep(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | 
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
                     bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
-                print(f"|BC ORDER{bary_axis_order}")
-                print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
                 new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
-                print(f"|Virtuell CW -> VORHER: {dummy_node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if dummy_node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
                 dummy_node_groups[axis] = new_order
-            print("--------------------------CCW---------------------------")
             for axis in reversed_phi: # counter clockwise
                 bary_axis_order = dummy_node_groups[axis]
                 bary_positions_axis = []
                 for node in bary_axis_order:
                     node_neighbors = neighborhood_map[node]
                     bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
-                print(f"|BC ORDER{bary_axis_order}")
-                print(f"|BC WERTE{bary_positions_axis}")
                 # umsortierung der knotenliste nach positionen
                 new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
-                print(f"|Virtuell CCW -> VORHER: {dummy_node_groups[axis]} | NACHHER: {new_order} | changed = {changed} | new order list? {isinstance(new_order, list)}")
                 if dummy_node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
                     changed = True
                 dummy_node_groups[axis] = new_order
-            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
 def intra_axis_handler(layout: HivePlotLayout) -> None:
     """Bereitet intra-axis Knoten nach der Barycenter-Pipeline auf. Alle intra-axis Kanten werden zu Zusammenhangskomponenten gruppiert und pro Achse sortiert in zwei Kategorien abgelegt: kurze Pfade (Länge 2) und längere Pfade (Länge > 2). Diese Reihenfolge wird in layout.intra_axis_nodes
@@ -446,6 +425,14 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
     position = 1/len(neighbor_group) * neighbor_sum
     return position
 
+def edge_cleanup(layout: HivePlotLayout):
+    fused_edges = layout.fuse_edges_with_edge_dummies()
+    layout.graph.add_edges_from(fused_edges)
+    layout.graph.remove_edges_from(layout.long_edges)
+    # for edge in fused_edges:
+    #     if edge not in hpl.edges():
+    #         hpl.graph.add_edge(edge[0], edge[1])
+
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = float("inf"), expanded: bool = False) -> None:
     """Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).
 
@@ -505,7 +492,6 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
-        dummy_edge_copy = layout.dummy_edge_segments.copy() # für die pipeline wird dummy.edge_segments mit den normalen kanten des graphen verschmolzen, für die expansion am ende wird aber eine reine dummyliste benötigt
         layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
         # 4.
         _sweep(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
@@ -518,57 +504,65 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
 
 if __name__ == "__main__":
     print("##########################################")
-    printer = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PRINTER
+    import src.renderer as rr
+    from src.hiveplot import HivePlotLayout
+
     # graph_mode = 0
     # graph_mode = 1
     graph_mode = 2
-    from src.graphs import sample_graph_selfconstructed, sample_graph_multipartite, sample_graph_caveman
-    from src.hiveplot import HivePlotLayout
-    # # from src.partitioning import louvain_community_detection
-    from src.debug_renderer import render_debug
-    # # logging.basicConfig(level=logging.DEBUG)
+
+    #INITIALISIERUNG paperkonform
     G = graphs.sample_graph_selfconstructed_extended(graph_mode)
     nodes = list(G.nodes(data="subset"))
     axes = native_order(nodes)
     ng = node_groups(nodes)
-    print("Layout ORIGINAL")
     hpl = HivePlotLayout(
         graph=G,
         num_axes=len(axes),
         axis_order=axes,
         node_groups=ng
     )
-    print(hpl)
-    if printer == 1:
-        render_debug(hpl, title="ORIGINAL") 
     hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
     hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
-    if printer == 1:
-        render_debug(hpl, title="OHNE PIPELINE - OPTIMIZED")
-    print("Pipeline -> Start")
-    # barycenter_crossmin_pipeline(hpl, threshold=5)
+
+    # PIPELINE nicht expandiert
     barycenter_crossmin_pipeline(hpl)
-    # barycenter_crossmin_pipeline(hpl, expanded=True)
-    print("Pipeline -> Ende")
-    if printer == 1:
-        render_debug(hpl, title="PIPELINE ABGESCHLOSSEN")
-    print("Layout NACH OPTIMIERUNG")
-    # print(hpl)
-    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    # hpl.post_processing_expansion(node_axis_map) # fügt die expandierten Achsen mit den intra axis Knoten hinzu, damit die Visualisierung direkt mit expandierten Achsen startet, ohne dass die Pipeline erneut durchlaufen werden muss
-    # hpl.dummy_edge_segments = []
-    fused_groups = hpl.fuse_node_groups_with_dummies()
-    fused_edges = hpl.fuse_edges_with_edge_dummies()
-    for edge in fused_edges:
-        if edge not in hpl.edges():
-            hpl.graph.add_edge(edge[0], edge[1])
-    hpl.graph.remove_edges_from(hpl.long_edges)
-    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    node_position_map, node_axis_map = node_to_axis_maps(hpl, fused_groups)
-    hpl.post_processing_expansion(node_axis_map)
-    render_debug(hpl, title="PIPELINE ABGESCHLOSSEN", just_edges=True)
+    edge_cleanup(hpl)
+    rr.hiveplot_renderer("Barycenter_paperkonform", hpl)
+    rr.hiveplot_renderer("Barycenter_paperkonform mit intra", hpl, intra=True)
+
+    print("##########################################")
+    print("Barycenter_paperkonform")
     print(hpl)
     print(hpl.edges())
-    # print(hpl.node_groups)
-    # print(hpl.fuse_node_groups_with_dummies())
+    
+    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    edge_cleanup(hpl)
+    hpl.post_processing_expansion(node_axis_map)
+    rr.hiveplot_renderer("Barycenter_paperkonform_expandiert", hpl, expanded=True)
+    print("##########################################")
+    print("Barycenter_paperkonform_expandiert")
+    print(hpl)
+    print(hpl.edges())
+    # INITIALISIERUNG EXPANDIERT
+    G = graphs.sample_graph_selfconstructed_extended(graph_mode)
+    nodes = list(G.nodes(data="subset"))
+    axes = native_order(nodes)
+    ng = node_groups(nodes)
+    hpl_two = HivePlotLayout(
+        graph=G,
+        num_axes=len(axes),
+        axis_order=axes,
+        node_groups=ng
+    )
+    hpl_two.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
+    hpl_two.node_groups = reordered_node_groups(ng, hpl_two.axis_order)
+
+    barycenter_crossmin_pipeline(hpl_two, expanded=True)
+    edge_cleanup(hpl_two)
+    rr.hiveplot_renderer("Barycenter_eigen", hpl_two, expanded=True)
+    print("##########################################")
+    print("Barycenter eigen")
+    print(hpl_two)
+    print(hpl_two.edges())
     print("##########################################")
