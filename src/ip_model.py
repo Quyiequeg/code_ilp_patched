@@ -328,75 +328,40 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # print(len(node_axis_map))
 
 if __name__ == "__main__":
-    # rr.hiveplot_renderer("IP_paperkonform", hpl, expanded=True)
-    # node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    # hpl.post_processing_expansion(node_axis_map)
-    print("##########################################")
-    import src.renderer as rr
-    from src.hiveplot import HivePlotLayout
+    import src.partitioning as pt
+    import src.hiveplot as hp
     import src.crossing_minimization as cm
+    import pickle
+    import networkx as nx
+    import src.dblp_parser as pr
+    import src.renderer as rr
 
-    # PARAMETER
-    expanded = True
-    # expanded = False
-    expanded_afterwards = True
-    # expanded_afterwards = False
-
-    # graph_mode = 0
-    # graph_mode = 1
-    graph_mode = 2
-
-    #INITIALISIERUNG paperkonform
-    G = graphs.sample_graph_selfconstructed_extended(graph_mode)
-    nodes = list(G.nodes(data="subset"))
-    axes = native_order(nodes)
-    ng = node_groups(nodes)
-    hpl = HivePlotLayout(
-        graph=G,
-        num_axes=len(axes),
-        axis_order=axes,
-        node_groups=ng
-    )
-    hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
-    hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
-
-    # PIPELINE nicht expandiert
-    ip_model_pipeline(hpl, threshold=5)
-    cm.edge_cleanup(hpl)
-    rr.hiveplot_renderer("IP_paperkonform", hpl, expanded=False)
-
-    print("##########################################")
-    print("IP_paperkonform")
-    print(hpl)
-    print(hpl.edges())
-    
-    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    cm.edge_cleanup(hpl)
+    year = 2020
+    save = True
+    # pipeline = "barycenter"
+    # method = "paper"
+    cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k8_2020_11.06--16.04_edges248_intra27.pkl"
+    with open(cache_path, "rb") as file:
+        hpl = pickle.load(file)
+    _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    # cm.edge_cleanup(hpl)
     hpl.post_processing_expansion(node_axis_map)
-    rr.hiveplot_renderer("IP_paperkonform_expandiert", hpl, expanded=True)
-    print("##########################################")
-    print("IP_paperkonform_expandiert")
-    print(hpl)
-    print(hpl.edges())
-    # INITIALISIERUNG EXPANDIERT
-    G = graphs.sample_graph_selfconstructed_extended(graph_mode)
-    nodes = list(G.nodes(data="subset"))
-    axes = native_order(nodes)
-    ng = node_groups(nodes)
-    hpl_two = HivePlotLayout(
-        graph=G,
-        num_axes=len(axes),
-        axis_order=axes,
-        node_groups=ng
-    )
-    hpl_two.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
-    hpl_two.node_groups = reordered_node_groups(ng, hpl_two.axis_order)
+    if (44, 'd_20_44_2') in hpl.edges():
+        print(f"(44, 'd_20_44_2') IST IN EDGES!")
+    else:
+        print(f"(44, 'd_20_44_2') IST NICHT IN EDGES!")
+    # cm.edge_cleanup(hpl)
+    rr.hiveplot_renderer("DEBUG_PRE_PROCESSING_ILP_2020_EXPANDED_cleanup_cleanup", hpl, expanded=True, debug = True)
+    if (26, 79) in hpl.edges():
+        print(f"(26, 79) IST IN EDGES!")
+    else:
+        print(f"(26, 79) IST NICHT IN EDGES!")
 
-    ip_model_pipeline(hpl_two, threshold=1, expanded=True)
-    cm.edge_cleanup(hpl_two)
-    rr.hiveplot_renderer("IP_eigen", hpl_two, expanded=True)
-    print("##########################################")
-    print("Barycenter eigen")
-    print(hpl_two)
-    print(hpl_two.edges())
-    print("##########################################")
+    if (44, 'd_20_44_2') in hpl.edges():
+        print(f"(44, 'd_20_44_2') IST IN EDGES!")
+    else:
+        print(f"(44, 'd_20_44_2') IST NICHT IN EDGES!")
+    # print(hpl.edges())
+    # print(hpl)
+    # (44, -20) (-20, 44) -> (44, d_-20_44_1) müsste _2 sein (44, 'd_20_44_1') DRIN
+    # (26, 79) long ist noch drin

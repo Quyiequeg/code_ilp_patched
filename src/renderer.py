@@ -21,6 +21,7 @@ def draw_basis(node_groups, edges, intra_edges = None):
     svg_axes = []
     svg_nodes = []
     svg_edges = []
+    svg_labels = []
     rendered_node_positions = {}
     for i, (axis, nodes) in enumerate(node_groups.items()): # achsen anlegen
         real_nodes = []
@@ -41,6 +42,8 @@ def draw_basis(node_groups, edges, intra_edges = None):
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[real] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="2" fill="#e01414"/>')
+            if real >=0:
+                svg_labels.append(f'<text x="{x + 2 + 2}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
         for j, virtual in enumerate(virtual_nodes, start=1):
             radius = MAX_RADIUS + j * 50/ (len(virtual_nodes) + 1) # (MAX_RADIUS + 50 - MAX_RADIUS)
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
@@ -70,7 +73,7 @@ def draw_basis(node_groups, edges, intra_edges = None):
             x_fix = x_mid - dy * 0.3
             y_fix = y_mid + dx * 0.3
             svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" fill="none" stroke="gray" stroke-width="1.2" opacity="0.5"/>')
-    return svg_axes, svg_nodes, svg_edges
+    return svg_axes, svg_nodes, svg_edges, svg_labels
 
 def draw_nodes():
     pass
@@ -86,7 +89,7 @@ def render_svg(filename, width, height, elements):
     with open(filename, "w", encoding="utf-8") as f:
         f.write("\n".join(svg))
 
-def hiveplot_renderer(name, layout: HivePlotLayout, expanded=False, intra=False):
+def hiveplot_renderer(name, layout: HivePlotLayout, expanded=False, intra=False, debug: bool = False):
     intra=intra
     if expanded:
         node_groups = layout.node_groups_expanded
@@ -94,13 +97,17 @@ def hiveplot_renderer(name, layout: HivePlotLayout, expanded=False, intra=False)
         node_groups = layout.node_groups
     elements = ["<rect width='100%' height='100%' fill='white'/>"] # weißer hintergrund
     if intra:
-        ax, nod, ed = draw_basis(node_groups, layout.edges(), layout.intra_axis_edges)
+        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), layout.intra_axis_edges)
     else:
-        ax, nod, ed = draw_basis(node_groups, layout.edges())
+        ax, nod, ed, lab = draw_basis(node_groups, layout.edges())
     elements.extend(ax)
     elements.extend(ed)
     elements.extend(nod)
-    output = Path("output/debug")
+    elements.extend(lab)
+    if debug:
+        output = Path("output/debug")
+    else:
+        output = Path("output/years")
     filename = output / (name + ".svg")
     output.mkdir(parents=True, exist_ok=True)
     render_svg(filename, WIDTH, HEIGHT, elements)

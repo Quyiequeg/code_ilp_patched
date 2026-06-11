@@ -1,0 +1,80 @@
+15:13 ------------------------START--------------------------------
+15:13 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+15:14 Brute Force fertig. Berechnung in 60.0s abgeschlossen.
+15:14 Pipeline und Cleanup fertig. Berechnung in 60.0s abgeschlossen.
+15:14 Post Processing fertig. Berechnung in 60.0s abgeschlossen.
+15:14 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_hpl_k8_2000_11.06--15.14_edges87_intra87.pkl
+15:14 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_hpl_k16_2000_11.06--15.14_edges174_intra87.pkl
+15:14 Fertig. Berechnung in 60.0s abgeschlossen
+15:14 ------------------------STOPP--------------------------------
+15:18 ------------------------START--------------------------------
+15:18 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+15:19 Brute Force fertig. Berechnung in 60.0s abgeschlossen.
+15:19 Pipeline und Cleanup fertig. Berechnung in 60.0s abgeschlossen.
+15:19 Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_hpl_k16_2000_11.06--15.19_edges174_intra0.pkl
+15:19 Fertig. Berechnung in 60.0s abgeschlossen
+15:19 ------------------------STOPP--------------------------------
+15:20 ------------------------START--------------------------------
+15:20 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+15:23 Brute Force fertig. Berechnung in 177.3s abgeschlossen.
+15:23 Pipeline und Cleanup fertig. Berechnung in 177.3s abgeschlossen.
+15:23 Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_hpl_k16_2020_11.06--15.23_edges449_intra0.pkl
+15:23 Fertig. Berechnung in 177.3s abgeschlossen
+15:23 ------------------------STOPP--------------------------------
+15:24 ------------------------START-------2020------------
+15:24 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+15:28 Brute Force fertig. Berechnung in 185.5s abgeschlossen.
+15:28 Pipeline und Cleanup fertig. Berechnung in 185.5s abgeschlossen.
+15:28 Post Processing fertig. Berechnung in 185.5s abgeschlossen.
+15:28 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_hpl_k8_2020_11.06--15.28_edges248_intra27.pkl
+15:28 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_hpl_k16_2020_11.06--15.28_edges449_intra27.pkl
+15:28 Fertig. Berechnung in 185.5s abgeschlossen
+15:28 ------------------------STOPP--------------------------------
+15:34 ------------------------START-------2020------------
+15:34 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+15:37 Brute Force fertig. Berechnung in 177.7s abgeschlossen.
+15:37 paperlike = True
+15:37 Pipeline und Cleanup fertig. Berechnung in 177.7s abgeschlossen.
+15:37 Post Processing fertig. Berechnung in 177.7s abgeschlossen.
+15:37 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_hpl_k8_2020_11.06--15.37_edges248_intra27.pkl
+15:37 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_hpl_k16_2020_11.06--15.37_edges449_intra27.pkl
+15:37 Fertig. Berechnung in 177.7s abgeschlossen
+15:37 ------------------------STOPP--------------------------------
+15:37 ------------------------START-------2020------------
+15:37 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+15:40 Brute Force fertig. Berechnung in 176.9s abgeschlossen.
+15:40 paperlike = True
+15:40 Pipeline und Cleanup fertig. Berechnung in 176.9s abgeschlossen.
+15:40 Post Processing fertig. Berechnung in 176.9s abgeschlossen.
+15:40 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_hpl_k8_2020_11.06--15.40_edges248_intra27.pkl
+15:40 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_hpl_k16_2020_11.06--15.40_edges617_intra27.pkl
+15:40 Fertig. Berechnung in 176.9s abgeschlossen
+15:40 ------------------------STOPP--------------------------------
+15:41 ------------------------START-------2020------------
+15:41 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+15:44 Brute Force fertig. Berechnung in 176.3s abgeschlossen.
+15:44 paperlike = True
+15:44 Pipeline und Cleanup fertig. Berechnung in 176.3s abgeschlossen.
+15:44 Post Processing fertig. Berechnung in 176.3s abgeschlossen.
+15:44 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_hpl_k8_2020_11.06--15.44_edges248_intra27.pkl
+15:44 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_hpl_k16_2020_11.06--15.44_edges617_intra27.pkl
+15:44 Fertig. Berechnung in 176.3s abgeschlossen
+15:44 ------------------------STOPP--------------------------------
+16:01 ------------------------START-------2020------------
+16:01 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+16:04 Brute Force fertig. Berechnung in 176.7s abgeschlossen.
+16:04 paperlike = True
+16:04 Pipeline und Cleanup fertig. Berechnung in 182.2s abgeschlossen.
+16:04 Post Processing fertig. Berechnung in 182.2s abgeschlossen.
+16:04 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k8_2020_11.06--16.04_edges248_intra27.pkl
+16:04 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_ILP_k16_2020_11.06--16.04_edges449_intra27.pkl
+16:04 Fertig. Berechnung in 182.2s abgeschlossen
+16:04 ------------------------STOPP--------------------------------
+16:05 ------------------------START-------2020------------
+16:05 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+16:08 Brute Force fertig. Berechnung in 172.5s abgeschlossen.
+16:08 paperlike = False
+16:08 Pipeline und Cleanup fertig. Berechnung in 186.6s abgeschlossen.
+16:08 Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_ILP_k16_2020_11.06--16.08_edges449_intra0.pkl
+16:08 Fertig. Berechnung in 186.6s abgeschlossen
+16:08 ------------------------STOPP--------------------------------

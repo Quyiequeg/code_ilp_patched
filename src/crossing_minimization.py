@@ -22,11 +22,11 @@
 # -> Parameter intuitiv: def barycenter_crossing_min(G, alpha, phi, pi, g=1, threshold=None) | RETURN: PI
 
 from pyvis import node
-
 from src import graphs
 from src.cost import node_or_axes_span
 from src.ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
 import networkx as nx
+import pickle
 # import logging
 # logging.basicConfig(
 #     level=logging.DEBUG,
@@ -427,7 +427,7 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
 
 def edge_cleanup(layout: HivePlotLayout):
     fused_edges = layout.fuse_edges_with_edge_dummies()
-    layout.graph.add_edges_from(fused_edges)
+    # layout.graph.add_edges_from(fused_edges)
     layout.graph.remove_edges_from(layout.long_edges)
     # for edge in fused_edges:
     #     if edge not in hpl.edges():

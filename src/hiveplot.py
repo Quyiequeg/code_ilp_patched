@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 import networkx as nx
-
+import copy
 
 @dataclass
 class HivePlotLayout:
@@ -36,9 +36,11 @@ class HivePlotLayout:
     # knotenordnung auf achsen, wobei pi_i = p_i^+ = p_i^-
     node_order: dict[int, list[int]] = field(default_factory=dict)
 
-    # unabhängige Kopien für pi+ und pi-, da diese sich im erweiterten Modell unterscheiden können
     node_groups_expanded:  dict[int, list[int | str]] = field(default_factory=dict)
     edges_expanded: list[tuple[int | str, int | str]] = field(default_factory=list)
+
+    id_to_name: dict[int, str] = field(default_factory=dict)
+    name_to_id: dict[str, int] = field(default_factory=dict)
 
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
@@ -68,6 +70,9 @@ class HivePlotLayout:
             f"  Crossings (erweitert): {self.crossings_extended}"
         ]
         return "\n".join(lines)
+    
+    def copy(self):
+        return copy.deepcopy(self)
 
     def edges(self) -> list[tuple]:
         """Gibt die Kantenliste des Graphen zurück. Notwendig, weil mit dem Networkx Edgeview nicht direkt gearbeitet werden kann.
@@ -281,6 +286,7 @@ class HivePlotLayout:
             dummy_copy (list[tuple[int  |  str, int  |  str]], optional): eine Aktuelle Kopie der Dummysegmente, Default ist None
         """
         from src.crossing_minimization import parse_dummy_name
+        from src.ordering import node_to_axis_maps
         if dummy_copy is None:
             dummy_edges = self.dummy_edge_segments
         else:
@@ -347,14 +353,14 @@ class HivePlotLayout:
                     first_edge_position = axis_position_map[edge_axis_map[edge][0]]
                     second_node = edge[1]
                     second_edge_position = axis_position_map[edge_axis_map[edge][1]]
-                    if first_edge_position - 1 == second_edge_position or first_edge_position - 1 < 0: # erster knoten rechts
+                    if first_edge_position - 1 == second_edge_position or first_edge_position - 1 < 1: # erster knoten rechts
                         if isinstance(second_node, int):
                             new_inter_edges.append((-second_node, first_node)) 
                         elif isinstance(second_node, str):
                             dummy_node = parse_dummy_name(second_node)
                             dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
                             new_inter_edges.append((dummy_node_incremented, first_node))
-                    elif first_edge_position + 1 == second_edge_position or first_edge_position + 1 == self.num_axes: # zweiter knoten rechts
+                    elif first_edge_position + 1 == second_edge_position or first_edge_position + 1 > self.num_axes: # zweiter knoten rechts
                         if isinstance(first_node, int):
                             new_inter_edges.append((-first_node, second_node))
                         elif isinstance(first_node, str):
@@ -367,9 +373,9 @@ class HivePlotLayout:
                     start_position = axis_position_map[edge_axis_map[edge][0]] # achsen position in phi von startknoten achse
                     end_node = edge[1]
                     end_position = axis_position_map[edge_axis_map[edge][1]] # achsen position in phi von endknoten achse
-                    if start_position - 1 == end_position or start_position - 1 < 0 : # endknoten liegt links der expandierten achse oder letzte achse der ordnung
+                    if start_position - 1 == end_position or start_position - 1 < 1: # endknoten liegt links der expandierten achse oder letzte achse der ordnung
                         new_inter_edges.append(edge) # kann einfach übernommen werden
-                    elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
+                    elif start_position + 1 == end_position or start_position + 1 > self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
                         if isinstance(start_node, int):
                             new_inter_edges.append((-start_node, end_node))
                         elif isinstance(start_node, str):
@@ -381,16 +387,16 @@ class HivePlotLayout:
                     start_position = axis_position_map[edge_axis_map[edge][1]]
                     end_node = edge[0]
                     end_position = axis_position_map[edge_axis_map[edge][0]]
-                    if start_position - 1 == end_position or start_position - 1 < 0 : # endknoten liegt links der expandierten achse oder letzte achse der ordnung
+                    if start_position - 1 == end_position or start_position - 1 < 1: # endknoten liegt links der expandierten achse oder letzte achse der ordnung
                         new_inter_edges.append(edge) # kann einfach übernommen werden
-                    elif start_position + 1 == end_position or start_position + 1 == self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
+                    elif start_position + 1 == end_position or start_position + 1 > self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
                         if isinstance(start_node, int):
                             new_inter_edges.append((-start_node, end_node)) 
                         elif isinstance(start_node, str):
                             dummy_node = parse_dummy_name(start_node)
                             dummy_node_incremented = f"d_{dummy_node[0]}_{dummy_node[1]}_{dummy_node[2]+1}"
                             new_inter_edges.append((dummy_node_incremented, end_node))
-        self.graph.add_edges_from(new_inter_edges)
+            self.graph.add_edges_from(new_inter_edges)
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
 
