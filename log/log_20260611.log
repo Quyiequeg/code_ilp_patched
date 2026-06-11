@@ -78,3 +78,39 @@
 16:08 Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_ILP_k16_2020_11.06--16.08_edges449_intra0.pkl
 16:08 Fertig. Berechnung in 186.6s abgeschlossen
 16:08 ------------------------STOPP--------------------------------
+20:46 ------------------------START-------2020------------
+20:46 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+20:49 Brute Force fertig. Berechnung in 173.0s abgeschlossen.
+20:49 paperlike = True
+20:49 Pipeline und Cleanup fertig. Berechnung in 173.0s abgeschlossen.
+20:49 Post Processing fertig. Berechnung in 173.0s abgeschlossen.
+20:49 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_hpl_k8_2020_11.06--20.49_edges248_intra27.pkl
+20:49 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_hpl_k16_2020_11.06--20.49_edges449_intra27.pkl
+20:49 Fertig. Berechnung in 173.0s abgeschlossen
+20:49 ------------------------STOPP--------------------------------
+20:54 ------------------------START-------2020------------
+20:54 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+20:57 Brute Force fertig. Berechnung in 173.8s abgeschlossen.
+20:57 paperlike = True
+20:57 Pipeline und Cleanup fertig. Berechnung in 179.1s abgeschlossen.
+20:57 Post Processing fertig. Berechnung in 179.1s abgeschlossen.
+20:57 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k8_2020_11.06--20.57_edges248_intra27.pkl
+20:57 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_ILP_k16_2020_11.06--20.57_edges449_intra27.pkl
+20:57 Fertig. Berechnung in 179.2s abgeschlossen
+20:57 ------------------------STOPP--------------------------------
+21:02 ------------------------START-------2020------------
+21:02 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+21:05 Brute Force fertig. Berechnung in 174.1s abgeschlossen.
+21:05 paperlike = False
+21:05 Pipeline und Cleanup fertig. Berechnung in 174.2s abgeschlossen.
+21:05 Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_hpl_k16_2020_11.06--21.05_edges449_intra0.pkl
+21:05 Fertig. Berechnung in 174.2s abgeschlossen
+21:05 ------------------------STOPP--------------------------------
+21:34 ------------------------START-------2020------------
+21:34 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+21:37 Brute Force fertig. Berechnung in 173.3s abgeschlossen.
+21:37 paperlike = False
+21:37 Pipeline und Cleanup fertig. Berechnung in 187.5s abgeschlossen.
+21:37 Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_ILP_k16_2020_11.06--21.37_edges449_intra0.pkl
+21:37 Fertig. Berechnung in 187.5s abgeschlossen
+21:37 ------------------------STOPP--------------------------------

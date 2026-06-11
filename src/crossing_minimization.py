@@ -427,7 +427,7 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
 
 def edge_cleanup(layout: HivePlotLayout):
     fused_edges = layout.fuse_edges_with_edge_dummies()
-    # layout.graph.add_edges_from(fused_edges)
+    layout.graph.add_edges_from(fused_edges)
     layout.graph.remove_edges_from(layout.long_edges)
     # for edge in fused_edges:
     #     if edge not in hpl.edges():

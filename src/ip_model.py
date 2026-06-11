@@ -345,13 +345,13 @@ if __name__ == "__main__":
         hpl = pickle.load(file)
     _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
     # cm.edge_cleanup(hpl)
+    # if hpl.node_groups == hp.fuse:
+    #     print(f"JA nodegroups = fused")
+    # else:
+    #     print(f"NOPE")
     hpl.post_processing_expansion(node_axis_map)
-    if (44, 'd_20_44_2') in hpl.edges():
-        print(f"(44, 'd_20_44_2') IST IN EDGES!")
-    else:
-        print(f"(44, 'd_20_44_2') IST NICHT IN EDGES!")
     # cm.edge_cleanup(hpl)
-    rr.hiveplot_renderer("DEBUG_PRE_PROCESSING_ILP_2020_EXPANDED_cleanup_cleanup", hpl, expanded=True, debug = True)
+    rr.hiveplot_renderer("DEBUG_PRE_PROCESSING_ILP_2020_EXPANDED_cleanup_FIX", hpl, expanded=True, debug = True)
     if (26, 79) in hpl.edges():
         print(f"(26, 79) IST IN EDGES!")
     else:

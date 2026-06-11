@@ -103,7 +103,7 @@ def main():
             node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
             # edge_cleanup(hpl)
             hpl.post_processing_expansion(node_axis_map)
-            edge_cleanup(hpl)
+            # edge_cleanup(hpl)
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             # logger.info(hpl)
             hiveplot_renderer(f"Barycenter_paperkonform_expandiert_{year}", hpl, expanded=True)
@@ -161,7 +161,7 @@ def main():
             hiveplot_renderer(f"ILP_paperkonform mit intra_{year}", hpl, intra=True)
             # POST EXPANSION
             node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-            edge_cleanup(hpl)
+            # edge_cleanup(hpl)
             hpl.post_processing_expansion(node_axis_map)
             # edge_cleanup(hpl)
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
