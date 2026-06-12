@@ -72,6 +72,7 @@ class HivePlotLayout:
         return "\n".join(lines)
     
     def copy(self):
+        "Gibt eine Deepcopy des Hiveplotlayouts zurück."
         return copy.deepcopy(self)
 
     def edges(self) -> list[tuple]:
@@ -259,18 +260,19 @@ class HivePlotLayout:
                 self.graph.nodes[node]['subset'] = axis
         
     def post_processing_expansion(self, node_axis_map: dict[int | str, int], dummy_copy: list[tuple[int | str, int | str]] = None) -> None:
-        """Die Funktion dient dem post-processing des Eingabegraphen nach der Pipeline, sodass bei diesem die Achsen expandiert werden. Dazu wird die Achse i zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.
+        """Die Funktion dient dem post-processing des Eingabegraphen nach der Pipeline, sodass bei diesem die Achsen expandiert werden. Dazu wird die Achse i (> 0) zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.
         Folgende Schritte werden durchgeführt:
         1. Initialiseren der Dummysegmente, diese werden in der Funktion mutiert
         2. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)
         3. Initialisieren der Map inter_expandables mit allen Kanten die genau einen Start oder Enknoten auf der expandierten Achse haben
         4. Initielisieren der node_groups_expanded mit Keys ursprüngliche AchsenIDs und expandierte AchsenIDs und ihre in node_groups enthaltenen Knotenlisten (expandierte Achse -i bekommt alle Knoten von i zugeordnet, jedoch werden die KnotenIDs negativ gesetzt, für virtuelle Knoten wird die Sequenznummer inkrementiert und die neue Kante zwischen den virtuellen Knoten direkt in das Netwworkx Graphmodell hinzugefügt)
-        5. Initialisieren einer axis_position_map mit Key AchsenID und Value ist Position der Achse in der neuen Achsenordnung
-        6. Behandlung der intra-axis Kanten
+        5. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl und Update der edge_axis_map
+        6. Initialisieren einer axis_position_map mit Key AchsenID und Value Position der Achse in der neuen Achsenordnung
+        7. Behandlung der intra-axis Kanten
             a. Entfernen der intra-axis Kanten aus dem Hiveplotlayout
             b. Erstellen der neuen intra-axis Kanten zwischen den expandierten Achsen (Kante (u,v) auf Achse i wird symmetrisch gespiegelt zu den Kanten (-u, v) und (u, -v))
             c. Einpflegen der neuen intra-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts
-        7. Behandlung der inter-axis Kanten (Anmerkung: Im Sinne der Funktion müsste eigentlich vorher die edge_axis_map geupdated werden, das ist technisch jedoch sehr aufwendig. Deshalb wurden die Achsenpositionen der expandierten Achsen aus der relativen Lage in der nicht expandierten Knotenordnugn berechnet.)
+        8. Behandlung der inter-axis Kanten
             a. Entfernen der inter-axis Kanten aus dem Hiveplotlayout und den Dummykantensegmenten
             b. Erstellen der neuen inter-axis Kanten:
                 I: Ziel- und Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v wenn i vor j in der Achsenordnung, Kante (u, v) zu (-u, v) andernfalls zu (u, -v). Handelt es sich um virtuelle Knoten wird die ID nicht negativ gesetzt sondern die Sequenznummer inkrementiert.
@@ -279,7 +281,6 @@ class HivePlotLayout:
                     ii.) falls i vor j in der Achsenordnung: (u,v) zu (-u, v), andernfalls Kante übernehmen, bei virtuellen Knoten wird die Sequenznummer inkrementiert statt die Knoten-ID negativ zu setzen
                 III: Zielknoten auf expandierter Achse: Behandlung wie in II, jedoch mit vertauschten Knoten i und j
             c. Einpflegen der neuen inter-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts
-        8. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl
 
         Args:
             node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID
@@ -330,7 +331,7 @@ class HivePlotLayout:
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
         _, node_to_axis_map_copy = node_to_axis_maps(self, node_groups_expanded)
-        edge_axis_map = {edge: (node_to_axis_map_copy[edge[0]], node_to_axis_map_copy[edge[1]]) for edge in self.edges()} # initialisiere kanten zu achsen map
+        edge_axis_map = {edge: (node_to_axis_map_copy[edge[0]], node_to_axis_map_copy[edge[1]]) for edge in self.edges()} # update kanten zu achsen map
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
             axis_position_map[axis] = i

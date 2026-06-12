@@ -351,17 +351,4 @@ if __name__ == "__main__":
     #     print(f"NOPE")
     hpl.post_processing_expansion(node_axis_map)
     # cm.edge_cleanup(hpl)
-    rr.hiveplot_renderer("DEBUG_PRE_PROCESSING_ILP_2020_EXPANDED_cleanup_FIX", hpl, expanded=True, debug = True)
-    if (26, 79) in hpl.edges():
-        print(f"(26, 79) IST IN EDGES!")
-    else:
-        print(f"(26, 79) IST NICHT IN EDGES!")
-
-    if (44, 'd_20_44_2') in hpl.edges():
-        print(f"(44, 'd_20_44_2') IST IN EDGES!")
-    else:
-        print(f"(44, 'd_20_44_2') IST NICHT IN EDGES!")
-    # print(hpl.edges())
-    # print(hpl)
-    # (44, -20) (-20, 44) -> (44, d_-20_44_1) müsste _2 sein (44, 'd_20_44_1') DRIN
-    # (26, 79) long ist noch drin
+    rr.hiveplot_renderer("1000x1000_test", hpl, expanded=True, debug = True)

@@ -31,7 +31,7 @@ from ordering import (
 )
 from crossing_minimization import (
     barycenter_crossmin_pipeline,
-    edge_cleanup,
+    edge_node_cleanup,
 )
 from ip_model import (
     ip_model_pipeline
@@ -83,27 +83,27 @@ def main():
     logger.info(f"Brute Force fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
     print(f"ZEIT: {time.time() - start:.1f}")
     ############################################# Pipeline beginnt
-    # paper_like = True ##########################
-    paper_like = False #########################
-    # modus = "bary" #############################
-    modus = "ilp" ###############################
+    paper_like = True ##########################
+    # paper_like = False #########################
+    modus = "bary" #############################
+    # modus = "ilp" ###############################
     #############################################
     if modus == "bary":
         if paper_like:
             # PIPELINE nicht expandiert
             logger.info(f"paperlike = {paper_like}")
             barycenter_crossmin_pipeline(hpl)
-            edge_cleanup(hpl)
+            edge_node_cleanup(hpl)
             hpl_copy = hpl.copy()
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
             hiveplot_renderer(f"Barycenter_paperkonform_{year}", hpl)
             hiveplot_renderer(f"Barycenter_paperkonform mit intra_{year}", hpl, intra=True)
             # POST EXPANSION
-            node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-            # edge_cleanup(hpl)
+            _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+            # edge_node_cleanup(hpl)
             hpl.post_processing_expansion(node_axis_map)
-            # edge_cleanup(hpl)
+            # edge_node_cleanup(hpl)
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             # logger.info(hpl)
             hiveplot_renderer(f"Barycenter_paperkonform_expandiert_{year}", hpl, expanded=True)
@@ -131,7 +131,7 @@ def main():
             # PIPELINE expandiert
             logger.info(f"paperlike = {paper_like}")
             barycenter_crossmin_pipeline(hpl, expanded=True)
-            edge_cleanup(hpl)
+            # edge_node_cleanup(hpl)
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
             hiveplot_renderer(f"Barycenter_eigen_{year}", hpl, expanded=True)
@@ -153,17 +153,17 @@ def main():
             # PIPELINE nicht expandiert
             logger.info(f"paperlike = {paper_like}")
             ip_model_pipeline(hpl, threshold=10)
-            edge_cleanup(hpl)
+            edge_node_cleanup(hpl)
             hpl_copy = hpl.copy()
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
             hiveplot_renderer(f"ILP_paperkonform_{year}", hpl)
             hiveplot_renderer(f"ILP_paperkonform mit intra_{year}", hpl, intra=True)
             # POST EXPANSION
-            node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-            # edge_cleanup(hpl)
+            _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+            # edge_node_cleanup(hpl)
             hpl.post_processing_expansion(node_axis_map)
-            # edge_cleanup(hpl)
+            # edge_node_cleanup(hpl)
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             # logger.info(hpl)
             hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True)
@@ -191,7 +191,7 @@ def main():
             # PIPELINE expandiert
             logger.info(f"paperlike = {paper_like}")
             ip_model_pipeline(hpl, threshold=10, expanded=True)
-            edge_cleanup(hpl)
+            # edge_node_cleanup(hpl)
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
             hiveplot_renderer(f"ILP_eigen_{year}", hpl, expanded=True)

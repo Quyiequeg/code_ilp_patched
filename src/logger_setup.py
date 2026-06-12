@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 def setup_logger(per_session=True):
+    """Standardsetup für Logging."""
     log_dir = r"E:\Programming Workspace\Python\BA-Sauerteig\log"
     os.makedirs(log_dir, exist_ok=True)
 
