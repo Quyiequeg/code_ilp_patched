@@ -14,5 +14,6 @@ dblp-2025-05-02.xml
 notebooks/.ipynb_checkpoints/
 /Test_Bilder
 dblp-2025-05-02.xml.gz
-/output
+/output/*
 /dblp_daten_gesamt
+debug_renderer.py

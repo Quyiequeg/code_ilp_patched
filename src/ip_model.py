@@ -340,15 +340,17 @@ if __name__ == "__main__":
     save = True
     # pipeline = "barycenter"
     # method = "paper"
-    cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k8_2020_11.06--16.04_edges248_intra27.pkl"
+    cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_ILP_k16_2024_12.06--10.49_edges973_intra0.pkl"
     with open(cache_path, "rb") as file:
         hpl = pickle.load(file)
-    _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+    # _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
     # cm.edge_cleanup(hpl)
     # if hpl.node_groups == hp.fuse:
     #     print(f"JA nodegroups = fused")
     # else:
     #     print(f"NOPE")
-    hpl.post_processing_expansion(node_axis_map)
+    # hpl.post_processing_expansion(node_axis_map)
     # cm.edge_cleanup(hpl)
-    rr.hiveplot_renderer("1000x1000_test", hpl, expanded=True, debug = True)
+    # rr.hiveplot_renderer("1000x1000_test", hpl, expanded=True, debug = True)
+    # rr.hiveplot_renderer("1000x1000_test", hpl,  debug = True)
+    print(hpl.edges())

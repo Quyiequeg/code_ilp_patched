@@ -425,16 +425,17 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
     position = 1/len(neighbor_group) * neighbor_sum
     return position
 
-def edge_node_cleanup(layout: HivePlotLayout):
+def edge_node_cleanup(layout: HivePlotLayout, intra: bool = False):
     """Nachbereitung der Pipeline, dient als Absicherung, dass Kanten und intra Knoten im Layout korrekt gesetzt sind.
     """
     fused_edges = layout.fuse_edges_with_edge_dummies()
     layout.graph.add_edges_from(fused_edges)
     layout.graph.remove_edges_from(layout.long_edges)
     _, node_axis_map = node_to_axis_maps(layout, layout.fuse_node_groups_with_dummies())
-    for edge in fused_edges:
-        if node_axis_map[edge[0]] == node_axis_map[edge[1]] and edge not in layout.intra_axis_edges:
-            layout.intra_axis_edges.append(edge)
+    if intra:
+        for edge in fused_edges:
+            if node_axis_map[edge[0]] == node_axis_map[edge[1]] and edge not in layout.intra_axis_edges:
+                layout.intra_axis_edges.append(edge)
 
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = float("inf"), expanded: bool = False) -> None:
     """Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).

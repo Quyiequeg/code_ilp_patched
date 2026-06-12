@@ -25,7 +25,7 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
     3. x Wert für Labels: {x + r + 2} x Koordinate des zugehörigen Knoten + Radius des Knoten + Offset zum Knoten (verhindert das Überlappen von Label und Knoten)
     4. radius bei virtuellen Knoten = Achsenendpunkt + gleichmäßige Anordnung der Knoten auf einer imaginären Achse, wobei sie einen Abstand zum Startpunkt haben (Länge der Imaginären auf 50 Pixel begrenzt)
     5. x_fix, y_fix bei nicht intra Kanten: Fixpunkt zu dem die Kante tendiert, wird auf den Mittelpunkt der Kante + ein Offset alpha (unterschiedlich für real-real/virtuell-virtuell und real-virtuell) vom Koordinatenursprung weg gesetzt
-    6. x_fix, y_fix bei intra Kanten: da Start- und Endknoten auf der gleichen Achse liegen wird der Mittelpunkt nicht wie im vorherigen Fall entgegen des Ursprungs versetzt sondern im Uhrzeigersinn der Achsen anhand des Offset alpha
+    6. x_fix, y_fix bei intra Kanten: da Start- und Endknoten auf der gleichen Achse liegen wird der Mittelpunkt nicht wie im vorherigen Fall entgegen des Ursprungs versetzt von der Achsen weg anhand des Offset alpha
 
     Args:
         node_groups (dict[int, list[str  |  int]]): AchsenID: Knotenliste
