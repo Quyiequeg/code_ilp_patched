@@ -45,7 +45,7 @@ def main():
     setup_logger(per_session=False)
     logger = logging.getLogger(__name__)
     start = time.time()
-    year = 2024
+    year = 2020
     save = True
     # pipeline = "barycenter"
     # method = "paper"
