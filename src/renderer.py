@@ -17,7 +17,7 @@ def translate_polar_to_carthesian(radius: float, angle: float, center_x: float =
     y = center_y + radius * math.sin(angle)
     return x, y
 
-def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], intra_edges: list[tuple[int | str, int | str]] | None = None) -> tuple[list[str], list[str], list[str], list[str]]: 
+def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], intra_edges: list[tuple[int | str, int | str]] | None = None, axes_labels: bool =True) -> tuple[list[str], list[str], list[str], list[str]]: 
     """ Die Funktion berechnet die Koordinaten für Achsen, Kanten, Knoten und deren Label und erzeugt die .svg-Zeilen.
     Einige Hinweise zu den Berechnungen:
     1. angle = 270 + i * (360/len(node_groups)): 270 Grad, sorgt dafür, dass die erste Achse der Ordnung immer Richtung Norden eingefügt wird und alle weiteren radial dazu im Uhrzeigersinn
@@ -46,9 +46,10 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
         angle = 270 + i * (360/len(node_groups)) # erste achse nördlich und alle anderen relativ dazu
         x_end, y_end = translate_polar_to_carthesian(MAX_RADIUS, angle, CENTER_X, CENTER_Y)
         x_start, y_start = translate_polar_to_carthesian(AXIS_OFFSET, angle, CENTER_X, CENTER_Y)
-        x_label, y_label = translate_polar_to_carthesian(37, angle, CENTER_X, CENTER_Y) # leicht versetztes achsenlabel innen
+        x_label, y_label = translate_polar_to_carthesian(MAX_RADIUS + 10, angle*0.995, CENTER_X, CENTER_Y) # leicht versetztes achsenlabel innen
         svg_axes.append(f'<line x1="{x_start}" y1="{y_start}" x2="{x_end}" y2="{y_end}" stroke="black" stroke-width="1"/>')
-        svg_axes.append(f'<text x="{x_label}" y="{y_label}" text-anchor="middle" dominant-baseline="middle" font-size="12">{axis}</text>')
+        if axes_labels:
+            svg_axes.append(f'<text x="{x_label}" y="{y_label}" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#555555">A{axis}</text>')
         for node in nodes: # knoten nach virtuell und real vorfiltern
             if isinstance(node, int):
                 real_nodes.append(node)
@@ -60,21 +61,22 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
             rendered_node_positions[real] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="2" fill="#e01414"/>')
             if real >=0:
-                svg_labels.append(f'<text x="{x + 2 + 2}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
+                svg_labels.append(f'<text x="{x + 2 + 5}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
         for j, virtual in enumerate(virtual_nodes, start=1):
             radius = MAX_RADIUS + j * 50/ (len(virtual_nodes) + 1) # (MAX_RADIUS + 50 - MAX_RADIUS)
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[virtual] = (x, y)
-            svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="0" fill="#e01414"/>')
+            svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="0" fill="#AED6F1"/>')
     for edge in edges:
         u_x, u_y = rendered_node_positions[edge[0]]
         v_x, v_y = rendered_node_positions[edge[1]]
         x_mid = (u_x + v_x) /2
         y_mid = (u_y + v_y) /2
         if (isinstance(edge[0], int) and isinstance(edge[1], int)) or (isinstance(edge[0], str) and isinstance(edge[1], str)): # beide real oder beide virtuell
-            alpha = -0.15
+            # alpha = -0.3
+            alpha = -0.15 # original
         elif (isinstance(edge[0], str) and isinstance(edge[1], int)) or (isinstance(edge[1], str) and isinstance(edge[0], int)): # mixed
-            alpha = -0.25
+            alpha = -0.8
         x_fix = x_mid + (CENTER_X - x_mid) * alpha
         y_fix = y_mid + (CENTER_Y - y_mid) * alpha
         svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" fill="none" stroke="gray" stroke-width="1.2" opacity="0.5"/>')
@@ -99,7 +101,7 @@ def render_svg(filename: str, width: int, height: int, elements: list[str]) -> N
     with open(filename, "w", encoding="utf-8") as file:
         file.write("\n".join(svg))
 
-def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False, intra: bool = False, debug: bool = False) -> None:
+def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True) -> None:
     """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (.svg) realisiert.
     """
     if expanded:
@@ -109,17 +111,20 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False,
     elements = ["<rect width='100%' height='100%' fill='white'/>"] # weißer hintergrund
     # elements = [] # kein hintergrund
     if intra:
-        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), layout.intra_axis_edges)
+        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), layout.intra_axis_edges, axes_labels=axes_labels)
     else:
-        ax, nod, ed, lab = draw_basis(node_groups, layout.edges())
+        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), axes_labels=axes_labels)
     elements.extend(ax)
     elements.extend(ed)
     elements.extend(nod)
-    elements.extend(lab)
-    if debug:
+    if node_labels:
+        elements.extend(lab)
+    if mode == "debug":
         output = Path("output/debug")
-    else:
+    elif mode == "year":
         output = Path("output/years")
+    elif mode == "ba":
+        output = Path("output/ba")
     filename = output / (name + ".svg")
     output.mkdir(parents=True, exist_ok=True)
     render_svg(filename, WIDTH, HEIGHT, elements)

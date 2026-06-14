@@ -513,7 +513,7 @@ if __name__ == "__main__":
 
     # graph_mode = 0
     # graph_mode = 1
-    graph_mode = 2
+    graph_mode = 3
 
     #INITIALISIERUNG paperkonform
     G = graphs.sample_graph_selfconstructed_extended(graph_mode)
@@ -531,7 +531,7 @@ if __name__ == "__main__":
 
     # PIPELINE nicht expandiert
     barycenter_crossmin_pipeline(hpl)
-    edge_cleanup(hpl)
+    edge_node_cleanup(hpl)
     rr.hiveplot_renderer("Barycenter_paperkonform", hpl)
     rr.hiveplot_renderer("Barycenter_paperkonform mit intra", hpl, intra=True)
 

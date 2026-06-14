@@ -53,8 +53,7 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_nodes_from([3, 4, 5], subset=1)
         G.add_nodes_from([6, 7, 8], subset=2)
 
-        G.add_edges_from([(0, 5), (1, 3), (2, 4)])
-        G.add_edges_from([(3, 6), (1, 7)])
+        G.add_edges_from([(0, 5), (0, 3), (1, 4), (2, 6), (7, 0), (8, 2), (8, 5), (6, 3), (7, 4)])
     elif mode == 1: # intra-axis tests
         G.add_nodes_from([0, 1, 2], subset=0)
         G.add_nodes_from([3, 4, 5], subset=1)
@@ -67,27 +66,19 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(0, 10), (2, 9)])
         G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
     elif mode == 2: # intra axis tests
-        G.add_nodes_from([0, 1, 2], subset=0)
-        G.add_nodes_from([3, 4, 5], subset=1)
-        G.add_nodes_from([6, 7, 8], subset=2)
-        G.add_nodes_from([9, 10, 11, 12], subset=3) # + isolierter Knoten
-        G.add_nodes_from([13, 14, 15, 16, 17, 18], subset=4) # + isolierte Knoten + intra-axis
+        G.add_nodes_from([1, 2, 3], subset=1)
+        G.add_nodes_from([4, 5, 6], subset=2)
+        G.add_nodes_from([7, 8, 9], subset=3)
+        G.add_nodes_from([10, 11, 12, 13], subset=4)
+        G.add_nodes_from([14, 15, 16], subset=5) 
 
-        G.add_edges_from([(0, 5), (1, 3), (2, 4)])
-        G.add_edges_from([(6, 11), (7, 9), (8, 10)])
-        G.add_edges_from([(0, 10), (2, 9)])
-        G.add_edges_from([(1, 7), (2, 8), (5, 11), (2, 11), (4, 11)]) # lange kanten
-        G.add_edges_from([(13, 14), (15, 16), (17, 18), (14,15)]) # intra-axis kanten, OSZILLATION BEI (17, 18) -> MÖGLICHER FIX: states hashen
-        G.add_edges_from([(9, 16)]) # 13 ist jetzt inter und intra 
+        G.add_edges_from([(1, 6), (2, 4), (3, 5)]) # 1 -> 2
+        G.add_edges_from([(5, 8)]) # 2 -> 3
+        G.add_edges_from([(7, 11), (7, 10)]) # 3 -> 4
+        G.add_edges_from([(10, 14)]) # 4 -> 5
+        G.add_edges_from([(2, 8), (6, 13), (3, 12), (1, 13), (4, 14)]) # lange kanten
+        G.add_edges_from([(14, 15), (15, 16)]) # intra
 
-        G.add_edges_from([(14, 16)]) # verzweigung der intra axis komponente knoten 14-15-16 bilden jetzt einen kreis
-        G.add_nodes_from([19, 20, 21, 22, 23, 24, 25, 26, 27, 28], subset=5) # testfall: langer intra axis pfad
-        # G.add_edges_from([(19, 20), (20, 21),  (22, 23)]) # testfall: langer intra axis pfad
-        G.add_edges_from([(19, 20), (20, 21), (21, 22), (21, 22), (23, 24)]) # testfall: nur intra lang + kurz
-        G.add_edges_from([(19, 21), (24, 25), (5, 18)]) # testfälle: kreis+solo auf einer kante
-        G.add_edges_from([(0, 24)]) # testfälle: erweitert vorherigen fall um mixed
-        G.add_edges_from([(27, 28)])
-        G.add_edges_from([(7, 16), (18, 28)])
     elif mode == 3: # post processing test graph
         G.add_nodes_from([0, 1, 2, 'd_4_11_1', 'd_5_11_1'], subset=0)
         G.add_nodes_from([3, 4, 5, 'd_0_24_1'], subset=1)
