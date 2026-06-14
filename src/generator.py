@@ -34,10 +34,7 @@ from ordering import (
     reordered_node_groups,
     node_to_axis_maps,
 )
-from crossing_minimization import (
-    barycenter_crossmin_pipeline,
-    edge_node_cleanup,
-)
+import src.crossing_minimization as cm
 from ip_model import (
     ip_model_pipeline
 )
@@ -96,11 +93,11 @@ def generate_hiveplot(graph_mode: int, pipeline: str = "bary"):
     # PIPELINE nicht expandiert
     # hpl.node_groups = hpl.fuse_node_groups_with_dummies()
     if pipeline == "bary":
-        barycenter_crossmin_pipeline(hpl)
-        edge_node_cleanup(hpl)
+        cm.barycenter_crossmin_pipeline(hpl)
+        cm.edge_node_cleanup(hpl)
     elif pipeline == "ilp":
         ip_model_pipeline(hpl, threshold=10)
-        edge_node_cleanup(hpl, intra=True)
+        cm.edge_node_cleanup(hpl, intra=True)
     return hpl, hpl_copy
 
 
@@ -119,21 +116,41 @@ if __name__ == "__main__":
     mode = "ba"
     node_labels = True
     axes_labels = True
-    draw_dummys = False
-    
-
-    hiveplot_renderer(name, hpl, expanded, intra, mode, node_labels, axes_labels)
-    hiveplot_renderer(name_two, hpl_copy, expanded, intra, mode, node_labels, axes_labels)
-    settings(f"output/ba/{name_two}.svg", node_pt=8, line_pt=3, text_pt=25, draw_dummys=False, dummy_size=None)
-    settings(f"output/ba/{name}.svg", node_pt=8, line_pt=3, text_pt=25, draw_dummys=draw_dummys, dummy_size=5)
-    if mode == "ba":
-        svg_path = f"output/ba/{name}.svg"
-    drawing = svg2rlg(f"output/ba/{name}.svg")
-    renderPDF.drawToFile(drawing, f"output/ba/{name}.pdf")
-    drawing = svg2rlg(f"output/ba/{name_two}.svg")
-    renderPDF.drawToFile(drawing, f"output/ba/{name_two}.pdf")
-    print(f"Kosten Optimiert: {ct.cost_function_whole(hpl.axis_order, hpl.node_groups, hpl.edges())}")
-    print(f"Kosten Original: {ct.cost_function_whole(hpl_copy.axis_order, hpl_copy.node_groups, hpl_copy.edges())}")
-    # print(f"Kosten nach brute force: {ct.cost_function_whole(hpl_copy.axis_order, hpl_copy.node_groups, hpl_copy.edges())}")
-    # hiveplot_renderer(f"{name}_mit_intra", hpl, intra=True, mode="ba", node_labels=node_labels, axes_labels=axes_labels)
-    print(hpl_copy.edges())
+    draw_dummys = True
+    special = True
+    if special:
+        G = g.sample_graph_selfconstructed_extended(graph_mode)
+        nodes = list(G.nodes(data="subset"))
+        axes = native_order(nodes)
+        ng = node_groups(nodes)
+        hpl = HivePlotLayout(
+            graph=G,
+            num_axes=len(axes),
+            axis_order=axes,
+            node_groups=ng
+        )
+        node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+        neighborhood_map = hpl.get_proper_neighborhood_map(hpl.edges()) # initialisieren aus layout.graph
+        cm.subdivide_long_edges(hpl, node_position_map, node_axis_map, neighborhood_map)
+        cm.edge_node_cleanup(hpl, intra=True)
+        if mode == "ba":
+            svg_path = f"output/ba/{name}.svg"
+        # hiveplot_renderer(name + "_SPECIAL", hpl, expanded, intra, mode, node_labels, axes_labels)
+        # settings(f"output/ba/{name}_SPECIAL.svg", node_pt=8, line_pt=3, text_pt=25, draw_dummys=draw_dummys, dummy_size=5)
+        drawing = svg2rlg(f"output/ba/{name}_SPECIAL.svg")
+        renderPDF.drawToFile(drawing, f"output/ba/{name}_SPECIAL.pdf")
+    else:
+        hiveplot_renderer(name, hpl, expanded, intra, mode, node_labels, axes_labels)
+        hiveplot_renderer(name_two, hpl_copy, expanded, intra, mode, node_labels, axes_labels)
+        settings(f"output/ba/{name_two}.svg", node_pt=8, line_pt=3, text_pt=25, draw_dummys=False, dummy_size=None)
+        settings(f"output/ba/{name}.svg", node_pt=8, line_pt=3, text_pt=25, draw_dummys=draw_dummys, dummy_size=5)
+        if mode == "ba":
+            svg_path = f"output/ba/{name}.svg"
+        drawing = svg2rlg(f"output/ba/{name}.svg")
+        renderPDF.drawToFile(drawing, f"output/ba/{name}.pdf")
+        drawing = svg2rlg(f"output/ba/{name_two}.svg")
+        renderPDF.drawToFile(drawing, f"output/ba/{name_two}.pdf")
+        print(f"Kosten Optimiert: {ct.cost_function_whole(hpl.axis_order, hpl.node_groups, hpl.edges())}")
+        print(f"Kosten Original: {ct.cost_function_whole(hpl_copy.axis_order, hpl_copy.node_groups, hpl_copy.edges())}")
+        # print(f"Kosten nach brute force: {ct.cost_function_whole(hpl_copy.axis_order, hpl_copy.node_groups, hpl_copy.edges())}")
+        # hiveplot_renderer(f"{name}_mit_intra", hpl, intra=True, mode="ba", node_labels=node_labels, axes_labels=axes_labels)
