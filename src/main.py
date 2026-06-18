@@ -99,8 +99,10 @@ def main():
             hpl_copy = hpl.copy()
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
-            hiveplot_renderer(f"Barycenter_paperkonform_{year}", hpl)
-            hiveplot_renderer(f"Barycenter_paperkonform mit intra_{year}", hpl, intra=True)
+            hpl_freeze = hpl.copy()
+            hpl_freeze.prepare_for_rendering()
+            hiveplot_renderer(f"Barycenter_paperkonform_{year}", hpl_freeze)
+            hiveplot_renderer(f"Barycenter_paperkonform mit intra_{year}", hpl_freeze, intra=True)
             # POST EXPANSION
             _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
             # edge_node_cleanup(hpl)
@@ -159,8 +161,10 @@ def main():
             hpl_copy = hpl.copy()
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
-            hiveplot_renderer(f"ILP_paperkonform_{year}", hpl)
-            hiveplot_renderer(f"ILP_paperkonform mit intra_{year}", hpl, intra=True)
+            hpl_freeze = hpl.copy()
+            hpl_freeze.prepare_for_rendering()
+            hiveplot_renderer(f"ILP_paperkonform_{year}", hpl_freeze)
+            hiveplot_renderer(f"ILP_paperkonform mit intra_{year}", hpl_freeze, intra=True)
             # POST EXPANSION
             _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
             # edge_node_cleanup(hpl)
@@ -169,7 +173,7 @@ def main():
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             # logger.info(hpl)
             hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True)
-            hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True,)
+            hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True)
             if save:
                 timestamp = datetime.now().strftime("%d.%m--%H.%M")
                 filename = f"paper_expanded_ILP_k{hpl.num_axes}_{year}_{timestamp}_edges{len(hpl.edges())}_intra{len(hpl.intra_axis_edges)}.pkl"

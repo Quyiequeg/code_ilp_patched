@@ -61,7 +61,6 @@ class HivePlotLayout:
             f"  Intra-Axis Nodes: {self.intra_axis_nodes}",
             f"  Intra-Axis Edges: {self.intra_axis_edges}",
             f"  Long Edges: {self.long_edges}",
-            f"  Node Order (pi_i): {self.node_order}",
             f"  node_groups_expanded: {self.node_groups_expanded}",
             f"  edges_expanded: {self.edges_expanded}",
             f"  Crossings (standard): {self.crossings}",
@@ -284,8 +283,8 @@ class HivePlotLayout:
             node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID
             dummy_copy (list[tuple[int  |  str, int  |  str]], optional): eine Aktuelle Kopie der Dummysegmente, Default ist None
         """
-        from src.crossing_minimization import parse_dummy_name
-        from src.ordering import node_to_axis_maps
+        from crossing_minimization import parse_dummy_name
+        from ordering import node_to_axis_maps
         if dummy_copy is None:
             dummy_edges = self.dummy_edge_segments
         else:
@@ -401,12 +400,29 @@ class HivePlotLayout:
                     elif start_position > end_position or expanded_node + 1 > self.num_axes: # endknoten liegt rechts der expandierten achse  oder ist erste achse der ordnung
                             new_inter_edges.append(edge)
             self.graph.add_edges_from(new_inter_edges)
+
+    def prepare_for_rendering(self) -> None:
+        """Funktion entfernt alle intra-axis Kanten aus self.edges() und schreibt sie nach self.intra_axis_edges. Notwendig, weil die Rendererlogik sonst falsche 
+        Kanten zeichnet.
+        """
+        node_axis_map = {}
+        for axis, nodes in self.fuse_node_groups_with_dummies().items():
+            for node in nodes:
+                node_axis_map[node] = axis
+        
+        intra_edges = [edge for edge in self.edges() 
+                    if node_axis_map[edge[0]] == node_axis_map[edge[1]]]
+        
+        self.graph.remove_edges_from(intra_edges)
+        for edge in intra_edges:
+            if edge not in self.intra_axis_edges:
+                self.intra_axis_edges.append(edge)
         
 
 if __name__ == "__main__":
-    from src.graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
-    from src.ordering import native_order, node_groups, node_to_axis_maps, brute_force_ordering, reordered_node_groups
-    from src.debug_renderer import render_debug
+    from graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
+    from ordering import native_order, node_groups, node_to_axis_maps, brute_force_ordering, reordered_node_groups
+    from debug_renderer import render_debug
     graph_mode = 3
     G = sample_graph_selfconstructed_extended(graph_mode)
     nodes = list(G.nodes(data="subset"))

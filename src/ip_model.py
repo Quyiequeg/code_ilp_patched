@@ -1,7 +1,7 @@
-import src.crossing_minimization as cm
+import crossing_minimization as cm
 from src import graphs
-from src.cost import node_or_axes_span
-from src.ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
+from cost import node_or_axes_span
+from ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
 import networkx as nx
 import pulp as pp
 
@@ -328,13 +328,13 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # print(len(node_axis_map))
 
 if __name__ == "__main__":
-    import src.partitioning as pt
-    import src.hiveplot as hp
-    import src.crossing_minimization as cm
+    import partitioning as pt
+    import hiveplot as hp
+    import crossing_minimization as cm
     import pickle
     import networkx as nx
-    import src.dblp_parser as pr
-    import src.renderer as rr
+    import dblp_parser as pr
+    import renderer as rr
 
     year = 2024
     # pipeline = "barycenter"
@@ -344,7 +344,7 @@ if __name__ == "__main__":
     with open(cache_path, "rb") as file:
         hpl = pickle.load(file)
     # hpl = graphs[year]
-    print(hpl.dummy_edge_segments)
+    # print(hpl.dummy_edge_segments)
     # Initialisiere Hiveplotlayout
     # id_to_name, name_to_id = build_node_identity_maps(graphs[year].nodes())
     # original_edges = graphs[year].edges()

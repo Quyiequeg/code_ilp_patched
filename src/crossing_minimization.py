@@ -21,10 +21,9 @@
 # 5. Pipeline gesamt (nur diese wird ausgeführt und bündelt die einzelnen Bestandteile)
 # -> Parameter intuitiv: def barycenter_crossing_min(G, alpha, phi, pi, g=1, threshold=None) | RETURN: PI
 
-from pyvis import node
 from src import graphs
-from src.cost import node_or_axes_span
-from src.ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
+from cost import node_or_axes_span
+from ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
 import networkx as nx
 import pickle
 # import logging
@@ -508,8 +507,8 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
 
 if __name__ == "__main__":
     print("##########################################")
-    import src.renderer as rr
-    from src.hiveplot import HivePlotLayout
+    import renderer as rr
+    from hiveplot import HivePlotLayout
 
     # graph_mode = 0
     # graph_mode = 1

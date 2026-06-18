@@ -1,4 +1,4 @@
-from src.ordering import node_to_axis_maps, node_to_axis
+from ordering import node_to_axis_maps, node_to_axis
 
 def node_or_axes_span(n1, n2, k): #Span von Knoten u,v oder Achsen a_i,a_j
     """Berechnet den Spann zweier Knoten oder Achsen
@@ -58,7 +58,7 @@ def cost_function_whole(ordering: list[int], node_grps: dict, edges: list) -> in
 if __name__ == "__main__":
     # Aufbau der Testdaten
     from graphs import sample_graph_multipartite
-    from src.ordering import native_order, node_groups
+    from ordering import native_order, node_groups
     G = sample_graph_multipartite()
     nodes = list(G.nodes(data="subset"))
     edges = list(G.edges())

@@ -1,7 +1,7 @@
 import math
 from pathlib import Path
-import src.hiveplot
-
+import hiveplot
+import generator as gr
 WIDTH = 1000
 HEIGHT = 1000
 CENTER_X = WIDTH / 2   # Koordinatenursprung horizontal
@@ -73,8 +73,8 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
         x_mid = (u_x + v_x) /2
         y_mid = (u_y + v_y) /2
         if (isinstance(edge[0], int) and isinstance(edge[1], int)) or (isinstance(edge[0], str) and isinstance(edge[1], str)): # beide real oder beide virtuell
-            # alpha = -0.3
-            alpha = -0.15 # original
+            alpha = -1
+            # alpha = -0.15 # original
         elif (isinstance(edge[0], str) and isinstance(edge[1], int)) or (isinstance(edge[1], str) and isinstance(edge[0], int)): # mixed
             alpha = -0.8
         x_fix = x_mid + (CENTER_X - x_mid) * alpha
@@ -88,7 +88,7 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
             dy = v_y - u_y  
             x_mid = (u_x + v_x) /2
             y_mid = (u_y + v_y) /2
-            alpha = 0.3
+            alpha = 0.5
             x_fix = x_mid - dy * alpha
             y_fix = y_mid + dx * alpha
             svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" fill="none" stroke="gray" stroke-width="1.2" opacity="0.5"/>')
@@ -130,7 +130,30 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False,
     render_svg(filename, WIDTH, HEIGHT, elements)
 
 if __name__ == "__main__":
+    from partitioning import (
+    clauset_newman_moore_communities,
+    louvain_community_detection,
+    )
+    from dblp_parser import (
+        build_node_identity_maps,
+    )
+    from ordering import (
+        native_order,
+        node_groups,
+        brute_force_ordering,
+        reordered_node_groups,
+        node_to_axis_maps,
+    )
+    import crossing_minimization as cm
+    from ip_model import (
+        ip_model_pipeline
+    )
+
+    from hiveplot import HivePlotLayout
+    from renderer import hiveplot_renderer
+    import re
     from svglib.svglib import svg2rlg
     from reportlab.graphics import renderPDF
-    drawing = svg2rlg(f"E:\Programming Workspace\Python\BA-Sauerteig\output\debug\ILP_paperkonform_expandiert_2000_34Achsen.svg")
-    renderPDF.drawToFile(drawing, f"output/ba/kapitel4_graph2000_34Achsen.pdf")
+    gr.settings(fr"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.svg", node_pt=8, line_pt=3, text_pt=25, draw_dummys=False)
+    drawing = svg2rlg(r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.svg")
+    renderPDF.drawToFile(drawing, r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.pdf")

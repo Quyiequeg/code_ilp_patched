@@ -1,7 +1,6 @@
 from itertools import permutations
-
-from src.graphs import sample_graph_selfconstructed
-from src.hiveplot import HivePlotLayout
+from graphs import sample_graph_selfconstructed
+from hiveplot import HivePlotLayout
 
 def native_order(nodes):
     """Bekommt einen NodeView übergeben und wandelt diese über ein Set in eine Liste um, die alle Subsetnumnern enthält. Diese Subsets spiegeln die Achsen wieder. Die Liste dient als Initialisierung zur Berechnung von Phi. Es handelt sich als o
@@ -96,7 +95,7 @@ def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> t
     Returns:
         tuple[int, ...]: _description_
     """
-    from src.cost import cost_function_whole
+    from cost import cost_function_whole
     permutations_ordering = list(permutations(ordering))
     minimized_cost = float('inf') # init
     optimal_perm = None # init
@@ -115,7 +114,7 @@ def reordered_node_groups(node_grps: dict[int, list[int]], new_order: tuple[int,
 
 def ip_ordering(layout: HivePlotLayout) -> list[int]:
     import pulp as pp
-    from src.cost import (
+    from cost import (
         edges_between_axes,
         node_or_axes_span,
         cost_function_whole
@@ -187,8 +186,8 @@ def ip_ordering(layout: HivePlotLayout) -> list[int]:
     return new_axis_order
 if __name__ == "__main__":
     # Aufbau der Testdaten
-    from src.graphs import sample_graph_multipartite, sample_graph_caveman, sample_graph_selfconstructed
-    from src.partitioning import clauset_newman_moore_communities, louvain_community_detection
+    from graphs import sample_graph_multipartite, sample_graph_caveman, sample_graph_selfconstructed
+    from partitioning import clauset_newman_moore_communities, louvain_community_detection
     G = sample_graph_multipartite()
     CG = sample_graph_caveman(4, 10)
     SC = sample_graph_selfconstructed()

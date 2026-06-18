@@ -2,7 +2,7 @@
 
 Verwendung in beliebigen Modulen:
 
-    from src.debug_renderer import render_debug
+    from debug_renderer import render_debug
 
     render_debug(layout, title="nach subdivide", highlight_nodes=[...])
 
@@ -15,7 +15,7 @@ import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
 
-from src.hiveplot import HivePlotLayout
+from hiveplot import HivePlotLayout
 
 
 # ---------------------------------------------------------------------------

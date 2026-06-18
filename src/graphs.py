@@ -1,6 +1,8 @@
 import networkx as nx
-import src.hiveplot as hpl
-
+import hiveplot as hpl
+import crossing_minimization as cm
+import renderer as rr
+import matplotlib.pyplot as plt
 def sample_graph_multipartite(sizes=(10, 10, 10)):
     """Erzeugt einen vollständigen multipartiten Testgraphen. Diese Funktion dient dem Testen und Debugging.
     
@@ -88,24 +90,105 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_nodes_from([13, 14, 15, 16, 17, 18], subset=4) # + isolierte Knoten + intra-axis
         G.add_nodes_from([19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 'd_5_18_1'], subset=5) # testfall: langer intra axis pfad
         G.add_edges_from([(19, 20), (19, 21), (20, 21), (21, 22), (0, 5), (0, 10), (1, 3), (2, 4), (2, 9), (2, 11), (6, 11), (7, 9), (7, 16), (8, 10), (13, 14), (14, 15), (14, 16), (15, 16), (17, 18), (18, 28), (23, 24), (24, 25), (27, 28), (0, 'd_0_24_1'), ('d_0_24_1', 24), (1, 'd_1_7_1'), ('d_1_7_1', 7), (2, 'd_2_8_1'), ('d_2_8_1', 8), (4, 'd_4_11_1'), ('d_4_11_1', 11), (5, 'd_5_11_1'), ('d_5_11_1', 11), (5, 'd_5_18_1'), ('d_5_18_1', 18), (9, 'd_9_16_1'), ('d_9_16_1', 16)])
+    # elif mode == 4: # post processing test graph
+        
+    #     pass
     return G
 
 if __name__ == "__main__":
-    # G = sample_graph_multipartite()
-    # C = sample_graph_caveman(4, 10)
-    D = sample_graph_selfconstructed_extended(1)
-    print("##########################################")
-    # print(f"Multi: Knoten: {G.number_of_nodes()}, Kanten: {G.number_of_edges()}")
-    # print(f"Caveman: Knoten: {C.number_of_nodes()}, Kanten: {C.number_of_edges()}")
-    print(f"Self-constructed: Knoten: {D.number_of_nodes()}, Kanten: {D.number_of_edges()}")
-    print("##########################################")
-    print(nx.single_source_shortest_path_length(D, 16))
-    print(nx.shortest_path(D, 16))
-    print(nx.shortest_path(D, 16).values())
-    node_list = list(nx.shortest_path(D, 16).values())
-    print(node_list)
-    singleton_list = set()
-    for elem in node_list:
-        for single in elem:
-            singleton_list.add(single)
-    print(singleton_list)
+        G = nx.Graph()
+        edges = [
+            (5, 7), (4, 9), (5,10),   # proper
+            (1, 6),                    # long edge, Span 2
+            (10, 12),                  # mixed, Achse 1
+            (11, 13), (13, 15),           # strict-intra lang
+            (16, 17), (2, 3)                  # strict-intra kurz
+        ]
+        for i in range(17):
+            G.add_node(i+1)
+        G.add_edges_from(edges)
+
+        node_groups = {
+            1: [3, 2, 1],
+            3: [7, 9], #8
+            2: [4, 5, 6],
+            4: [12, 11, 10, 13, 15, 17, 16, "d_1_6_1"], #14
+        }
+
+        axis_order = [1, 3, 2, 4]
+        hply = hpl.HivePlotLayout(
+        graph=G,
+        num_axes=4,
+        axis_order=axis_order,
+        node_groups=node_groups,
+        node_groups_dummies = {
+            1: [],
+            3: [],
+            2: [],
+            4: ["d_1_6_1"],
+        },
+        dummy_edge_segments = [
+            (1, "d_1_6_1"),
+            ("d_1_6_1", 6),
+        ],
+        long_edges = {(1, 6)},
+        intra_axis_nodes = {
+            1: [2, 3],
+            3: [],
+            2: [],
+            4: [12, 13, 15, 16, 17],
+        },
+        intra_axis_edges = [
+            (2, 3),
+            (11, 13),
+            (10, 12),
+            (13, 15),
+            (16, 17),
+        ]
+        )
+        color_map = {
+            5:  "#e15759",  # proper
+            7:  "#e15759",  # proper
+            4:  "#e15759",  # proper
+            9:  "#e15759",  # proper
+            1:  "#e15759",  # long edge
+            6:  "#e15759",  # long edge
+            10: "#e15759",  # mixed
+            11: "#e15759",  # mixed
+            12: "#e15759",  # strict-intra lang
+            13: "#e15759",  # strict-intra lang
+            15: "#e15759",  # strict-intra lang
+            16: "#e15759",  # strict-intra kurz
+            17: "#e15759",  # strict-intra kurz
+            2:  "#e15759",  # strict-intra kurz
+            3:  "#e15759",  # strict-intra kurz
+            8:  "#e15759",  # isoliert
+            14: "#e15759",  # isoliert
+        }
+        # G.remove_nodes_from([8, 14])
+        # G.add_edges_from([(1, "d_1_6_1"), ("d_1_6_1", 6)])
+        # G.remove_edge(1,6)
+        # hply.prepare_for_rendering()
+        # print(G.edges())
+        # colors = [color_map[n] for n in G.nodes()]
+        # pos = nx.spring_layout(G, seed=42, k=3.0)  # k erhöhen = mehr Abstand
+
+        # fig, ax = plt.subplots(figsize=(8, 6))
+
+        # nx.draw_networkx_nodes(G, pos, ax=ax,
+        #     node_color=colors, node_size=600)
+
+        # nx.draw_networkx_labels(G, pos, ax=ax,
+        #     font_color='white', font_weight='bold')
+
+        # nx.draw_networkx_edges(G, pos, ax=ax,
+        #     edge_color='gray', width=1.5)
+
+        # ax.axis('off')
+        # plt.savefig("kapitel4_beispielgraph_schlicht.pdf", bbox_inches='tight')
+        # isolated_nodes = cm.remove_isolated_nodes(hpl.graph, hpl.node_groups)
+        # node_position_map, node_axis_map = cm.node_to_axis_maps(hpl, hpl.node_groups)
+        # neighborhood_map = hpl.get_proper_neighborhood_map(hpl.edges())
+        # cm.subdivide_long_edges(hpl, node_position_map, node_axis_map, neighborhood_map)
+        print(hply)
+        # rr.hiveplot_renderer("beispiel_vor_3a", hply, mode = "ba", intra=True)
