@@ -113,6 +113,78 @@ def reordered_node_groups(node_grps: dict[int, list[int]], new_order: tuple[int,
     """Schnelles Umordnen nach Optimierung der Achsenordnung."""
     return {axis: node_grps[axis] for axis in new_order}
 
+def ip_ordering(layout: HivePlotLayout) -> list[int]:
+    import pulp as pp
+    from src.cost import (
+        edges_between_axes,
+        node_or_axes_span,
+        cost_function_whole
+    )
+
+    def ilp_objective_function(partition_to_axis: dict, y: dict, axes_weights: dict, phi: list, k: int) -> pp.lpSum:
+        """Funktion ermittelt die Terme der Zielfunktion und gibt die Zielfunktion zurück."""
+        objectives = []
+        for i in phi:
+            for j in phi:
+                if i == j:
+                    continue
+                for l in range(k):
+                    for h in range(k):
+                        if l == h:
+                            continue
+                        objective = y[(i, j, l, h)] * node_or_axes_span(l, h, k) * axes_weights.get((i, j), 0)
+                        objectives.append(objective)
+        return pp.lpSum(objectives)
+
+    phi = layout.axis_order
+    k = layout.num_axes
+    node_groups = layout.node_groups
+    edges = layout.edges()
+    axes_weights = {}
+    for i in range(k):
+        for j in range(i + 1, k):
+            weight = edges_between_axes(node_groups, edges, phi[i], phi[j])
+            axes_weights[(phi[i], phi[j])] = weight
+            axes_weights[(phi[j], phi[i])] = weight
+    # probleminstanz initialisieren
+    prob = pp.LpProblem("ILP_AxisOrdering", pp.LpMinimize)
+    # Variablen initialisieren
+    partition_to_axis = {}
+    for axis in phi:
+        for j in range(k):
+            partition_to_axis[(axis, j)] = pp.LpVariable(f"x_{axis}_{j}", cat="Binary")
+    # Hilfsvariablen y[(i,j,l,h)] = x[(i,l)] * x[(j,h)]
+    y = {}
+    for i in phi:
+        for j in phi:
+            if i == j:
+                continue
+            for l in range(k):
+                for h in range(k):
+                    if l == h:
+                        continue
+                    y[(i, j, l, h)] = pp.LpVariable(f"y_{i}_{j}_{l}_{h}", cat="Binary")
+                    prob += y[(i, j, l, h)] <= partition_to_axis[(i, l)]
+                    prob += y[(i, j, l, h)] <= partition_to_axis[(j, h)]
+                    prob += y[(i, j, l, h)] >= partition_to_axis[(i, l)] + partition_to_axis[(j, h)] - 1
+    # zielfunktion initialisieren
+    prob += ilp_objective_function(partition_to_axis, y, axes_weights, phi, k)
+    # nebenbedingungen initialisieren
+    for i in phi:
+        prob += pp.lpSum(partition_to_axis[(i, j)] for j in range(k)) == 1
+    for j in range(k):
+        prob += pp.lpSum(partition_to_axis[(i, j)] for i in phi) == 1
+    # ILP lösen
+    prob.solve(pp.PULP_CBC_CMD(msg=False))
+    assignment = {}
+    for i in phi:
+        for j in range(k):
+            if round(pp.value(partition_to_axis[(i, j)])) == 1:
+                assignment[j] = i
+    new_axis_order = []
+    for j in range(k):
+        new_axis_order.append(assignment[j])
+    return new_axis_order
 if __name__ == "__main__":
     # Aufbau der Testdaten
     from src.graphs import sample_graph_multipartite, sample_graph_caveman, sample_graph_selfconstructed

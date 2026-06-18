@@ -1,0 +1,81 @@
+11:16 ------------------------START-------2000------------
+11:16 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:16 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:16 paperlike = True
+11:16 Pipeline und Cleanup fertig. Berechnung in 2.8s abgeschlossen.
+11:16 ------------------------START-------2000------------
+11:16 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:16 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:16 paperlike = True
+11:16 Pipeline und Cleanup fertig. Berechnung in 2.6s abgeschlossen.
+11:17 ------------------------START-------2000------------
+11:17 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:19 ------------------------START-------2000------------
+11:19 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:19 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:19 paperlike = True
+11:19 Pipeline und Cleanup fertig. Berechnung in 2.6s abgeschlossen.
+11:23 ------------------------START-------2000------------
+11:23 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:23 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:23 paperlike = True
+11:23 Pipeline und Cleanup fertig. Berechnung in 2.7s abgeschlossen.
+11:23 ------------------------START-------2000------------
+11:23 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:24 Brute Force fertig. Berechnung in 50.1s abgeschlossen.
+11:24 paperlike = True
+11:24 Pipeline und Cleanup fertig. Berechnung in 52.8s abgeschlossen.
+11:28 ------------------------START-------2000------------
+11:28 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:28 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:28 paperlike = True
+11:28 Pipeline und Cleanup fertig. Berechnung in 2.6s abgeschlossen.
+11:28 Post Processing fertig. Berechnung in 2.6s abgeschlossen.
+11:28 ------------------------START-------2000------------
+11:28 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:28 Brute Force fertig. Berechnung in 23.6s abgeschlossen.
+11:28 paperlike = True
+11:28 Pipeline und Cleanup fertig. Berechnung in 26.3s abgeschlossen.
+11:29 Post Processing fertig. Berechnung in 75.1s abgeschlossen.
+11:32 ------------------------START-------2000------------
+11:32 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:32 ------------------------START-------2000------------
+11:32 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:32 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:32 paperlike = True
+11:32 Pipeline und Cleanup fertig. Berechnung in 2.7s abgeschlossen.
+11:32 Post Processing fertig. Berechnung in 2.7s abgeschlossen.
+11:32 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k17_2000_17.06--11.32_edges87_intra87.pkl
+11:32 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_ILP_k34_2000_17.06--11.32_edges174_intra87.pkl
+11:32 Fertig. Berechnung in 2.7s abgeschlossen
+11:32 ------------------------STOPP--------------------------------
+11:34 ------------------------START-------2000------------
+11:34 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:34 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:34 paperlike = True
+11:34 Pipeline und Cleanup fertig. Berechnung in 2.5s abgeschlossen.
+11:34 Post Processing fertig. Berechnung in 2.5s abgeschlossen.
+11:34 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k17_2000_17.06--11.34_edges87_intra87.pkl
+11:34 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_ILP_k34_2000_17.06--11.34_edges174_intra87.pkl
+11:34 Fertig. Berechnung in 2.5s abgeschlossen
+11:34 ------------------------STOPP--------------------------------
+11:38 ------------------------START-------2000------------
+11:38 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:38 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:38 paperlike = True
+11:38 Pipeline und Cleanup fertig. Berechnung in 2.6s abgeschlossen.
+11:38 Post Processing fertig. Berechnung in 2.6s abgeschlossen.
+11:38 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k17_2000_17.06--11.38_edges87_intra87.pkl
+11:38 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_ILP_k34_2000_17.06--11.38_edges174_intra87.pkl
+11:38 Fertig. Berechnung in 2.6s abgeschlossen
+11:38 ------------------------STOPP--------------------------------
+11:42 ------------------------START-------2000------------
+11:42 Hiveplotlaut fertig. Berechnung in 0.0s abgeschlossen.
+11:42 Brute Force fertig. Berechnung in 0.0s abgeschlossen.
+11:42 paperlike = True
+11:42 Pipeline und Cleanup fertig. Berechnung in 1.4s abgeschlossen.
+11:42 Post Processing fertig. Berechnung in 1.4s abgeschlossen.
+11:42 Nicht expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_ILP_k8_2000_17.06--11.42_edges87_intra87.pkl
+11:42 Expandiert Cache gespeichert: E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\paper_expanded_ILP_k16_2000_17.06--11.42_edges174_intra87.pkl
+11:42 Fertig. Berechnung in 1.4s abgeschlossen
+11:42 ------------------------STOPP--------------------------------

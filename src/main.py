@@ -28,6 +28,7 @@ from ordering import (
     brute_force_ordering,
     reordered_node_groups,
     node_to_axis_maps,
+    ip_ordering
 )
 from crossing_minimization import (
     barycenter_crossmin_pipeline,
@@ -45,7 +46,7 @@ def main():
     setup_logger(per_session=False)
     logger = logging.getLogger(__name__)
     start = time.time()
-    year = 2020
+    year = 2015
     save = True
     # pipeline = "barycenter"
     # method = "paper"
@@ -78,13 +79,14 @@ def main():
     print(f"ZEIT: {time.time() - start:.1f}")
     logger.info(f"Hiveplotlaut fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
     print(f"ZEIT: {time.time() - start:.1f}")
-    hpl.axis_order = brute_force_ordering(axes, node_grps, list(G.edges()))
+    # hpl.axis_order = brute_force_ordering(axes, node_grps, list(G.edges()))
+    hpl.axis_order = ip_ordering(hpl)
     hpl.node_groups = reordered_node_groups(node_grps, hpl.axis_order)
     logger.info(f"Brute Force fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
     print(f"ZEIT: {time.time() - start:.1f}")
     ############################################# Pipeline beginnt
-    # paper_like = True ##########################
-    paper_like = False #########################
+    paper_like = True ##########################
+    # paper_like = False #########################
     # modus = "bary" #############################
     modus = "ilp" ###############################
     #############################################
@@ -167,6 +169,7 @@ def main():
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             # logger.info(hpl)
             hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True)
+            hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True,)
             if save:
                 timestamp = datetime.now().strftime("%d.%m--%H.%M")
                 filename = f"paper_expanded_ILP_k{hpl.num_axes}_{year}_{timestamp}_edges{len(hpl.edges())}_intra{len(hpl.intra_axis_edges)}.pkl"

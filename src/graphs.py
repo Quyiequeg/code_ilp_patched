@@ -77,7 +77,8 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
         G.add_edges_from([(7, 11), (7, 10)]) # 3 -> 4
         G.add_edges_from([(10, 14)]) # 4 -> 5
         G.add_edges_from([(2, 8), (6, 13), (3, 12), (1, 13), (4, 14)]) # lange kanten
-        G.add_edges_from([(14, 15), (15, 16)]) # intra
+        # G.add_edges_from([(14, 15), (15, 16)]) # intra
+        # G.add_edges_from([(7, 9), (8, 9)]) # intra
 
     elif mode == 3: # post processing test graph
         G.add_nodes_from([0, 1, 2, 'd_4_11_1', 'd_5_11_1'], subset=0)

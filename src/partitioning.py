@@ -12,7 +12,7 @@ def clauset_newman_moore_communities(graph, threshold: int = 0):
         dict[int, list[int]]: Ein Dictionary mit den Communities als Werte und ihren IDs als Schlüssel.
     """
     communities = nx.algorithms.community.greedy_modularity_communities(graph) # !prüfen: frozenset -> communities später nicht veränderbar, relevant?
-    node_grps = {i: list(community) for i, community in enumerate(communities)}
+    node_grps = {i: list(community) for i, community in enumerate(communities, start=1)}
     if threshold > 0:
         while  len(node_grps) > threshold:
             node_group_size = {i: len(node_grps[i]) for i in node_grps} # communityid: größe

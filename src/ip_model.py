@@ -120,7 +120,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
                     uv = delta_static[(u, v, axis)]
                     vu = delta_static[(v, u, axis)]
                     if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable):
-                        prob += uv + vu == 1 # antisymmetrie, im paper implizit angenommen
+                        prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
             for i in range(len(pi_var)): # transitivitätsbedingungen
                 for j in range(i+1, len(pi_var)):
                     for k in range(j+1, len(pi_var)):
@@ -169,8 +169,8 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
                     u, v = pi_var[i], pi_var[j]
                     uv = delta_static[(u, v, axis)]
                     vu = delta_static[(v, u, axis)]
-                    if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable):
-                        prob += uv + vu == 1
+                    if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable): 
+                        prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
             for i in range(len(pi_var)):
                 for j in range(i+1, len(pi_var)):
                     for k in range(j+1, len(pi_var)):
@@ -336,21 +336,34 @@ if __name__ == "__main__":
     import src.dblp_parser as pr
     import src.renderer as rr
 
-    year = 2020
-    save = True
+    year = 2024
     # pipeline = "barycenter"
     # method = "paper"
+    # cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\gd_graphs.pkl"
     cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_ILP_k16_2024_12.06--10.49_edges973_intra0.pkl"
     with open(cache_path, "rb") as file:
         hpl = pickle.load(file)
-    # _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    # cm.edge_cleanup(hpl)
-    # if hpl.node_groups == hp.fuse:
-    #     print(f"JA nodegroups = fused")
-    # else:
-    #     print(f"NOPE")
-    # hpl.post_processing_expansion(node_axis_map)
-    # cm.edge_cleanup(hpl)
-    # rr.hiveplot_renderer("1000x1000_test", hpl, expanded=True, debug = True)
-    # rr.hiveplot_renderer("1000x1000_test", hpl,  debug = True)
-    print(hpl.edges())
+    # hpl = graphs[year]
+    print(hpl.dummy_edge_segments)
+    # Initialisiere Hiveplotlayout
+    # id_to_name, name_to_id = build_node_identity_maps(graphs[year].nodes())
+    # original_edges = graphs[year].edges()
+    # edges = []
+    # for edge in original_edges:
+    #     edges.append((name_to_id[edge[0]], name_to_id[edge[1]]))
+    # # logger.info(edges)
+    # # logger.info(id_to_name, name_to_id)
+    # G = nx.Graph()
+    # G.add_edges_from(edges)
+    # # logger.info(graphs[year])
+    # # logger.info(G)
+    # # check auf graphs[year] nodes/edges == G?
+    # node_grps = clauset_newman_moore_communities(G, 8)
+    # axes = list(node_grps.keys())
+    # # logger.info(node_groups)
+    # hpl = HivePlotLayout(
+    #     graph=G,
+    #     num_axes=len(axes),
+    #     axis_order=axes,
+    #     node_groups=node_grps
+    # )

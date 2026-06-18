@@ -130,16 +130,7 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False,
     render_svg(filename, WIDTH, HEIGHT, elements)
 
 if __name__ == "__main__":
-    from src.graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
-    import src.hiveplot as hpl
-    graph_mode = 3
-    G = sample_graph_selfconstructed_extended(graph_mode)
-    a_order = [0, 1, 5, 4, 2, ]
-    ng = {0: [1, 2, 0, 'd_4_11_1', 'd_5_11_1'], 1: [3, 4, 5, 'd_0_24_1'], 5: [19, 20, 21, 22, 24, 23, 25, 27, 28, 26, 'd_5_18_1'], 4: [14, 16, 15, 13, 17, 18], 2: [7, 6, 8, 'd_9_16_1'], 3: [9, 10, 11, 12, 'd_1_7_1', 'd_2_8_1']}
-    layout = hpl.HivePlotLayout(
-        graph=G,
-        axis_order = a_order,
-        num_axes=len(a_order),
-        node_groups=ng,
-    )
-    hiveplot_renderer("test", layout)
+    from svglib.svglib import svg2rlg
+    from reportlab.graphics import renderPDF
+    drawing = svg2rlg(f"E:\Programming Workspace\Python\BA-Sauerteig\output\debug\ILP_paperkonform_expandiert_2000_34Achsen.svg")
+    renderPDF.drawToFile(drawing, f"output/ba/kapitel4_graph2000_34Achsen.pdf")

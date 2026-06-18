@@ -15,8 +15,6 @@ class HivePlotLayout:
         node_groups_dummies (dict[int, list[int]]): Achsen mit Dummyknoten
         # dummy_edge_segments (dict[tuple[int,int], list[tuple[int, int]]]): key: Kantentupel (u,v) value: Liste von Kantensegmenten die u und v über Dummyknoten verbinden
         node_order (dict[int, list[int]]): pi_i pro Achse gebündelt
-        node_order_plus (dict[int, list[int]]): pi_i^+
-        node_order_minus (dict[int, list[int]]): pi_i^-
         crossings (Optional[int]): Kreuzungszahl Standardmodell
         crossings_extended (Optional[int]): Kreuzungszahl erweitertes Modell
     """
@@ -24,17 +22,17 @@ class HivePlotLayout:
     graph: nx.Graph
     num_axes: int
     axis_order: list[int]
-    node_groups: dict[int, list[int]]
+    node_groups: dict[int, list[int | str]]
 
     # notwendig für Pipeline Schritt 3: lange Kanten segmentieren
-    node_groups_dummies: dict[int, list[int]] = field(default_factory=dict)
-    dummy_edge_segments: list[tuple[int, int]] = field(default_factory=list)
+    node_groups_dummies: dict[int, list[str]] = field(default_factory=dict)
+    dummy_edge_segments: list[tuple[int | str, int| str]] = field(default_factory=list)
     long_edges: set[tuple[int, int]] = field(default_factory=set)
     intra_axis_nodes: dict[int, list[int]] = field(default_factory=dict)
     intra_axis_edges: list[tuple[int, int]] = field(default_factory=list)
 
     # knotenordnung auf achsen, wobei pi_i = p_i^+ = p_i^-
-    node_order: dict[int, list[int]] = field(default_factory=dict)
+    # node_order: dict[int, list[int]] = field(default_factory=dict)
 
     node_groups_expanded:  dict[int, list[int | str]] = field(default_factory=dict)
     edges_expanded: list[tuple[int | str, int | str]] = field(default_factory=list)
@@ -331,6 +329,7 @@ class HivePlotLayout:
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
         _, node_to_axis_map_copy = node_to_axis_maps(self, node_groups_expanded)
+        # node_to_axis_map_copy = node_axis_map
         edge_axis_map = {edge: (node_to_axis_map_copy[edge[0]], node_to_axis_map_copy[edge[1]]) for edge in self.edges()} # update kanten zu achsen map
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
