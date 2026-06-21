@@ -96,6 +96,11 @@ def sample_graph_selfconstructed_extended(mode: int = 0):
     return G
 
 if __name__ == "__main__":
+        from ordering import node_to_axis_maps, ip_ordering, reordered_node_groups
+        from partitioning import clauset_newman_moore_communities
+        import crossing_minimization as cm
+        
+        from ip_model import onelayer_twosided_optimization
         G = nx.Graph()
         edges = [
             (5, 7), (4, 9), (5,10),   # proper
@@ -107,69 +112,25 @@ if __name__ == "__main__":
         for i in range(17):
             G.add_node(i+1)
         G.add_edges_from(edges)
-
-        node_groups = {
-            1: [3, 2, 1],
-            3: [7, 9], #8
-            2: [4, 5, 6],
-            4: [12, 11, 10, 13, 15, 17, 16, "d_1_6_1"], #14
-        }
-
-        axis_order = [1, 3, 2, 4]
-        hply = hpl.HivePlotLayout(
-        graph=G,
-        num_axes=4,
-        axis_order=axis_order,
-        node_groups=node_groups,
-        node_groups_dummies = {
-            1: [],
-            3: [],
-            2: [],
-            4: ["d_1_6_1"],
-        },
-        dummy_edge_segments = [
-            (1, "d_1_6_1"),
-            ("d_1_6_1", 6),
-        ],
-        long_edges = {(1, 6)},
-        intra_axis_nodes = {
-            1: [2, 3],
-            3: [],
-            2: [],
-            4: [12, 13, 15, 16, 17],
-        },
-        intra_axis_edges = [
-            (2, 3),
-            (11, 13),
-            (10, 12),
-            (13, 15),
-            (16, 17),
-        ]
-        )
-        color_map = {
-            5:  "#e15759",  # proper
-            7:  "#e15759",  # proper
-            4:  "#e15759",  # proper
-            9:  "#e15759",  # proper
-            1:  "#e15759",  # long edge
-            6:  "#e15759",  # long edge
-            10: "#e15759",  # mixed
-            11: "#e15759",  # mixed
-            12: "#e15759",  # strict-intra lang
-            13: "#e15759",  # strict-intra lang
-            15: "#e15759",  # strict-intra lang
-            16: "#e15759",  # strict-intra kurz
-            17: "#e15759",  # strict-intra kurz
-            2:  "#e15759",  # strict-intra kurz
-            3:  "#e15759",  # strict-intra kurz
-            8:  "#e15759",  # isoliert
-            14: "#e15759",  # isoliert
-        }
-        # G.remove_nodes_from([8, 14])
-        # G.add_edges_from([(1, "d_1_6_1"), ("d_1_6_1", 6)])
-        # G.remove_edge(1,6)
-        # hply.prepare_for_rendering()
-        # print(G.edges())
+        # color_map = {
+        #     5:  "#e15759",  # proper
+        #     7:  "#e15759",  # proper
+        #     4:  "#e15759",  # proper
+        #     9:  "#e15759",  # proper
+        #     1:  "#e15759",  # long edge
+        #     6:  "#e15759",  # long edge
+        #     10: "#e15759",  # mixed
+        #     11: "#e15759",  # mixed
+        #     12: "#e15759",  # strict-intra lang
+        #     13: "#e15759",  # strict-intra lang
+        #     15: "#e15759",  # strict-intra lang
+        #     16: "#e15759",  # strict-intra kurz
+        #     17: "#e15759",  # strict-intra kurz
+        #     2:  "#e15759",  # strict-intra kurz
+        #     3:  "#e15759",  # strict-intra kurz
+        #     8:  "#e15759",  # isoliert
+        #     14: "#e15759",  # isoliert
+        # }
         # colors = [color_map[n] for n in G.nodes()]
         # pos = nx.spring_layout(G, seed=42, k=3.0)  # k erhöhen = mehr Abstand
 
@@ -186,9 +147,85 @@ if __name__ == "__main__":
 
         # ax.axis('off')
         # plt.savefig("kapitel4_beispielgraph_schlicht.pdf", bbox_inches='tight')
-        # isolated_nodes = cm.remove_isolated_nodes(hpl.graph, hpl.node_groups)
-        # node_position_map, node_axis_map = cm.node_to_axis_maps(hpl, hpl.node_groups)
-        # neighborhood_map = hpl.get_proper_neighborhood_map(hpl.edges())
-        # cm.subdivide_long_edges(hpl, node_position_map, node_axis_map, neighborhood_map)
+        node_groups = {
+            1: [3, 2, 1],
+            3: [7, 8, 9], #8
+            2: [4, 5, 6],
+            4: [11, 10, 12, 15, 13, 17, 16, 14], #14 
+        }
+        # node_groups = clauset_newman_moore_communities(G, 4)
+        axes = list(node_groups.keys())
+        axis_order = [1, 3, 2, 4]
+        hply = hpl.HivePlotLayout(
+        graph=G,
+        num_axes=4,
+        axis_order=axis_order,
+        node_groups=node_groups,
+        # node_groups_dummies = {
+        #     1: [],
+        #     3: [],
+        #     2: [],
+        #     4: ["d_1_6_1"],
+        # },
+        # dummy_edge_segments = [
+        #     (1, "d_1_6_1"),
+        #     ("d_1_6_1", 6),
+        # ],
+        # long_edges = {(1, 6)},
+        # intra_axis_nodes = {
+        #     1: [2, 3],
+        #     3: [],
+        #     2: [],
+        #     4: [11, 13, 15, 16, 17],
+        # },
+        # intra_axis_edges = [
+        #     (2, 3),
+        #     (11, 13),
+        #     (10, 12),
+        #     (13, 15),
+        #     (16, 17),
+        # ]
+        )
+        
+        hply.axis_order = ip_ordering(hply)
+        hply.node_groups = reordered_node_groups(hply.node_groups, hply.axis_order)
+        isolated_nodes = cm.remove_isolated_nodes(hply.graph, hply.node_groups)
+        node_position_map, node_axis_map = node_to_axis_maps(hply, hply.node_groups)
+        neighborhood_map = hply.get_proper_neighborhood_map(hply.edges()) # initialisieren aus layout.graph
+        cm.subdivide_long_edges(hply, node_position_map, node_axis_map, neighborhood_map)
+        
+        
+
+        fused_edge_list = hply.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
+        fused_node_list = hply.fuse_node_groups_with_dummies() # UPDATE !!!
+        node_position_map, node_axis_map = node_to_axis_maps(hply, fused_node_list) # UPDATE !!!
+        neighborhood_map = hply.get_proper_neighborhood_map(fused_edge_list)
+        # hply.dummy_edge_segments = hply.fuse_edges_with_edge_dummies()
+
+        
+        # G.remove_nodes_from([8, 14])
+        # # G.add_edges_from([(1, "d_1_6_1"), ("d_1_6_1", 6)])
+        # G.remove_edge(1,6)
+        # G.remove_edges_from(hply.intra_axis_edges)
+        # isolated_nodes = [8, 14]
+        # # hply.prepare_for_rendering()
+        # # print(G.edges())
+        
+
+        # onelayer_twosided_optimization(hply, neighborhood_map, node_axis_map, threshold=10)
+
+        cm.barycenter_heuristic(hply, neighborhood_map, node_axis_map, threshold=10, real=True) # nur real
+        cm.barycenter_heuristic(hply, neighborhood_map, node_axis_map, threshold=10, real=False) # nur virtuell (dummies)
+        
+        cm.intra_axis_handler(hply)
+        cm.finish_structured_axis_orders(hply, isolated_nodes)
+        cm.edge_node_cleanup(hply, intra=True)
+        fused_node_list = hply.fuse_node_groups_with_dummies()
+        _, node_axis_map = node_to_axis_maps(hply, fused_node_list)
+        hply.post_processing_expansion(node_axis_map)
         print(hply)
-        # rr.hiveplot_renderer("beispiel_vor_3a", hply, mode = "ba", intra=True)
+        print(hply.edges())
+        hply.prepare_for_rendering()
+        # print(hply.edges())
+        # rr.hiveplot_renderer("kapitel4_beispielgraph_nach3a_ilp", hply, mode = "ba", intra=False)
+        rr.hiveplot_renderer(f"kapitel4_beispielgraph_nachpipeline_bary", hply, expanded=True, mode = "ba")

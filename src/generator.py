@@ -121,9 +121,9 @@ if __name__ == "__main__":
     from svglib.svglib import svg2rlg
     from reportlab.graphics import renderPDF
     from src.generator import settings
-    settings(r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.svg", node_pt=8, line_pt=1.2, text_pt=25, draw_dummys=False)
-    drawing = svg2rlg(r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.svg")
-    renderPDF.drawToFile(drawing, r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.pdf")
+    settings(r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\kapitel4_beispielgraph_nachpipeline_ilp.svg", node_pt=8, line_pt=1.2, text_pt=30, draw_dummys=False)
+    drawing = svg2rlg(r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\kapitel4_beispielgraph_nachpipeline_ilp.svg")
+    renderPDF.drawToFile(drawing, r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\kapitel4_beispielgraph_nachpipeline_ilp.pdf")
     # if special:
     #     G = g.sample_graph_selfconstructed_extended(graph_mode)
     #     nodes = list(G.nodes(data="subset"))

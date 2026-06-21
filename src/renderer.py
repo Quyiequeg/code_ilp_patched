@@ -73,10 +73,10 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
         x_mid = (u_x + v_x) /2
         y_mid = (u_y + v_y) /2
         if (isinstance(edge[0], int) and isinstance(edge[1], int)) or (isinstance(edge[0], str) and isinstance(edge[1], str)): # beide real oder beide virtuell
-            alpha = -1
-            # alpha = -0.15 # original
+            # alpha = -1
+            alpha = -0.3 # original
         elif (isinstance(edge[0], str) and isinstance(edge[1], int)) or (isinstance(edge[1], str) and isinstance(edge[0], int)): # mixed
-            alpha = -0.8
+            alpha = -0.7
         x_fix = x_mid + (CENTER_X - x_mid) * alpha
         y_fix = y_mid + (CENTER_Y - y_mid) * alpha
         svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" fill="none" stroke="gray" stroke-width="1.2" opacity="0.5"/>')

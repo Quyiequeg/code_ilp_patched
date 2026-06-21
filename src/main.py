@@ -166,7 +166,7 @@ def main():
             hiveplot_renderer(f"ILP_paperkonform_{year}", hpl_freeze)
             hiveplot_renderer(f"ILP_paperkonform mit intra_{year}", hpl_freeze, intra=True)
             # POST EXPANSION
-            _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+            _, node_axis_map = node_to_axis_maps(hpl, hpl.fuse_node_groups_with_dummies())
             # edge_node_cleanup(hpl)
             hpl.post_processing_expansion(node_axis_map)
             # edge_node_cleanup(hpl)

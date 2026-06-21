@@ -225,7 +225,7 @@ def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: 
     """Finalisiert die Achsenordnungen nach der Barycenter-Pipeline.
 
     Die Funktion fügt zunächst intra-axis Knoten und verbleibende Knoten pro Achse zusammen, hängt danach die zuvor entfernten isolierten Knoten wieder an und stellt sicher, dass intra-axis Kanten im Graphen rekonstruiert werden.
-    Die engültige Reihenfolge ist auf jeder Achse identisch: reine intra axis Knoten | mixed intra axis Knoten | inter axis Knoten (real) | isolierte Knoten | virtuelle Knoten (dummys). 
+    Die engültige Reihenfolge ist auf jeder Achse identisch: reine intra axis Knoten (kurze Pfade < lange Pfade) | mixed intra axis Knoten + inter axis Knoten (real) | isolierte Knoten | virtuelle Knoten (dummys). 
 
     Args:
         layout: Das HivePlotLayout, dessen node_groups und Kanten finalisiert werden.
@@ -418,9 +418,9 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
         node_axis_name = node_axis_map[neighbor]
         axis_len = len(real_nodes[node_axis_name]) + len(virtual_nodes[node_axis_name])
         if isinstance(neighbor, int):
-            neighbor_sum += real_nodes[node_axis_name].index(neighbor)/axis_len # index teuer, ggf. map!
+            neighbor_sum += real_nodes[node_axis_name].index(neighbor)/axis_len
         elif isinstance(neighbor, str):
-            neighbor_sum += (len(real_nodes[node_axis_name]) +(virtual_nodes[node_axis_name].index(neighbor)))/axis_len # index teuer, ggf. map!
+            neighbor_sum += (len(real_nodes[node_axis_name]) +(virtual_nodes[node_axis_name].index(neighbor)))/axis_len
     position = 1/len(neighbor_group) * neighbor_sum
     return position
 
