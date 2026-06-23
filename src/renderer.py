@@ -7,7 +7,7 @@ HEIGHT = 1000
 CENTER_X = WIDTH / 2   # Koordinatenursprung horizontal
 CENTER_Y = HEIGHT / 2  # Koordinatenursprung vertikal
 AXIS_OFFSET = 50       # Mindestabstand der Achsen vom Zentrum (px)
-MAX_RADIUS = min(WIDTH, HEIGHT) / 2 - 50  # Maximale Achsenlänge (px)
+MAX_RADIUS = min(WIDTH, HEIGHT) / 2 - 75  # Maximale Achsenlänge (px)
 
 def translate_polar_to_carthesian(radius: float, angle: float, center_x: float = CENTER_X, center_y: float = CENTER_Y) -> tuple[float, float]:
     """ Umrechnung der Polarkoordinate in ein karthesisches Tupel.
@@ -60,10 +60,10 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[real] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="2" fill="#e01414"/>')
-            if real >=0:
+            if real >=0: # vielfache von 4 haben gegenüberliegende achsen
                 svg_labels.append(f'<text x="{x + 2 + 5}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
         for j, virtual in enumerate(virtual_nodes, start=1):
-            radius = MAX_RADIUS + j * 50/ (len(virtual_nodes) + 1) # (MAX_RADIUS + 50 - MAX_RADIUS)
+            radius = MAX_RADIUS + j * 50/(len(virtual_nodes) + 1) # (MAX_RADIUS + 50 - MAX_RADIUS)
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[virtual] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="0" fill="#AED6F1"/>')
@@ -76,7 +76,7 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
             # alpha = -1
             alpha = -0.3 # original
         elif (isinstance(edge[0], str) and isinstance(edge[1], int)) or (isinstance(edge[1], str) and isinstance(edge[0], int)): # mixed
-            alpha = -0.7
+            alpha = -0.8
         x_fix = x_mid + (CENTER_X - x_mid) * alpha
         y_fix = y_mid + (CENTER_Y - y_mid) * alpha
         svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" fill="none" stroke="gray" stroke-width="1.2" opacity="0.5"/>')

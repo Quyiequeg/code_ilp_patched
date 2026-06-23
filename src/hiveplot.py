@@ -323,7 +323,7 @@ class HivePlotLayout:
             if edge in edge_axis_map:
                 return edge_axis_map[edge] # nur positive knoten, war vor expansion im hiveplot 
             else:
-                return (node_to_axis_map_copy[edge[0]], node_to_axis_map_copy[edge[1]]) # falls neue kante
+                return (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) # falls neue kante
             
         if dummy_copy is None:
             dummy_edges = self.dummy_edge_segments
@@ -351,7 +351,7 @@ class HivePlotLayout:
         for axis in node_groups:
             if axis not in intra_expandables: # achse muss nicht expandiert werden da 0 intra kante
                 node_groups_expanded[axis] = node_groups[axis].copy()
-            elif axis in intra_expandables: # kante muss expandiert werden da >= 1 intra kante
+            else: # kante muss expandiert werden da >= 1 intra kante
                 node_groups_expanded[axis] = node_groups[axis].copy()
                 node_groups_expanded[-axis] = []
                 for node in node_groups[axis]:
@@ -366,8 +366,8 @@ class HivePlotLayout:
                         self.graph.add_edge(node, new_dummy)
         self.axis_order = list(node_groups_expanded.keys()) # hpl update phi
         self.num_axes = len(self.axis_order) 
-        _, node_to_axis_map_copy = node_to_axis_maps(self, node_groups_expanded) # snapshot nach expansion zusätzlich mit negativen knoten
-        edge_axis_map = {edge: (node_to_axis_map_copy[edge[0]], node_to_axis_map_copy[edge[1]]) for edge in self.edges()} # enthält nur achsen mit positiven ids
+        _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_expanded) # snapshot nach expansion zusätzlich mit negativen knoten
+        edge_axis_map = {edge: (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) for edge in self.edges()} # enthält nur achsen mit positiven ids
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # id: position
             axis_position_map[axis] = i
@@ -398,7 +398,7 @@ class HivePlotLayout:
                         else:
                             new_dummy = get_expanded_dummy(edge[1], node_groups_expanded) # gespiegelten dummy von v auf rechter achsenkopie ermitteln
                             # all_expanded = [node for nodes in node_groups_expanded.values() for node in nodes]
-                            all_expanded =[]
+                            all_expanded = []
                             for node_group in node_groups_expanded.values(): # pi_i
                                 for node in node_group:
                                     all_expanded.append(node)
@@ -412,7 +412,7 @@ class HivePlotLayout:
                         else:
                             new_dummy = get_expanded_dummy(edge[0], node_groups_expanded) # änderung: edge[1]
                             # all_expanded = [n for nodes in node_groups_expanded.values() for n in nodes]
-                            all_expanded =[]
+                            all_expanded = []
                             for node_group in node_groups_expanded.values(): # pi_i
                                 for node in node_group:
                                     all_expanded.append(node)

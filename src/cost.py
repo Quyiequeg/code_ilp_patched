@@ -1,5 +1,3 @@
-from ordering import node_to_axis_maps, node_to_axis
-
 def node_or_axes_span(n1, n2, k): #Span von Knoten u,v oder Achsen a_i,a_j
     """Berechnet den Spann zweier Knoten oder Achsen
 
@@ -26,6 +24,7 @@ def edges_between_axes(node_grps, edges, a1, a2):
     Returns:
         int: Anzahl der Kanten
     """
+    from ordering import node_to_axis_maps, node_to_axis
     edgecount = 0
     for edge in edges:
         start = node_to_axis(edge[0], node_grps)

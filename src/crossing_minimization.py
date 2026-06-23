@@ -23,7 +23,6 @@
 
 from src import graphs
 from cost import node_or_axes_span
-from ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
 import networkx as nx
 import pickle
 # import logging
@@ -427,6 +426,8 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
 def edge_node_cleanup(layout: HivePlotLayout, intra: bool = False):
     """Nachbereitung der Pipeline, dient als Absicherung, dass Kanten und intra Knoten im Layout korrekt gesetzt sind.
     """
+    from ordering import node_to_axis_maps
+
     fused_edges = layout.fuse_edges_with_edge_dummies()
     layout.graph.add_edges_from(fused_edges)
     layout.graph.remove_edges_from(layout.long_edges)
@@ -460,6 +461,8 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         threshold(int): Optionaler Abbruchschwellwert für die Anzahl der Sweep-Durchläufe.
         expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     """
+    from ordering import node_to_axis_maps
+
     if expanded:
         # pipeline 3a <<<<<<<<<<<<
         # 1.
@@ -509,6 +512,7 @@ if __name__ == "__main__":
     print("##########################################")
     import renderer as rr
     from hiveplot import HivePlotLayout
+    from ordering import brute_force_ordering, native_order, node_groups, node_to_axis_maps, reordered_node_groups
 
     # graph_mode = 0
     # graph_mode = 1
