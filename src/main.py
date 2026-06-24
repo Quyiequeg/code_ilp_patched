@@ -218,7 +218,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
+    main()
     import hiveplot
     # cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\gd_graphs.pkl"
     # year = 2016
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     # edge_node_cleanup(hpl_copy, intra=True)
     # hpl_copy.graph.remove_edges_from(hpl_copy.intra_axis_edges)
     hpl_copy.prepare_for_rendering()
-    hiveplot_renderer(f"TEST_2016_not_normal_minrad_100_virtual_-0.8", hpl_copy)
+    # hiveplot_renderer(f"TEST_2016_not_normal_minrad_100_virtual_-0.8", hpl_copy)
     _, node_axis_map = node_to_axis_maps(hpl, hpl.fuse_node_groups_with_dummies())
     # edge_node_cleanup(hpl)
     hpl.post_processing_expansion(node_axis_map)
@@ -277,5 +277,7 @@ if __name__ == "__main__":
     for edge in hpl.edges():
         if edge[1] == 12 and isinstance(edge[0], str):
             print(edge)
+    print(hpl)
+    print(hpl.edges())
     
     hiveplot_renderer(f"TEST_2016", hpl, expanded=True)

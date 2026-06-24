@@ -297,7 +297,7 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # print(f"REAL: {layout.node_groups}")
         # print(f"DUMMY: {layout.node_groups_dummies}")
         # 5.
-        cm.intra_axis_handler(layout)
+        # cm.intra_axis_handler(layout)
         # 6.
         cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
     else:

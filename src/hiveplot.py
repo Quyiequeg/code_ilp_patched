@@ -230,24 +230,23 @@ class HivePlotLayout:
                 axis_v = edge_axis_map[edge][1]
                 pos_axis_u = axis_position_map.get(axis_u, axis_position_map.get((axis_u, 0))) # beide fälle müssen abgedeckt sein: achse ist int und achse ist expandiert und tupel
                 pos_axis_v = axis_position_map.get(axis_v, axis_position_map.get((axis_v, 0)))
-                span_uv = (pos_axis_u - pos_axis_v) % k
-                span_vu = (pos_axis_v - pos_axis_u) % k
+                dist_left_u_v = (pos_axis_u - pos_axis_v) % k
+                dist_left_v_u = (pos_axis_v - pos_axis_u) % k
                 if axis_u in intra_expandables and axis_v in intra_expandables: # ziel- und startachse expandiert
-                    if span_uv <= span_vu: # v -> u + bei gleichstand immer links
+                    if dist_left_u_v <= dist_left_v_u: # v -> u + bei gleichstand immer links
                         new_inter_edges.append((edge[0], -edge[1]))
-                    elif span_vu < span_uv: # u auf expandierter achse und u -> v
+                    elif dist_left_v_u < dist_left_u_v: # u auf expandierter achse und u -> v
                         new_inter_edges.append((-edge[0], edge[1]))
-                else: # ziel- oder startkante expandiert
-                    if axis_u == axis:
-                        if span_uv <= span_vu: # u auf expandierter achse und v -> u + bei gleichstand immer links
-                            new_inter_edges.append((edge[0], edge[1]))
-                        elif span_vu < span_uv: # u auf expandierter achse und u -> v
-                            new_inter_edges.append((-edge[0], edge[1]))
-                    elif axis_v == axis:
-                        if span_vu <= span_uv: # v auf expandierter achse und u -> v
-                            new_inter_edges.append((edge[0], edge[1]))
-                        elif span_uv < span_vu: # v auf expandierter achse und v -> u
-                            new_inter_edges.append((edge[0], -edge[1]))
+                elif axis_u == axis:
+                    if dist_left_u_v <= dist_left_v_u: # u auf expandierter achse und v -> u + bei gleichstand immer links
+                        new_inter_edges.append((edge[0], edge[1]))
+                    elif dist_left_v_u < dist_left_u_v: # u auf expandierter achse und u -> v
+                        new_inter_edges.append((-edge[0], edge[1]))
+                elif axis_v == axis:
+                    if dist_left_v_u <= dist_left_u_v: # v auf expandierter achse und u -> v
+                        new_inter_edges.append((edge[0], edge[1]))
+                    elif dist_left_u_v < dist_left_v_u: # v auf expandierter achse und v -> u
+                        new_inter_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_inter_edges)
         # self.graph neue knoten auf expandierten achsen wieder einem neuen subset zuordnen
         for axis, nodes in self.node_groups_expanded.items():
@@ -389,10 +388,10 @@ class HivePlotLayout:
                 pos_u = axis_position_map[axis_u] # achsenposion u
                 pos_v = axis_position_map[axis_v] # achsenposion v
                 k = self.num_axes
-                span_uv = (pos_u - pos_v) % k
-                span_vu = (pos_v - pos_u) % k
+                dist_left_u_v = (pos_u - pos_v) % k
+                dist_left_v_u = (pos_v - pos_u) % k
                 if axis_u in intra_expandables and axis_v in intra_expandables: # sonderfall u und v auf expandierten achsen
-                    if span_uv <= span_vu: # u auf linkem teil einer expandierten achse, v auf rechtem teil einer expandierten achse -> v muss aktualisiert werden
+                    if dist_left_u_v <= dist_left_v_u: # u auf linkem teil einer expandierten achse, v auf rechtem teil einer expandierten achse -> v muss aktualisiert werden
                         if isinstance(edge[1], int):
                             new_inter_edges.append((edge[0], -edge[1])) 
                         else:
@@ -421,7 +420,7 @@ class HivePlotLayout:
                                 dummy_edges.append((edge[0], new_dummy)) # änderung: edge[1]
                             new_inter_edges.append((edge[1], new_dummy))# änderung: edge[0]
                 elif axis_u == axis: # u ist auf einer expandierten achse -> prüfen ob u auf linkem oder rechten teil liegt -> v auf nicht expandierter achse
-                    if span_uv <= span_vu: # u liegt auf linkem teil einer expandierten achse
+                    if dist_left_u_v <= dist_left_v_u: # u liegt auf linkem teil einer expandierten achse
                         new_inter_edges.append(edge)
                     else: # u liegt auf rechtem teil einer expandierten achse
                         if isinstance(edge[0], int):
@@ -438,7 +437,7 @@ class HivePlotLayout:
                                 dummy_edges.append((edge[0], new_dummy)) #! edge[1] 
                             new_inter_edges.append((edge[1], new_dummy)) #! edge[0]
                 elif axis_v == axis: # v ist auf einer expandierten achse -> prüfen ob v auf linkem oder rechten teil liegt -> u auf nicht expandierter achse
-                    if span_vu <= span_uv: # v liegt auf nicht-expandiertem teil
+                    if dist_left_v_u <= dist_left_u_v: # v liegt auf nicht-expandiertem teil
                         new_inter_edges.append(edge)
                     else: # v liegt auf expandiertem teil
                         if isinstance(edge[1], int):
