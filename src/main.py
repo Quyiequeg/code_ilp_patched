@@ -66,7 +66,7 @@ def main():
     # logger.info(graphs[year])
     # logger.info(G)
     # check auf graphs[year] nodes/edges == G?
-    node_grps = clauset_newman_moore_communities(G, 4)
+    node_grps = clauset_newman_moore_communities(G, 8)
     axes = list(node_grps.keys())
     # logger.info(node_groups)
     hpl = HivePlotLayout(
@@ -87,8 +87,8 @@ def main():
     ############################################# Pipeline beginnt
     # paper_like = True ##########################
     paper_like = False #########################
-    # modus = "bary" #############################
-    modus = "ilp" ###############################
+    modus = "bary" #############################
+    # modus = "ilp" ###############################
     #############################################
     if modus == "bary":
         if paper_like:
@@ -256,28 +256,28 @@ if __name__ == "__main__":
     #     pickle.dump(hpl, file)
 
     ###############################
-    cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\output\2016_nachsubdivideILP.pkl"
-    with open(cache_path, "rb") as file:
-        hpl = pickle.load(file)
-    for edge in hpl.edges():
-        if edge[0] == 12 and isinstance(edge[1], str):
-            print(edge)
-    print("###################################")
-    hpl_copy = hpl.copy()
-    # edge_node_cleanup(hpl_copy, intra=True)
-    # hpl_copy.graph.remove_edges_from(hpl_copy.intra_axis_edges)
-    hpl_copy.prepare_for_rendering()
-    # hiveplot_renderer(f"TEST_2016_not_normal_minrad_100_virtual_-0.8", hpl_copy)
-    _, node_axis_map = node_to_axis_maps(hpl, hpl.fuse_node_groups_with_dummies())
-    # edge_node_cleanup(hpl)
-    hpl.post_processing_expansion(node_axis_map)
-    for edge in hpl.edges():
-        if edge[0] == 12 and isinstance(edge[1], str):
-            print(edge)
-    for edge in hpl.edges():
-        if edge[1] == 12 and isinstance(edge[0], str):
-            print(edge)
-    print(hpl)
-    print(hpl.edges())
+    # cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\output\2016_nachsubdivideILP.pkl"
+    # with open(cache_path, "rb") as file:
+    #     hpl = pickle.load(file)
+    # for edge in hpl.edges():
+    #     if edge[0] == 12 and isinstance(edge[1], str):
+    #         print(edge)
+    # print("###################################")
+    # hpl_copy = hpl.copy()
+    # # edge_node_cleanup(hpl_copy, intra=True)
+    # # hpl_copy.graph.remove_edges_from(hpl_copy.intra_axis_edges)
+    # hpl_copy.prepare_for_rendering()
+    # # hiveplot_renderer(f"TEST_2016_not_normal_minrad_100_virtual_-0.8", hpl_copy)
+    # _, node_axis_map = node_to_axis_maps(hpl, hpl.fuse_node_groups_with_dummies())
+    # # edge_node_cleanup(hpl)
+    # hpl.post_processing_expansion(node_axis_map)
+    # for edge in hpl.edges():
+    #     if edge[0] == 12 and isinstance(edge[1], str):
+    #         print(edge)
+    # for edge in hpl.edges():
+    #     if edge[1] == 12 and isinstance(edge[0], str):
+    #         print(edge)
+    # print(hpl)
+    # print(hpl.edges())
     
-    hiveplot_renderer(f"TEST_2016", hpl, expanded=True)
+    # hiveplot_renderer(f"TEST_2016", hpl, expanded=True)

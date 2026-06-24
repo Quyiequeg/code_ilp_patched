@@ -99,7 +99,7 @@ if __name__ == "__main__":
         from ordering import node_to_axis_maps, ip_ordering, reordered_node_groups
         from partitioning import clauset_newman_moore_communities
         import crossing_minimization as cm
-        
+        import ip_model as im
         from ip_model import onelayer_twosided_optimization
         G = nx.Graph()
         edges = [
@@ -186,46 +186,51 @@ if __name__ == "__main__":
         #     (16, 17),
         # ]
         )
-        
         hply.axis_order = ip_ordering(hply)
         hply.node_groups = reordered_node_groups(hply.node_groups, hply.axis_order)
-        isolated_nodes = cm.remove_isolated_nodes(hply.graph, hply.node_groups)
-        node_position_map, node_axis_map = node_to_axis_maps(hply, hply.node_groups)
-        neighborhood_map = hply.get_proper_neighborhood_map(hply.edges()) # initialisieren aus layout.graph
-        cm.subdivide_long_edges(hply, node_position_map, node_axis_map, neighborhood_map)
-        
-        
-
-        fused_edge_list = hply.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
-        fused_node_list = hply.fuse_node_groups_with_dummies() # UPDATE !!!
-        node_position_map, node_axis_map = node_to_axis_maps(hply, fused_node_list) # UPDATE !!!
-        neighborhood_map = hply.get_proper_neighborhood_map(fused_edge_list)
-        # hply.dummy_edge_segments = hply.fuse_edges_with_edge_dummies()
-
-        
-        # G.remove_nodes_from([8, 14])
-        # # G.add_edges_from([(1, "d_1_6_1"), ("d_1_6_1", 6)])
-        # G.remove_edge(1,6)
-        # G.remove_edges_from(hply.intra_axis_edges)
-        # isolated_nodes = [8, 14]
-        # # hply.prepare_for_rendering()
-        # # print(G.edges())
-        
-
-        # onelayer_twosided_optimization(hply, neighborhood_map, node_axis_map, threshold=10)
-
-        cm.barycenter_heuristic(hply, neighborhood_map, node_axis_map, threshold=10, real=True) # nur real
-        cm.barycenter_heuristic(hply, neighborhood_map, node_axis_map, threshold=10, real=False) # nur virtuell (dummies)
-        
-        cm.intra_axis_handler(hply)
-        cm.finish_structured_axis_orders(hply, isolated_nodes)
-        cm.edge_node_cleanup(hply, intra=True)
-        fused_node_list = hply.fuse_node_groups_with_dummies()
-        _, node_axis_map = node_to_axis_maps(hply, fused_node_list)
-        hply.post_processing_expansion(node_axis_map)
+        cm.barycenter_crossmin_pipeline(hply, expanded=True)
+        # im.ip_model_pipeline(hply, threshold=10, expanded=True)
+        cm.edge_node_cleanup(hply)
+        rr.hiveplot_renderer(f"kapitel4_beispielgraph_unordered_bary", hply, expanded=True, mode = "ba", unordered = True)
         print(hply)
-        print(hply.edges())
-        hply.prepare_for_rendering()
+        # hply.axis_order = ip_ordering(hply)
+        # hply.node_groups = reordered_node_groups(hply.node_groups, hply.axis_order)
+        # isolated_nodes = cm.remove_isolated_nodes(hply.graph, hply.node_groups)
+        # node_position_map, node_axis_map = node_to_axis_maps(hply, hply.node_groups)
+        # neighborhood_map = hply.get_proper_neighborhood_map(hply.edges()) # initialisieren aus layout.graph
+        # cm.subdivide_long_edges(hply, node_position_map, node_axis_map, neighborhood_map)
+        
+        
+
+        # fused_edge_list = hply.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
+        # fused_node_list = hply.fuse_node_groups_with_dummies() # UPDATE !!!
+        # node_position_map, node_axis_map = node_to_axis_maps(hply, fused_node_list) # UPDATE !!!
+        # neighborhood_map = hply.get_proper_neighborhood_map(fused_edge_list)
+        # # hply.dummy_edge_segments = hply.fuse_edges_with_edge_dummies()
+
+        
+        # # G.remove_nodes_from([8, 14])
+        # # # G.add_edges_from([(1, "d_1_6_1"), ("d_1_6_1", 6)])
+        # # G.remove_edge(1,6)
+        # # G.remove_edges_from(hply.intra_axis_edges)
+        # # isolated_nodes = [8, 14]
+        # # # hply.prepare_for_rendering()
+        # # # print(G.edges())
+        
+
+        # # onelayer_twosided_optimization(hply, neighborhood_map, node_axis_map, threshold=10)
+
+        # cm.barycenter_heuristic(hply, neighborhood_map, node_axis_map, threshold=10, real=True) # nur real
+        # cm.barycenter_heuristic(hply, neighborhood_map, node_axis_map, threshold=10, real=False) # nur virtuell (dummies)
+        
+        # cm.intra_axis_handler(hply)
+        # cm.finish_structured_axis_orders(hply, isolated_nodes)
+        # cm.edge_node_cleanup(hply, intra=True)
+        # fused_node_list = hply.fuse_node_groups_with_dummies()
+        # _, node_axis_map = node_to_axis_maps(hply, fused_node_list)
+        # hply.post_processing_expansion(node_axis_map)
+        # print(hply)
+        # print(hply.edges())
+        # hply.prepare_for_rendering()
         # print(hply.edges())
         # rr.hiveplot_renderer("kapitel4_beispielgraph_nach3a_ilp", hply, mode = "ba", intra=False)
-        rr.hiveplot_renderer(f"kapitel4_beispielgraph_nachpipeline_bary", hply, expanded=True, mode = "ba")

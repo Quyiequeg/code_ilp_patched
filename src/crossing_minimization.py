@@ -137,7 +137,7 @@ def subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | s
         end_pos = node_position_map[edge[1]] # endposition
         span = node_or_axes_span(start_pos, end_pos, k)
         if span > 1: # direkte behandlung von langen kanten (dummy knoten erzeugen), proper ignorieren
-            if (start_pos - end_pos) % k > (end_pos - start_pos) % k or (start_pos - end_pos) % k == (end_pos - start_pos) % k: # richtung start -> ende
+            if (start_pos - end_pos) % k >= (end_pos - start_pos) % k: # richtung start -> ende
                 clockwise_count(start_pos, edge[0], edge[1], span)
             elif (start_pos - end_pos) % k < (end_pos - start_pos) % k: # richtung ende <- start, counter cw
                 counter_clockwise_count(start_pos, edge[0], edge[1], span)
@@ -277,7 +277,7 @@ def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | st
     # initialisierung layout parameter
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
-    if expanded:
+    if expanded and real == True:
         node_groups = layout.node_groups_expanded
     elif real:
         node_groups = layout.node_groups
@@ -298,7 +298,7 @@ def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | st
             bary_positions_axis = []
             for node in bary_axis_order:
                 node_neighbors = neighborhood_map[node]
-                bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
+                bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, real, expanded=expanded))
             # umsortierung der knotenliste nach positionen
             new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
             if node_groups[axis] != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
@@ -309,7 +309,7 @@ def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | st
             bary_positions_axis = []
             for node in bary_axis_order:
                 node_neighbors = neighborhood_map[node]
-                bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, expanded=expanded))
+                bary_positions_axis.append(calculate_barycenter_position(layout, node_neighbors, node_axis_map, real, expanded=expanded))
             # umsortierung der knotenliste nach positionen
             # besser (stable sort mit Tiebreak auf aktuelle Position):
             new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
@@ -397,7 +397,7 @@ def intra_axis_handler(layout: HivePlotLayout) -> None:
     
     layout.intra_axis_nodes = {key: sorted_intra_nodes_short[key] + sorted_intra_nodes_long[key] for key in intra_nodes} # vorarbeit zum finish der achsenordnung ->  triviale intra-axis| cluster intra-axis
 
-def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map, expanded: bool = False) -> float:
+def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map, real, expanded: bool = False) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
 
     Args:
@@ -412,6 +412,7 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
         real_nodes = layout.node_groups_expanded
     else:
         real_nodes = layout.node_groups
+
     virtual_nodes = layout.node_groups_dummies
     for neighbor in neighbor_group:
         node_axis_name = node_axis_map[neighbor]
@@ -468,13 +469,13 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         # 1.
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
-        layout.expand_axes(node_axis_map)
+        layout.pre_processing_expansion(node_axis_map)
         # 2.
         isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
         # 3.
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), expanded=expanded) # UPDATE
-        subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+        subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map, expanded=expanded)
         # 4.
         fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
         fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!

@@ -157,7 +157,7 @@ class HivePlotLayout:
             neighbor_map[edge[1]].add(edge[0])
         return neighbor_map
 
-    def expand_axes(self, node_axis_map: dict[int | str, int]) -> None:
+    def pre_processing_expansion(self, node_axis_map: dict[int | str, int]) -> None:
         """Die Funktion dient der Umsetzung unterschiedlicher Knotenordnungen auf expandierten Achsen. Die Funktion ist ausschließlich zum pre-processing des Eingabegraphen bevor etwaige Berechnungen der Pipeline durchgeführt werden gedacht. Dazu wird die Achse i zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.
         Folgende Schritte werden durchgeführt:
         1. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)
@@ -462,7 +462,7 @@ class HivePlotLayout:
 
     def prepare_for_rendering(self) -> None:
         """Funktion entfernt alle intra-axis Kanten aus self.edges() und schreibt sie nach self.intra_axis_edges. Notwendig, weil die Rendererlogik sonst falsche 
-        Kanten zeichnet.
+        Kanten zeichnet. Wird für das zeichnen im nicht expandierten Fall benötigt, da sonst intra-axis Kanten eingezeichnet werden, was zu Fehlern in der Darstellung führt. 
         """
         node_axis_map = {}
         groups = self.node_groups_expanded if self.node_groups_expanded else self.fuse_node_groups_with_dummies()
@@ -503,7 +503,7 @@ if __name__ == "__main__":
     # hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
     # isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
     node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    # hpl.expand_axes(node_axis_map)
+    # hpl.pre_processing_expansion(node_axis_map)
     hpl.dummy_edge_segments = []
     hpl.post_processing_expansion(node_axis_map)
     render_debug(hpl, title="Post-processing-test")

@@ -282,7 +282,7 @@ def ip_model_pipeline(layout: HivePlotLayout, threshold: int = int(10), expanded
         # 1.
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
-        layout.expand_axes(node_axis_map)
+        layout.pre_processing_expansion(node_axis_map)
         # 2.
         isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
@@ -343,6 +343,7 @@ if __name__ == "__main__":
     cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_ILP_k16_2024_12.06--10.49_edges973_intra0.pkl"
     with open(cache_path, "rb") as file:
         hpl = pickle.load(file)
+    
     # hpl = graphs[year]
     # print(hpl.dummy_edge_segments)
     # Initialisiere Hiveplotlayout

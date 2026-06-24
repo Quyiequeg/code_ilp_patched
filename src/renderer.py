@@ -17,7 +17,7 @@ def translate_polar_to_carthesian(radius: float, angle: float, center_x: float =
     y = center_y + radius * math.sin(angle)
     return x, y
 
-def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], intra_edges: list[tuple[int | str, int | str]] | None = None, axes_labels: bool =True) -> tuple[list[str], list[str], list[str], list[str]]: 
+def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], unordered: bool, intra_edges: list[tuple[int | str, int | str]] | None = None, axes_labels: bool =True) -> tuple[list[str], list[str], list[str], list[str]]: 
     """ Die Funktion berechnet die Koordinaten für Achsen, Kanten, Knoten und deren Label und erzeugt die .svg-Zeilen.
     Einige Hinweise zu den Berechnungen:
     1. angle = 270 + i * (360/len(node_groups)): 270 Grad, sorgt dafür, dass die erste Achse der Ordnung immer Richtung Norden eingefügt wird und alle weiteren radial dazu im Uhrzeigersinn
@@ -60,13 +60,17 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[real] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="2" fill="#e01414"/>')
-            if real >=0: # vielfache von 4 haben gegenüberliegende achsen
+            if unordered:
                 svg_labels.append(f'<text x="{x + 2 + 5}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
+            else:
+                if real >=0: # vielfache von 4 haben gegenüberliegende achsen
+                    svg_labels.append(f'<text x="{x + 2 + 5}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
         for j, virtual in enumerate(virtual_nodes, start=1):
             radius = MAX_RADIUS + j * 50/(len(virtual_nodes) + 1) # (MAX_RADIUS + 50 - MAX_RADIUS)
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[virtual] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="0" fill="#AED6F1"/>')
+
     for edge in edges:
         u_x, u_y = rendered_node_positions[edge[0]]
         v_x, v_y = rendered_node_positions[edge[1]]
@@ -101,7 +105,7 @@ def render_svg(filename: str, width: int, height: int, elements: list[str]) -> N
     with open(filename, "w", encoding="utf-8") as file:
         file.write("\n".join(svg))
 
-def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True) -> None:
+def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False) -> None:
     """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (.svg) realisiert.
     """
     if expanded:
@@ -111,9 +115,9 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False,
     elements = ["<rect width='100%' height='100%' fill='white'/>"] # weißer hintergrund
     # elements = [] # kein hintergrund
     if intra:
-        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), layout.intra_axis_edges, axes_labels=axes_labels)
+        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), layout.intra_axis_edges, unordered = unordered, axes_labels=axes_labels)
     else:
-        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), axes_labels=axes_labels)
+        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), unordered = unordered, axes_labels=axes_labels)
     elements.extend(ax)
     elements.extend(ed)
     elements.extend(nod)
