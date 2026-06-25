@@ -47,7 +47,7 @@ def main():
     logger = logging.getLogger(__name__)
     start = time.time()
     year = 2016
-    save = True
+    save = False
     # pipeline = "barycenter"
     # method = "paper"
     cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\gd_graphs.pkl"
@@ -73,7 +73,9 @@ def main():
         graph=G,
         num_axes=len(axes),
         axis_order=axes,
-        node_groups=node_grps
+        node_groups=node_grps, 
+        id_to_name=id_to_name, 
+        name_to_id=name_to_id
     )
     logger.info(f"------------------------START-------{year}------------")
     print(f"ZEIT: {time.time() - start:.1f}")
@@ -87,8 +89,8 @@ def main():
     ############################################# Pipeline beginnt
     # paper_like = True ##########################
     paper_like = False #########################
-    modus = "bary" #############################
-    # modus = "ilp" ###############################
+    # modus = "bary" #############################
+    modus = "ilp" ###############################
     #############################################
     if modus == "bary":
         if paper_like:
@@ -138,7 +140,7 @@ def main():
             edge_node_cleanup(hpl)
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
-            hiveplot_renderer(f"Barycenter_eigen_{year}", hpl, expanded=True)
+            hiveplot_renderer(f"Barycenter_eigen_{year}", hpl, expanded=True, unordered=True)
             if save:
                 timestamp = datetime.now().strftime("%d.%m--%H.%M")
                 filename = f"self_hpl_k{hpl.num_axes}_{year}_{timestamp}_edges{len(hpl.edges())}_intra{len(hpl.intra_axis_edges)}.pkl"
@@ -201,7 +203,7 @@ def main():
             edge_node_cleanup(hpl)
             logger.info(f"Pipeline und Cleanup fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             print(f"ZEIT: {time.time() - start:.1f}")
-            hiveplot_renderer(f"ILP_eigen_{year}", hpl, expanded=True)
+            hiveplot_renderer(f"ILP_eigen_{year}", hpl, expanded=True, unordered=True)
             if save:
                 timestamp = datetime.now().strftime("%d.%m--%H.%M")
                 filename = f"self_ILP_k{hpl.num_axes}_{year}_{timestamp}_edges{len(hpl.edges())}_intra{len(hpl.intra_axis_edges)}.pkl"
@@ -259,25 +261,13 @@ if __name__ == "__main__":
     # cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\output\2016_nachsubdivideILP.pkl"
     # with open(cache_path, "rb") as file:
     #     hpl = pickle.load(file)
-    # for edge in hpl.edges():
-    #     if edge[0] == 12 and isinstance(edge[1], str):
-    #         print(edge)
-    # print("###################################")
-    # hpl_copy = hpl.copy()
-    # # edge_node_cleanup(hpl_copy, intra=True)
-    # # hpl_copy.graph.remove_edges_from(hpl_copy.intra_axis_edges)
-    # hpl_copy.prepare_for_rendering()
-    # # hiveplot_renderer(f"TEST_2016_not_normal_minrad_100_virtual_-0.8", hpl_copy)
+    # # print("###################################")
+    # # hpl_copy = hpl.copy()
+    # # # edge_node_cleanup(hpl_copy, intra=True)
+    # # # hpl_copy.graph.remove_edges_from(hpl_copy.intra_axis_edges)
+    # # hpl_copy.prepare_for_rendering()
+    # # # hiveplot_renderer(f"TEST_2016_not_normal_minrad_100_virtual_-0.8", hpl_copy)
     # _, node_axis_map = node_to_axis_maps(hpl, hpl.fuse_node_groups_with_dummies())
-    # # edge_node_cleanup(hpl)
     # hpl.post_processing_expansion(node_axis_map)
-    # for edge in hpl.edges():
-    #     if edge[0] == 12 and isinstance(edge[1], str):
-    #         print(edge)
-    # for edge in hpl.edges():
-    #     if edge[1] == 12 and isinstance(edge[0], str):
-    #         print(edge)
-    # print(hpl)
-    # print(hpl.edges())
-    
+    # edge_node_cleanup(hpl)
     # hiveplot_renderer(f"TEST_2016", hpl, expanded=True)

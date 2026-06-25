@@ -2,6 +2,10 @@ import math
 from pathlib import Path
 import hiveplot
 import generator as gr
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
+import statistics
+
 WIDTH = 1000
 HEIGHT = 1000
 CENTER_X = WIDTH / 2   # Koordinatenursprung horizontal
@@ -17,40 +21,50 @@ def translate_polar_to_carthesian(radius: float, angle: float, center_x: float =
     y = center_y + radius * math.sin(angle)
     return x, y
 
-def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], unordered: bool, intra_edges: list[tuple[int | str, int | str]] | None = None, axes_labels: bool =True) -> tuple[list[str], list[str], list[str], list[str]]: 
-    """ Die Funktion berechnet die Koordinaten für Achsen, Kanten, Knoten und deren Label und erzeugt die .svg-Zeilen.
-    Einige Hinweise zu den Berechnungen:
-    1. angle = 270 + i * (360/len(node_groups)): 270 Grad, sorgt dafür, dass die erste Achse der Ordnung immer Richtung Norden eingefügt wird und alle weiteren radial dazu im Uhrzeigersinn
-    2. radius bei realen Knoten = offset vom Ursprung + gleichmäßige Anordnung der Knoten auf der Achse, wobei die Knoten nie am Achsenanfang oder -ende beginnen
-    3. x Wert für Labels: {x + r + 2} x Koordinate des zugehörigen Knoten + Radius des Knoten + Offset zum Knoten (verhindert das Überlappen von Label und Knoten)
-    4. radius bei virtuellen Knoten = Achsenendpunkt + gleichmäßige Anordnung der Knoten auf einer imaginären Achse, wobei sie einen Abstand zum Startpunkt haben (Länge der Imaginären auf 50 Pixel begrenzt)
-    5. x_fix, y_fix bei nicht intra Kanten: Fixpunkt zu dem die Kante tendiert, wird auf den Mittelpunkt der Kante + ein Offset alpha (unterschiedlich für real-real/virtuell-virtuell und real-virtuell) vom Koordinatenursprung weg gesetzt
-    6. x_fix, y_fix bei intra Kanten: da Start- und Endknoten auf der gleichen Achse liegen wird der Mittelpunkt nicht wie im vorherigen Fall entgegen des Ursprungs versetzt von der Achsen weg anhand des Offset alpha
+def draw_basis(layout, node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], degree: bool = False, id_to_label_map: dict[int, str] | None = None, unordered: bool = False, intra_edges: list[tuple[int | str, int | str]] | None = None, axes_labels: bool = True) -> tuple[list[str], list[str], list[str], list[str]]:
 
-    Args:
-        node_groups (dict[int, list[str  |  int]]): AchsenID: Knotenliste
-        edges (list[tuple[): gesamte Kantenliste
-        intra_edges (list[tuple[, optional): Liste der intra-Kanten, Default ist None
+    def shorten_label(name: str) -> str:
+        import re
+        name = re.sub(r'\s*\d+', '', name).strip()
+        tokens = name.split()
+        if not tokens:
+            return name
+        last = tokens[-1]
+        first_initial = tokens[0][0] + "."
+        return f"{first_initial} {last}"
 
-    Returns:
-        tuple[list[str], list[str], list[str], list[str]]: svg strings für die Graphelemente
-    """
+    if degree: # falls filter aktiv prioritätsliste erstellen
+        degrees = dict(layout.graph.degree())
+        priority_nodes = []
+        for axis in node_groups:
+            real_nodes = [node for node in node_groups[axis] if isinstance(node, int)]
+            if not real_nodes:
+                continue
+            axis_degrees = [degrees[node] for node in real_nodes]
+            medi = statistics.median(axis_degrees)
+            for node in real_nodes:
+                if degrees[node] >= medi:
+                    priority_nodes.append(node)
+        priority_set = set(priority_nodes)
     svg_axes = []
     svg_nodes = []
     svg_edges = []
     svg_labels = []
     rendered_node_positions = {}
-    for i, (axis, nodes) in enumerate(node_groups.items()): # achsen anlegen
+    for i, (axis, nodes) in enumerate(node_groups.items()):
         real_nodes = []
         virtual_nodes = []
-        angle = 270 + i * (360/len(node_groups)) # erste achse nördlich und alle anderen relativ dazu
+        angle = 270 + i * (360 / len(node_groups))
         x_end, y_end = translate_polar_to_carthesian(MAX_RADIUS, angle, CENTER_X, CENTER_Y)
         x_start, y_start = translate_polar_to_carthesian(AXIS_OFFSET, angle, CENTER_X, CENTER_Y)
-        x_label, y_label = translate_polar_to_carthesian(MAX_RADIUS + 10, angle*0.995, CENTER_X, CENTER_Y) # leicht versetztes achsenlabel innen
+        x_label, y_label = translate_polar_to_carthesian(AXIS_OFFSET * 0.85, angle, CENTER_X, CENTER_Y)
         svg_axes.append(f'<line x1="{x_start}" y1="{y_start}" x2="{x_end}" y2="{y_end}" stroke="black" stroke-width="1"/>')
         if axes_labels:
-            svg_axes.append(f'<text x="{x_label}" y="{y_label}" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#555555">A{axis}</text>')
-        for node in nodes: # knoten nach virtuell und real vorfiltern
+            if axis > 0: # originale beschriften
+                svg_axes.append(f'<text x="{x_label}" y="{y_label}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#4f4f4f">'f'A<tspan dy="3" font-size="6">{axis}</tspan>'f'</text>')
+            else: # expandierte teile beschriften
+                svg_axes.append(f'<text x="{x_label}" y="{y_label}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#7e7e7e">'f'A<tspan dy="3" font-size="5">{axis}</tspan>'f'</text>')
+        for node in nodes:
             if isinstance(node, int):
                 real_nodes.append(node)
             elif isinstance(node, str):
@@ -58,44 +72,100 @@ def draw_basis(node_groups: dict[int, list[str | int]], edges: list[tuple[int | 
         for j, real in enumerate(real_nodes, start=1):
             radius = AXIS_OFFSET + j * (MAX_RADIUS - AXIS_OFFSET) / (len(real_nodes) + 1)
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
-            rendered_node_positions[real] = (x, y)
-            svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="2" fill="#e01414"/>')
-            if unordered:
-                svg_labels.append(f'<text x="{x + 2 + 5}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
-            else:
-                if real >=0: # vielfache von 4 haben gegenüberliegende achsen
-                    svg_labels.append(f'<text x="{x + 2 + 5}" y="{y}" font-size="8" dominant-baseline="central">{real}</text>') # x + radius + 2
+            rendered_node_positions[real] = (x, y) # koordinaten speichern
+            if degree and real in priority_set: # wenn prio und filteroption gesetzt
+                svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="4" fill="#d77b7b"/>')
+            else: # alle knoten
+                svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="3" fill="#d77b7b"/>')
+            if unordered or real > 0: # auch expandierte achsen oder nur originale
+                LABEL_OFFSET = 6
+                fontsize = 6
+                if id_to_label_map: # nur wenn übergeben, sonst knotenID
+                    label_text = shorten_label(id_to_label_map[abs(real)])
+                else:
+                    label_text = str(real)
+                angle_radius = math.radians(angle) # bogenmaß aus polar
+                cos_angle = math.cos(angle_radius) # richtungsvektor der achse, x
+                sin_angle = math.sin(angle_radius) # richtungsvektor der achse, y
+                flipped = False # auf rechte seite der horizontalen setzen
+                if cos_angle < 0:
+                    flipped = True 
+                if real > 0: # 
+                    rotation = (angle - 270) % 360 + 240
+                else:
+                    rotation = (angle - 270) % 360 - 67.5
+                if flipped: # auf linke seite der horizontalen spiegeln
+                    rotation += 180
+                if flipped:
+                    if real > 0: # originale achse
+                        lx = x + LABEL_OFFSET * sin_angle
+                        ly = y - LABEL_OFFSET * cos_angle
+                    else:
+                        lx = x - LABEL_OFFSET * sin_angle
+                        ly = y + LABEL_OFFSET * cos_angle
+                else: # expandierte achse
+                    if real > 0:
+                        lx = x + LABEL_OFFSET * sin_angle
+                        ly = y - LABEL_OFFSET * cos_angle
+                    else:
+                        lx = x - LABEL_OFFSET * sin_angle
+                        ly = y + LABEL_OFFSET * cos_angle
+
+                anchor = "end" if cos_angle < 0 else "start"
+
+                if unordered and degree:
+                    if real in priority_set:
+                        svg_labels.append(f'<text x="{lx}" y="{ly}" font-size="{fontsize}" 'f'text-anchor="{anchor}" dominant-baseline="central" 'f'transform="rotate({rotation},{lx},{ly})">{label_text}</text>')
+                else:
+                    svg_labels.append(f'<text x="{lx}" y="{ly}" font-size="{fontsize}" 'f'text-anchor="{anchor}" dominant-baseline="central" 'f'transform="rotate({rotation},{lx},{ly})">{label_text}</text>')
         for j, virtual in enumerate(virtual_nodes, start=1):
-            radius = MAX_RADIUS + j * 50/(len(virtual_nodes) + 1) # (MAX_RADIUS + 50 - MAX_RADIUS)
+            radius = MAX_RADIUS + j * 50 / (len(virtual_nodes) + 1)
             x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[virtual] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="0" fill="#AED6F1"/>')
-
     for edge in edges:
         u_x, u_y = rendered_node_positions[edge[0]]
         v_x, v_y = rendered_node_positions[edge[1]]
-        x_mid = (u_x + v_x) /2
-        y_mid = (u_y + v_y) /2
-        if (isinstance(edge[0], int) and isinstance(edge[1], int)) or (isinstance(edge[0], str) and isinstance(edge[1], str)): # beide real oder beide virtuell
-            # alpha = -1
-            alpha = -0.3 # original
-        elif (isinstance(edge[0], str) and isinstance(edge[1], int)) or (isinstance(edge[1], str) and isinstance(edge[0], int)): # mixed
-            alpha = -0.8
-        x_fix = x_mid + (CENTER_X - x_mid) * alpha
-        y_fix = y_mid + (CENTER_Y - y_mid) * alpha
-        svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" fill="none" stroke="gray" stroke-width="1.2" opacity="0.5"/>')
+        x_mid = (u_x + v_x) / 2
+        y_mid = (u_y + v_y) / 2
+        both_real = False
+        both_virtual = False
+        if isinstance(edge[0], int) and isinstance(edge[1], int): #intra/inter
+            both_real = True
+        if isinstance(edge[0], str) and isinstance(edge[1], str): # achsenverbindung original zu expandiert
+            both_virtual = True
+
+        dx = x_mid - CENTER_X # richtungsvektor ursprung zu mitte, x
+        dy = y_mid - CENTER_Y # richtungsvektor ursprung zu mitte, y
+        dist = math.hypot(dx, dy)
+
+        if both_real:
+            pull = dist * 0.15
+        elif both_virtual:
+            pull = dist * 0.1
+        else:
+            pull = min(85, dist * 0.3)          
+        if dist > 0:
+            x_fix = x_mid + (dx / dist) * pull
+            y_fix = y_mid + (dy / dist) * pull
+        else: # fall back gerade zeichnen
+            x_fix, y_fix = x_mid, y_mid
+        svg_edges.append(
+            f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" 'f'fill="none" stroke="gray" stroke-width="1" opacity="0.5"/>')
+
     if intra_edges is not None:
         for edge in intra_edges:
             u_x, u_y = rendered_node_positions[edge[0]]
             v_x, v_y = rendered_node_positions[edge[1]]
-            dx = v_x - u_x # senkrecht zur achse versetzen, da auf gleicher achse
-            dy = v_y - u_y  
-            x_mid = (u_x + v_x) /2
-            y_mid = (u_y + v_y) /2
+            dx = v_x - u_x
+            dy = v_y - u_y
+            x_mid = (u_x + v_x) / 2
+            y_mid = (u_y + v_y) / 2
             alpha = 0.5
             x_fix = x_mid - dy * alpha
             y_fix = y_mid + dx * alpha
             svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" fill="none" stroke="gray" stroke-width="1.2" opacity="0.5"/>')
+
     return svg_axes, svg_nodes, svg_edges, svg_labels
 
 def render_svg(filename: str, width: int, height: int, elements: list[str]) -> None:
@@ -105,9 +175,10 @@ def render_svg(filename: str, width: int, height: int, elements: list[str]) -> N
     with open(filename, "w", encoding="utf-8") as file:
         file.write("\n".join(svg))
 
-def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False) -> None:
+def hiveplot_renderer(name: str, layout: HivePlotLayout, degree: bool = True, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False) -> None:
     """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (.svg) realisiert.
     """
+    id_to_label_map = layout.id_to_name
     if expanded:
         node_groups = layout.node_groups_expanded
     else:
@@ -115,9 +186,10 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False,
     elements = ["<rect width='100%' height='100%' fill='white'/>"] # weißer hintergrund
     # elements = [] # kein hintergrund
     if intra:
-        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), layout.intra_axis_edges, unordered = unordered, axes_labels=axes_labels)
+        ax, nod, ed, lab = draw_basis(layout, node_groups, layout.edges(), id_to_label_map=id_to_label_map, unordered=unordered, degree=degree, intra_edges=layout.intra_axis_edges,
+                                    axes_labels=axes_labels)
     else:
-        ax, nod, ed, lab = draw_basis(node_groups, layout.edges(), unordered = unordered, axes_labels=axes_labels)
+        ax, nod, ed, lab = draw_basis(layout, node_groups, layout.edges(), id_to_label_map=id_to_label_map, unordered = unordered, degree=degree,  axes_labels=axes_labels)
     elements.extend(ax)
     elements.extend(ed)
     elements.extend(nod)
@@ -132,6 +204,9 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, expanded: bool = False,
     filename = output / (name + ".svg")
     output.mkdir(parents=True, exist_ok=True)
     render_svg(filename, WIDTH, HEIGHT, elements)
+    drawing = svg2rlg(filename)
+    nosvg = filename = output / name
+    renderPDF.drawToFile(drawing, f"{nosvg}.pdf")
 
 if __name__ == "__main__":
     from partitioning import (

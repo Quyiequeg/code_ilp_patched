@@ -506,7 +506,7 @@ if __name__ == "__main__":
     # hpl.pre_processing_expansion(node_axis_map)
     hpl.dummy_edge_segments = []
     hpl.post_processing_expansion(node_axis_map)
-    render_debug(hpl, title="Post-processing-test")
+    render_debug(hpl, title="renderer_test")
     print(hpl)
     # print(hpl.edges())
     # print(hpl.graph.nodes)
