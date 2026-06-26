@@ -499,7 +499,7 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list)
-        layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
+        # layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
         # 4.
         barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
         barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False) # nur virtuell (dummies)

@@ -293,7 +293,7 @@ class HivePlotLayout:
         """
         from crossing_minimization import parse_dummy_name
         from ordering import node_to_axis_maps
-
+        
         def next_dummy_sequence(u, v, node_groups):
             """Zählt die Dummysegmente und gibt Anzahl+1 zurück."""
             max_sequence = 0
@@ -302,28 +302,39 @@ class HivePlotLayout:
                     if isinstance(node, str):
                         parts = node.split('_')
                         if len(parts) == 4 and parts[1] == str(u) and parts[2] == str(v):
-                            max_sequence = max(max_sequence, int(parts[3]))
+                            seq = int(parts[3])
+                            if seq > 0:  # ← NEU: negative Spiegel ignorieren
+                                max_sequence = max(max_sequence, seq)
             return max_sequence + 1
         
         def get_expanded_dummy(dummy, node_groups_expanded):
-            """Gibt den gespiegelten Dummyknoten zurück. Falls bereits in node_groups_expanded vorhanden wird er direkt zurückgegeben, andernfalls wird ein neuer Name mit der nächsten freien Sequenznummer erzeugt."""
             dummy_parsed = parse_dummy_name(dummy)
+            u, v = dummy_parsed[0], dummy_parsed[1]
+            
+            # Zuerst prüfen ob Spiegel (-1) bereits existiert
+            mirror_name = f"d_{u}_{v}_{-dummy_parsed[2]}"
+            all_expanded = [n for nodes in node_groups_expanded.values() for n in nodes]
+            if mirror_name in all_expanded:
+                return mirror_name  # ← NEU: Spiegel zurückgeben statt neuen erzeugen
+            
+            # Fallback: neuen Dummy mit nächster Sequenz erzeugen (alter Code)
             for nodes in node_groups_expanded.values():
                 for node in nodes:
                     if isinstance(node, str):
                         parts = node.split('_')
-                        if len(parts) == 4 and parts[1] == str(dummy_parsed[0]) and parts[2] == str(dummy_parsed[1]) and int(parts[3]) == dummy_parsed[2] + 1:
-                            return node # bereits expandiert
-            new_sequence = next_dummy_sequence(dummy_parsed[0], dummy_parsed[1], node_groups_expanded)
-            return f"d_{dummy_parsed[0]}_{dummy_parsed[1]}_{new_sequence}" # neu erzeugen
-        
+                        if len(parts) == 4 and parts[1] == str(u) and parts[2] == str(v) and int(parts[3]) == dummy_parsed[2] + 1:
+                            return node
+            new_sequence = next_dummy_sequence(u, v, node_groups_expanded)
+            return f"d_{u}_{v}_{new_sequence}"
+    
         def get_edge_axes(edge):
             """Funktion gibt robust die Achsen für die Kante zurück, kann also auf neuen und alten Kanten aufgerufen werden."""
             if edge in edge_axis_map:
                 return edge_axis_map[edge] # nur positive knoten, war vor expansion im hiveplot 
             else:
                 return (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) # falls neue kante
-            
+        
+        dummy_mirror_map = {}
         if dummy_copy is None:
             dummy_edges = self.dummy_edge_segments
         else:
@@ -356,13 +367,20 @@ class HivePlotLayout:
                 for node in node_groups[axis]:
                     if isinstance(node, int): # real -> negativ kopieren
                         node_groups_expanded[-axis].append(-node)
-                    elif isinstance(node, str): # virtuell -> inkrement erzeugen
+                    elif isinstance(node, str):
                         dummy_node = parse_dummy_name(node)
-                        new_sequence = next_dummy_sequence(dummy_node[0], dummy_node[1], node_groups_expanded)
-                        new_dummy = f"d_{dummy_node[0]}_{dummy_node[1]}_{new_sequence}"
-                        node_groups_expanded[-axis].append(new_dummy)
-                        dummy_edges.append((node, new_dummy))
+                        u, v = dummy_node[0], dummy_node[1]
+                        new_dummy = f"d_{u}_{v}_{-dummy_node[2]}" # sequenznummer spiegeln
+                        if new_dummy not in self.graph:     
+                            self.graph.add_node(new_dummy)
+                        node_groups_expanded[-axis].append(new_dummy) # indent ->
                         self.graph.add_edge(node, new_dummy)
+                        dummy_edges.append((node, new_dummy))
+        # self.dummy_edge_segments = [
+        #         e for e in self.dummy_edge_segments
+        #         if e[0] not in dummy_mirror_map and e[1] not in dummy_mirror_map
+        # ]
+
         self.axis_order = list(node_groups_expanded.keys()) # hpl update phi
         self.num_axes = len(self.axis_order) 
         _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_expanded) # snapshot nach expansion zusätzlich mit negativen knoten
@@ -377,6 +395,7 @@ class HivePlotLayout:
                 new_intra_edges.append((-edge[0], edge[1]))
                 new_intra_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_intra_edges)
+        print(dummy_mirror_map)
         for axis in inter_expandables: # fallprüfung und entfernen/einpflegen der zu expandierenden kanten (vorher/nachher)
             self.graph.remove_edges_from(inter_expandables[axis]) # zu expandierende real inter knoten aus hpl.graph löschen, die expandiert werden müssen
             new_inter_edges = []
@@ -405,6 +424,12 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_v, []).append(new_dummy)
                                 dummy_edges.append((edge[1], new_dummy)) # erzeugt eine kante zwischen dummyknoten auf einer zuvor expandierten achse
                             new_inter_edges.append((edge[0], new_dummy)) # erzeugt eine kante von u zu v, wobei v auf dem rechten teil einer expandierten achse liegt
+                        if edge in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove(edge)
+                            # self.graph.remove_edge(*edge)
+                        elif (edge[1], edge[0]) in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove((edge[1], edge[0]))
+                            # self.graph.remove_edge(*edge)
                     else: # v auf linkem teil einer expandierten achse, u auf rechtem teil einer expandierten achse 
                         if isinstance(edge[0], int):
                             new_inter_edges.append((-edge[0], edge[1]))
@@ -419,6 +444,12 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_u, []).append(new_dummy) # änderung: -axis_v
                                 dummy_edges.append((edge[0], new_dummy)) # änderung: edge[1]
                             new_inter_edges.append((edge[1], new_dummy))# änderung: edge[0]
+                        if edge in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove(edge)
+                            # self.graph.remove_edge(*edge)
+                        elif (edge[1], edge[0]) in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove((edge[1], edge[0]))
+                            # self.graph.remove_edge(*edge)
                 elif axis_u == axis: # u ist auf einer expandierten achse -> prüfen ob u auf linkem oder rechten teil liegt -> v auf nicht expandierter achse
                     if dist_left_u_v <= dist_left_v_u: # u liegt auf linkem teil einer expandierten achse
                         new_inter_edges.append(edge)
@@ -436,6 +467,20 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_u, []).append(new_dummy) #! -axis_v
                                 dummy_edges.append((edge[0], new_dummy)) #! edge[1] 
                             new_inter_edges.append((edge[1], new_dummy)) #! edge[0]
+                        print(f"edge: {edge}")
+                        print(f"edge in dummy_edge_segments: {edge in self.dummy_edge_segments}")
+                        print(f"reversed in dummy_edge_segments: {(edge[1], edge[0]) in self.dummy_edge_segments}")
+                        print(f"dummy_edge_segments: {self.dummy_edge_segments}")
+                        if edge in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove(edge)
+                            # self.graph.remove_edge(*edge)
+                            after = len(self.dummy_edge_segments)
+                        elif (edge[1], edge[0]) in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove((edge[1], edge[0]))
+                            # self.graph.remove_edge(*edge)
+                            after = len(self.dummy_edge_segments)
+                        if before == after:
+                                print(f"WARNUNG: Kante {edge} nicht in dummy_edge_segments gefunden!")
                 elif axis_v == axis: # v ist auf einer expandierten achse -> prüfen ob v auf linkem oder rechten teil liegt -> u auf nicht expandierter achse
                     if dist_left_v_u <= dist_left_u_v: # v liegt auf nicht-expandiertem teil
                         new_inter_edges.append(edge)
@@ -453,6 +498,21 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_v, []).append(new_dummy)
                                 dummy_edges.append((edge[1], new_dummy)) # kante auf der achse von v zwischen dummies einfügen
                             new_inter_edges.append((edge[0], new_dummy))
+                        print(f"edge: {edge}")
+                        print(f"edge in dummy_edge_segments: {edge in self.dummy_edge_segments}")
+                        print(f"reversed in dummy_edge_segments: {(edge[1], edge[0]) in self.dummy_edge_segments}")
+                        print(f"dummy_edge_segments: {self.dummy_edge_segments}")
+                        before = len(self.dummy_edge_segments)
+                        if edge in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove(edge)
+                            # self.graph.remove_edge(*edge)
+                            after = len(self.dummy_edge_segments)
+                        elif (edge[1], edge[0]) in self.dummy_edge_segments:
+                            self.dummy_edge_segments.remove((edge[1], edge[0]))
+                            # self.graph.remove_edge(*edge)
+                            after = len(self.dummy_edge_segments)
+                        if before == after:
+                            print(f"WARNUNG: Kante {edge} nicht in dummy_edge_segments gefunden!")
             self.graph.add_edges_from(new_inter_edges)
         for axis, nodes in self.node_groups_expanded.items(): # sanitycheck für networkx funktionen
             for node in nodes:

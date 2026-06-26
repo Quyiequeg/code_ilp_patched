@@ -54,7 +54,7 @@ def draw_basis(layout, node_groups: dict[int, list[str | int]], edges: list[tupl
     for i, (axis, nodes) in enumerate(node_groups.items()):
         real_nodes = []
         virtual_nodes = []
-        angle = 270 + i * (360 / len(node_groups))
+        angle = 270 + i * (360 / len(node_groups)) # theta
         x_end, y_end = translate_polar_to_carthesian(MAX_RADIUS, angle, CENTER_X, CENTER_Y)
         x_start, y_start = translate_polar_to_carthesian(AXIS_OFFSET, angle, CENTER_X, CENTER_Y)
         x_label, y_label = translate_polar_to_carthesian(AXIS_OFFSET * 0.85, angle, CENTER_X, CENTER_Y)
@@ -119,10 +119,26 @@ def draw_basis(layout, node_groups: dict[int, list[str | int]], edges: list[tupl
                 else:
                     svg_labels.append(f'<text x="{lx}" y="{ly}" font-size="{fontsize}" 'f'text-anchor="{anchor}" dominant-baseline="central" 'f'transform="rotate({rotation},{lx},{ly})">{label_text}</text>')
         for j, virtual in enumerate(virtual_nodes, start=1):
-            radius = MAX_RADIUS + j * 50 / (len(virtual_nodes) + 1)
-            x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
+            parts = virtual.split('_')
+            is_mirror = len(parts) == 4 and int(parts[3] ) < 0
+            if is_mirror:
+                # Spiegel-Dummy: gleiche Position wie der Original-Dummy auf dieser Achse
+                original = f"d_{parts[1]}_{parts[2]}_{-int(parts[3])}"
+                ox, oy = rendered_node_positions[original]
+                orig_radius = math.hypot(ox - CENTER_X, oy - CENTER_Y)
+                x, y = translate_polar_to_carthesian(orig_radius, angle, CENTER_X, CENTER_Y)
+            else:
+                radius = MAX_RADIUS + j * 50 / (len(virtual_nodes) + 1)
+                x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
             rendered_node_positions[virtual] = (x, y)
             svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="0" fill="#AED6F1"/>')
+            
+            
+            
+            # radius = MAX_RADIUS + j * 50 / (len(virtual_nodes) + 1)
+            # x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)
+            # rendered_node_positions[virtual] = (x, y)
+            # svg_nodes.append(f'<circle cx="{x}" cy="{y}" r="0" fill="#AED6F1"/>')
     for edge in edges:
         u_x, u_y = rendered_node_positions[edge[0]]
         v_x, v_y = rendered_node_positions[edge[1]]
@@ -150,8 +166,7 @@ def draw_basis(layout, node_groups: dict[int, list[str | int]], edges: list[tupl
             y_fix = y_mid + (dy / dist) * pull
         else: # fall back gerade zeichnen
             x_fix, y_fix = x_mid, y_mid
-        svg_edges.append(
-            f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" 'f'fill="none" stroke="gray" stroke-width="1" opacity="0.5"/>')
+        svg_edges.append(f'<path d="M {u_x},{u_y} Q {x_fix},{y_fix} {v_x},{v_y}" 'f'fill="none" stroke="gray" stroke-width="1" opacity="0.5"/>')
 
     if intra_edges is not None:
         for edge in intra_edges:
@@ -186,10 +201,10 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, degree: bool = True, ex
     elements = ["<rect width='100%' height='100%' fill='white'/>"] # weißer hintergrund
     # elements = [] # kein hintergrund
     if intra:
-        ax, nod, ed, lab = draw_basis(layout, node_groups, layout.edges(), id_to_label_map=id_to_label_map, unordered=unordered, degree=degree, intra_edges=layout.intra_axis_edges,
+        ax, nod, ed, lab = draw_basis(layout, node_groups, list(layout.edges()), id_to_label_map=id_to_label_map, unordered=unordered, degree=degree, intra_edges=layout.intra_axis_edges,
                                     axes_labels=axes_labels)
     else:
-        ax, nod, ed, lab = draw_basis(layout, node_groups, layout.edges(), id_to_label_map=id_to_label_map, unordered = unordered, degree=degree,  axes_labels=axes_labels)
+        ax, nod, ed, lab = draw_basis(layout, node_groups, list(layout.edges()), id_to_label_map=id_to_label_map, unordered = unordered, degree=degree,  axes_labels=axes_labels)
     elements.extend(ax)
     elements.extend(ed)
     elements.extend(nod)

@@ -46,7 +46,7 @@ def main():
     setup_logger(per_session=False)
     logger = logging.getLogger(__name__)
     start = time.time()
-    year = 2016
+    year = 2019
     save = False
     # pipeline = "barycenter"
     # method = "paper"
@@ -87,10 +87,10 @@ def main():
     logger.info(f"Brute Force fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
     print(f"ZEIT: {time.time() - start:.1f}")
     ############################################# Pipeline beginnt
-    # paper_like = True ##########################
-    paper_like = False #########################
-    # modus = "bary" #############################
-    modus = "ilp" ###############################
+    paper_like = True ##########################
+    # paper_like = False #########################
+    modus = "bary" #############################
+    # modus = "ilp" ###############################
     #############################################
     if modus == "bary":
         if paper_like:
@@ -106,13 +106,14 @@ def main():
             hiveplot_renderer(f"Barycenter_paperkonform_{year}", hpl_freeze)
             hiveplot_renderer(f"Barycenter_paperkonform mit intra_{year}", hpl_freeze, intra=True)
             # POST EXPANSION
-            _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
+            _, node_axis_map = node_to_axis_maps(hpl, hpl.fuse_node_groups_with_dummies())
             # edge_node_cleanup(hpl)
             hpl.post_processing_expansion(node_axis_map)
-            # edge_node_cleanup(hpl)
+            print("LOL")
+            edge_node_cleanup(hpl)
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             # logger.info(hpl)
-            hiveplot_renderer(f"Barycenter_paperkonform_expandiert_{year}", hpl, expanded=True)
+            hiveplot_renderer(f"Barycenter_paperkonform_expandiert_{year}", hpl, expanded=True, degree=True, unordered=False)
             if save:
                 timestamp = datetime.now().strftime("%d.%m--%H.%M")
                 filename = f"paper_expanded_hpl_k{hpl.num_axes}_{year}_{timestamp}_edges{len(hpl.edges())}_intra{len(hpl.intra_axis_edges)}.pkl"
@@ -156,6 +157,8 @@ def main():
     ###################################### ILP
     elif modus == "ilp":
         if paper_like:
+            print(hpl)
+            print(hpl.edges())
             # PIPELINE nicht expandiert
             logger.info(f"paperlike = {paper_like}")
             ip_model_pipeline(hpl, threshold=10)
@@ -168,13 +171,16 @@ def main():
             hiveplot_renderer(f"ILP_paperkonform_{year}", hpl_freeze)
             hiveplot_renderer(f"ILP_paperkonform mit intra_{year}", hpl_freeze, intra=True)
             # POST EXPANSION
-            _, node_axis_map = node_to_axis_maps(hpl, hpl.fuse_node_groups_with_dummies())
+            _, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
             # edge_node_cleanup(hpl)
             hpl.post_processing_expansion(node_axis_map)
-            # edge_node_cleanup(hpl)
+            # hpl.prepare_for_rendering()
+            edge_node_cleanup(hpl)
+            print(hpl)
+            print(hpl.edges())
             logger.info(f"Post Processing fertig. Berechnung in {time.time() - start:.1f}s abgeschlossen.")
             # logger.info(hpl)
-            hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True)
+            hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True, degree=True, unordered=False)
             # hiveplot_renderer(f"ILP_paperkonform_expandiert_{year}", hpl, expanded=True)
             if save:
                 timestamp = datetime.now().strftime("%d.%m--%H.%M")
