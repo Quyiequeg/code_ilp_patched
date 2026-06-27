@@ -467,10 +467,7 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_u, []).append(new_dummy) #! -axis_v
                                 dummy_edges.append((edge[0], new_dummy)) #! edge[1] 
                             new_inter_edges.append((edge[1], new_dummy)) #! edge[0]
-                        print(f"edge: {edge}")
-                        print(f"edge in dummy_edge_segments: {edge in self.dummy_edge_segments}")
-                        print(f"reversed in dummy_edge_segments: {(edge[1], edge[0]) in self.dummy_edge_segments}")
-                        print(f"dummy_edge_segments: {self.dummy_edge_segments}")
+                       
                         if edge in self.dummy_edge_segments:
                             self.dummy_edge_segments.remove(edge)
                             # self.graph.remove_edge(*edge)
@@ -498,10 +495,6 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_v, []).append(new_dummy)
                                 dummy_edges.append((edge[1], new_dummy)) # kante auf der achse von v zwischen dummies einfügen
                             new_inter_edges.append((edge[0], new_dummy))
-                        print(f"edge: {edge}")
-                        print(f"edge in dummy_edge_segments: {edge in self.dummy_edge_segments}")
-                        print(f"reversed in dummy_edge_segments: {(edge[1], edge[0]) in self.dummy_edge_segments}")
-                        print(f"dummy_edge_segments: {self.dummy_edge_segments}")
                         before = len(self.dummy_edge_segments)
                         if edge in self.dummy_edge_segments:
                             self.dummy_edge_segments.remove(edge)

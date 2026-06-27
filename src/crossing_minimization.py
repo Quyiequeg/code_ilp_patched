@@ -24,7 +24,8 @@
 from src import graphs
 from cost import node_or_axes_span
 import networkx as nx
-import pickle
+import logging
+from logger_setup import log
 # import logging
 # logging.basicConfig(
 #     level=logging.DEBUG,
@@ -438,7 +439,7 @@ def edge_node_cleanup(layout: HivePlotLayout, intra: bool = False):
             if node_axis_map[edge[0]] == node_axis_map[edge[1]] and edge not in layout.intra_axis_edges:
                 layout.intra_axis_edges.append(edge)
 
-def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = float("inf"), expanded: bool = False) -> None:
+def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold: float = float("inf"), expanded: bool = False) -> None:
     """Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).
 
     Die Pipeline umfasst im expandierten Fall:
@@ -470,12 +471,15 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
         layout.pre_processing_expansion(node_axis_map)
+        log(logger, "Barycenterheuristik - pre_processing_expansion abgeschlossen.")
+
         # 2.
         isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
         # 3.
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), expanded=expanded) # UPDATE
         subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map, expanded=expanded)
+        log(logger, "Barycenterheuristik Schritt 3* - Segmentierung abgeschlossen.")
         # 4.
         fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
         fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
@@ -483,9 +487,13 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
         # 5.
         barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, expanded=expanded) # nur real
+        log(logger, "Barycenterheuristik Schritt 3a/b - cw-Sweep abgeschlossen.")
         barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, expanded=expanded) # nur virtuell (dummies)
+        log(logger, "Barycenterheuristik Schritt 3a/b - ccw-Sweep abgeschlossen.")
         # 6.
         finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
+        log(logger, "Barycenterheuristik Schritt 3a/b - Finish abgeschlossen.")
+
     else:
         # pipeline 3a <<<<<<<<<<<<
         # 1.
@@ -494,6 +502,8 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
         subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+        log(logger, "Barycenterheuristik Schritt 3* - Segmentierung abgeschlossen.")
+        
         # 3.
         fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
         fused_node_list = layout.fuse_node_groups_with_dummies() # UPDATE !!!
@@ -502,12 +512,16 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, threshold: float = floa
         # layout.dummy_edge_segments = layout.fuse_edges_with_edge_dummies()
         # 4.
         barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True) # nur real
+        log(logger, "Barycenterheuristik Schritt 3a/b - cw-Sweep abgeschlossen.")
         barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False) # nur virtuell (dummies)
+        log(logger, "Barycenterheuristik Schritt 3a/b - ccw-Sweep abgeschlossen.")
         #pipeline 3b <<<<<<<<<<<<
         # 5.
         intra_axis_handler(layout)
+        log(logger, "Barycenterheuristik Schritt 3a/b - intra-axis Handling abgeschlossen.")
         # 6.
         finish_structured_axis_orders(layout, isolated_nodes)
+        log(logger, "Barycenterheuristik Schritt 3a/b - Finish abgeschlossen.")
 
 if __name__ == "__main__":
     print("##########################################")

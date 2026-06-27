@@ -183,14 +183,14 @@ def draw_basis(layout, node_groups: dict[int, list[str | int]], edges: list[tupl
 
     return svg_axes, svg_nodes, svg_edges, svg_labels
 
-def render_svg(filename: str, width: int, height: int, elements: list[str]) -> None:
+def render_svg(filename: Path | str, width: int, height: int, elements: list[str]) -> None:
     """ Setzt den Header der .svg Datei und hängt die Graphenelemente an und setzt die Schlussklausel. Datei wird neu erstellt bzw. überschrieben, falls sie bereits existiert.
     """
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">', *elements,'</svg>',]
     with open(filename, "w", encoding="utf-8") as file:
         file.write("\n".join(svg))
 
-def hiveplot_renderer(name: str, layout: HivePlotLayout, degree: bool = True, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False) -> None:
+def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree: bool = True, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False) -> Path:
     """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (.svg) realisiert.
     """
     id_to_label_map = layout.id_to_name
@@ -210,18 +210,12 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, degree: bool = True, ex
     elements.extend(nod)
     if node_labels:
         elements.extend(lab)
-    if mode == "debug":
-        output = Path("output/debug")
-    elif mode == "year":
-        output = Path("output/years")
-    elif mode == "ba":
-        output = Path("output/ba")
-    filename = output / (name + ".svg")
-    output.mkdir(parents=True, exist_ok=True)
+
+    filename = debug_dir / (name + ".svg")
     render_svg(filename, WIDTH, HEIGHT, elements)
-    drawing = svg2rlg(filename)
-    nosvg = filename = output / name
-    renderPDF.drawToFile(drawing, f"{nosvg}.pdf")
+    return filename
+
+    
 
 if __name__ == "__main__":
     from partitioning import (
