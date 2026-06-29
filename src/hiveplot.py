@@ -42,7 +42,7 @@ class HivePlotLayout:
 
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
-    crossings_extended: Optional[int] = None
+    crossings_expanded: Optional[int] = None
 
     def __str__(self):
         """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
@@ -134,7 +134,7 @@ class HivePlotLayout:
         Returns:
             list[tuple[int, int]]: Vereinigung aus Kanten und Dummykanten
         """
-        direct_edges = [e for e in self.edges() if e not in self.long_edges]
+        direct_edges = [edge for edge in self.edges() if edge not in self.long_edges]
         fused_edges = direct_edges + self.dummy_edge_segments
         return fused_edges
     
@@ -533,6 +533,41 @@ class HivePlotLayout:
             if edge not in self.intra_axis_edges:
                 self.intra_axis_edges.append(edge)
         
+    def count_crossings(self: HivePlotLayout, expanded: bool = False) -> int:
+        if expanded:
+            node_groups = self.node_groups_expanded
+        else:
+            node_groups = self.node_groups
+        hpl_copy = self.copy()
+        for edge in self.intra_axis_edges:
+            if edge in self.graph.edges() and not expanded:
+                hpl_copy.graph.remove_edge(edge[0], edge[1])
+        
+        if expanded:
+            neighbor_map = self.get_proper_neighborhood_map(self.edges(), expanded)
+        else:
+            hpl_copy.graph.add_edges_from(self.dummy_edge_segments)
+            neighbor_map = self.get_proper_neighborhood_map(hpl_copy.edges(), expanded)
+        node_positions_pi = {} # knoten -> position in pi
+        node_axis_map = {} 
+        for axis in node_groups: 
+            for i, node in enumerate(node_groups[axis]):
+                node_positions_pi[node] = i
+                node_axis_map[node] = axis
+        crossings = 0
+        k = len(self.axis_order)
+        for step in range(k): # betrachte achsen paarweise
+            axis_i = self.axis_order[step]
+            axis_j = self.axis_order[(step + 1) % k]
+            order_i = node_groups.get(axis_i, [])
+            for idx_u, u in enumerate(order_i): # betrachte knoten paarweise
+                for v in order_i[idx_u + 1:]:
+                    for s in neighbor_map.get(u, []):
+                        for t in neighbor_map.get(v, []):
+                            if (node_axis_map.get(s) == axis_j and node_axis_map.get(t) == axis_j and node_positions_pi[t] < node_positions_pi[s]):
+                                crossings += 1
+        return crossings
+
 
 if __name__ == "__main__":
     from graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended

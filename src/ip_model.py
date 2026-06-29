@@ -183,6 +183,8 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
             prob.solve(pp.PULP_CBC_CMD(msg=False))
+            if threshold_break == threshold - 1:
+                layout.crossings = pp.value(prob.objective)
             # schreibe problem um nach delta
             # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
             for key in delta:
@@ -246,10 +248,10 @@ def induced_crossings(delta_static: dict[tuple[int|str, int|str, int|str], int],
             v = pi_var[j]
             del_uv = delta_static[(u, v, pi_var_id)]
             del_vu = delta_static[(v, u, pi_var_id)]
-            neigh_u = sorted_neighbors[pi_fix, u]
-            neigh_v = sorted_neighbors[pi_fix, v]
-            for s in neigh_u:
-                for t in neigh_v:
+            neighbor_u = sorted_neighbors[pi_fix, u]
+            neighbor_v = sorted_neighbors[pi_fix, v]
+            for s in neighbor_u:
+                for t in neighbor_v:
                     if s == t: # nachbarlisten nicht zwangsweise disjunkt
                         continue
                     del_st = delta_static[(s, t, pi_fix)]
@@ -285,27 +287,27 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
         layout.pre_processing_expansion(node_axis_map)
-        log(logger, "ILP - pre_processing_expansion abgeschlossen.")
+        # log(logger, "ILP - pre_processing_expansion abgeschlossen.")
         # 2.
         isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), expanded=expanded) # UPDATE
         cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
+        # log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
         # 3.
         fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
         fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
         onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold, expanded=expanded)
-        log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
+        # log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
         # print(f"REAL: {layout.node_groups}")
         # print(f"DUMMY: {layout.node_groups_dummies}")
         # 5.
         # cm.intra_axis_handler(layout)
         # 6.
         cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
-        log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
+        # log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
 
     else:
         # pipeline 3a <<<<<<<<<<<<
@@ -315,7 +317,7 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
         cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
+        # log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
         # print(f"DELTAGROUPS: {delta}")
         # print(f"ISOLATED NODES: {isolated_nodes}")
         # print(f"DUMMIES: {layout.node_groups_dummies}")
@@ -325,15 +327,15 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
         onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
-        log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
+        # log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
         # print(f"REAL: {layout.node_groups}")
         # print(f"DUMMY: {layout.node_groups_dummies}")
         # 5.
         cm.intra_axis_handler(layout)
-        log(logger, "ILP Schritt 3a/b - intra-axis Handling abgeschlossen.")
+        # log(logger, "ILP Schritt 3a/b - intra-axis Handling abgeschlossen.")
         # 6.
         cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
-        log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
+        # log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
 
         # print("NODE_AXIS_MAP")
         # print(node_axis_map)

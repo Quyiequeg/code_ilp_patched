@@ -210,7 +210,10 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree
     elements.extend(nod)
     if node_labels:
         elements.extend(lab)
-
+    if expanded:
+        elements.append( f'<text x="12" y="20" font-size="24" fill="#000000">'f'Kreuzungen: {layout.crossings_expanded}'f'</text>')
+    else:
+        elements.append( f'<text x="12" y="20" font-size="24" fill="#000000">'f'Kreuzungen: {layout.crossings}'f'</text>')
     filename = debug_dir / (name + ".svg")
     render_svg(filename, WIDTH, HEIGHT, elements)
     return filename

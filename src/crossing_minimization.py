@@ -464,7 +464,6 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
         expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     """
     from ordering import node_to_axis_maps
-
     if expanded:
         # pipeline 3a <<<<<<<<<<<<
         # 1.
