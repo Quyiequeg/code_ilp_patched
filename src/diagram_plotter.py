@@ -10,20 +10,83 @@ _BASE = Path(__file__).parent.parent  # src/ -> repo root
 _DEFAULT_PATH = _BASE / "output/experiments/"
 _DEFAULT_PATH.mkdir(parents=True, exist_ok=True)
 
-def bar_chart_gesamt_absolute_inter_intra(title: str, data_set: dict[str, str | int | float | None], axes: plt.Axes):
-    colors = ["#0C3158", "#7CB5F1DD", "#4C78A8", "#4C78A8"]
-    position = np.arange(len(data_set["x"]))
-    x_values = data_set["x"]
-    lower_bar = data_set["absoluter Anteil intra-axis Kanten"]
-    upper_bar = data_set["absoluter Anteil inter-axis Kanten"]
+def bar_chart_gesamt_absolute_inter_intra(title: str, data_set: dict, axes: plt.Axes):
+    COLOR_INTRA  = "#7CB5F1DD"   # hellblau  – intra-axis Kanten
+    COLOR_INTER  = "#0C3158"     # dunkelblau – inter-axis Kanten
+    COLOR_NODES  = "#1B4D3E"     # dunkles Grün – Knoten
 
-    axes.bar(x_values, lower_bar, color = colors[1], width=0.5, label="intra-axis")
-    axes.bar(x_values, upper_bar, color = colors[0], width=0.5, label="inter-axis", bottom = lower_bar)
-    
-    axes.set(title = title, xlabel = "Jahr", ylabel = "absoluter Anteil")
-    axes.legend()
+    BAR_WIDTH = 0.38
+    x_values  = data_set["x"]
+    n         = len(x_values)
+    pos       = np.arange(n)
 
-    axes.set_xticks(x_values)
+    lower_bar    = data_set["absoluter Anteil intra-axis Kanten"]
+    upper_bar    = data_set["absoluter Anteil inter-axis Kanten"]
+    total_kanten = [a + b for a, b in zip(lower_bar, upper_bar)]
+    knoten       = data_set["Gesamtknoten"]
+
+    # Kantenbalken (links, gestapelt)
+    axes.bar(pos - BAR_WIDTH / 2, lower_bar, width=BAR_WIDTH,
+             color=COLOR_INTRA, label="intra-axis Kanten")
+    axes.bar(pos - BAR_WIDTH / 2, upper_bar, width=BAR_WIDTH,
+             color=COLOR_INTER, label="inter-axis Kanten", bottom=lower_bar)
+
+    # Knotenbalken (rechts)
+    axes.bar(pos + BAR_WIDTH / 2, knoten, width=BAR_WIDTH,
+             color=COLOR_NODES, label="Gesamtknoten")
+
+    # Verhältnis-Annotation über Kantenbalken
+    for x, k, e in zip(pos, knoten, total_kanten):
+        ratio = k / e * 100
+        axes.text(x + BAR_WIDTH / 2,
+                k + max(total_kanten) * 0.015,
+                rf"${ratio:.0f}\%$",
+                ha="center", va="bottom", fontsize=6, color="#333333")
+
+    axes.set(title=title, xlabel="Jahr", ylabel="Anteile")
+    axes.legend(fontsize=8)
+    axes.set_xticks(pos)
+    axes.set_xticklabels(x_values, rotation=45, ha="right")
+
+def bar_chart_gesamt_native_min_max(title: str, data_set: dict, axes: plt.Axes):
+    COLOR_COMMUNITIES = "#4C78A8"   # blau – native Communities
+    COLOR_RANGE_BASE  = "#A8C8E8"   # hellblau – min
+    COLOR_RANGE_TOP   = "#0C3158"   # dunkelblau – max - min
+
+    BAR_WIDTH  = 0.38
+    x_values   = data_set["x"]
+    pos        = np.arange(len(x_values))
+
+    communities = data_set["Native Communities"]
+    min_com     = data_set["kleinste Community"]
+    max_com     = data_set["größte Community"]
+    span        = [mx - mn for mx, mn in zip(max_com, min_com)]
+
+    # Linker Balken: Anzahl Communities
+    axes.bar(pos - BAR_WIDTH / 2, communities, width=BAR_WIDTH,
+             color=COLOR_COMMUNITIES, label="Anzahl Communities")
+
+    # Rechter Balken: Range (min als Basis, Span oben)
+    axes.bar(pos + BAR_WIDTH / 2, min_com, width=BAR_WIDTH,
+             color=COLOR_RANGE_BASE, label="kleinste Community")
+    axes.bar(pos + BAR_WIDTH / 2, span, width=BAR_WIDTH,
+             color=COLOR_RANGE_TOP, label="größte Community",
+             bottom=min_com)
+
+    # Max-Wert oben annotieren
+    for x, c, mx in zip(pos, communities, max_com):
+        axes.text(x - BAR_WIDTH / 2,
+                c + max(communities) * 0.015,
+                str(c),
+                ha="center", va="bottom", fontsize=6)
+        axes.text(x + BAR_WIDTH / 2,
+                mx + max(max_com) * 0.015,
+                str(mx),
+                ha="center", va="bottom", fontsize=6)
+
+    axes.set(title=title, xlabel="Jahr", ylabel="Anzahl Knoten")
+    axes.legend(fontsize=8)
+    axes.set_xticks(pos)
     axes.set_xticklabels(x_values, rotation=45, ha="right")
 
 def boxplot_h_one(title, dsets, axes: plt.Axes):
@@ -141,21 +204,26 @@ def plotter(title: str, file_name: str, data_set: str = None, mode: int = 0):
     colors = ["#4C78A8", "#4C78A8", "#4C78A8", "#4C78A8"]
     collector = DataCollector()
     # fig, axes = plt.subplots() balkendiagramm1
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
     if mode == 0:
+        fig, ax = plt.subplots(figsize=(14, 4))
         dset = collector.data_sets[data_set]
         bar_chart_gesamt_absolute_inter_intra(title, dset, ax)
     elif mode == 1:
-        for ax, year in zip(axes, ["GD2000", "GD2016", "GD2024"]):
+        fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+        for axes, year in zip(ax, ["GD2000", "GD2016", "GD2024"]):
             dsets = [
                 collector.data_sets[f"Laufzeiten und Kreuzungszahlen für tau = 4, {year}"]["Laufzeit ex"],
                 collector.data_sets[f"Laufzeiten und Kreuzungszahlen für tau = 6, {year}"]["Laufzeit ex"],
                 collector.data_sets[f"Laufzeiten und Kreuzungszahlen für tau = 8, {year}"]["Laufzeit ex"],
             ]
-            lineplot_h_one(f"Laufzeiten in Abhängigkeit zu $\\tau$ - {year}", dsets, ax)
+            lineplot_h_one(f"Laufzeiten in Abhängigkeit zu $\\tau$ - {year}", dsets, axes)
     elif mode == 2:
         fig, ax = plt.subplots(figsize=(10, 5))
         stacked_bar_partition_plot_h_one(title, collector, fig, ax)
+    elif mode == 3:
+        fig, ax = plt.subplots(figsize=(14, 4))
+        dset = collector.data_sets[data_set]
+        bar_chart_gesamt_native_min_max(title, dset, ax)
     
     
 
@@ -164,7 +232,8 @@ def plotter(title: str, file_name: str, data_set: str = None, mode: int = 0):
     plt.close(fig)
 
 if __name__ == "__main__":
-    # plotter(r"Gesamtkanten und -anteile $\tau$ = 8", "k5_diagramm1_absolute_anteile", "Gesamtkanten und -anteile tau = 8", 0)
-    plotter(r" ", "k5_lineplot_laufzeit_zu_tau", mode = 1)
+    # plotter(r"Gesamtkanten/-knoten Vergleich über alle Jahre $\tau$ = 8", "k5_diagramm1_absolute_anteile", "Gesamtkanten und -anteile tau = 8", 0)
+    # plotter(r" ", "k5_lineplot_laufzeit_zu_tau", mode = 1)
     # plotter(r"Kreuzungszahlen in Abhängigkeit zu $\tau$ - GD2000/2016/2024", "k5_balken_kreuzungen_zu_tau", mode = 2)
+    plotter(r"Native Communities und größte/kleinste Community Vergleich über alle Jahre $\tau = 0$", "k5_balken_nativ", "Gesamtkanten und -anteile tau = 8", mode = 3)
     

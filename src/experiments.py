@@ -48,8 +48,8 @@ class DataCollector:
             dset = self.data_sets[data_set]
             if x_val in dset["x"]: # falls x vorhanden, ersetze kwargs für index x
                 index = dset["x"].index(x_val)
-                for arg in kwargs:
-                    dset[arg][index] = kwargs[arg]
+                for arg in kwargs: # vorhandenen key updaten, neuen key anlegen
+                    dset.setdefault(arg, [None] * len(dset["x"]))[index] = kwargs[arg]
             else: # falls x nicht vorhanden, setze x und ordne kwarg einträge zu
                 dset["x"].append(x_val)
                 for arg in kwargs:
@@ -180,7 +180,7 @@ def hypothesis_one(exp_dir: Path, mode: int, config: dict[str, str | bool | int 
             ds["kleinste Community"] = min(len(v) for v in node_groups.values())
             ds["größte Community"] = max(len(v) for v in node_groups.values())
 
-            db.update("GDJahre_gesamt_knoten_kanten_native", year, **ds)
+            db.update("Gesamtkanten und -anteile tau = 8", year, **ds)
             
     elif mode == 3: # E2.5 tau=6, E2.6 tau = 8
         table = []
@@ -216,5 +216,6 @@ if __name__ == "__main__":
     data = DataCollector()
     # data.delete("Laufzeiten und Kreuzungszahlen für tau = 4")
     # print(data.get_data_set("Laufzeiten und Kreuzungszahlen für tau = 8, GD2000"))
-    # data.get_data_set("Gesamtkanten und -anteile tau = 8")
-    data.get_data_set("GDJahre_gesamt_knoten_kanten_native")
+    data.get_data_set("Laufzeitenvergleich Bary/ILP")
+    # data.delete("Laufzeitenvergleich Bary/ILP")
+    # data.get_data_set("GDJahre_gesamt_knoten_kanten_native")

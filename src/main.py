@@ -147,38 +147,68 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
     print("Berechnung Start.")
     collector = DataCollector()
     collected_data = {}
-    start = time.time()
+    start_begin = time.time()
     # graph erzeugen und partitionieren
     # log(logger, f"Starte Berechnung für {variant} für das Jahr {year}. Ordnung nach Original: {paper_like}.")
+    
     hiveplot = init_hiveplot(year, own_pkl, partitions, logger)
+    if variant == "Barycenterheuristik":
+        collected_data["init_hiveplot Bary t"] = time.time() - start_begin
+    else:    
+        collected_data["init_hiveplot ILP t"] = time.time() - start_begin
+
     # phi berechnen
+    start = time.time()
     step_ordering(hiveplot, logger)
+    if variant == "Barycenterheuristik":
+        collected_data["step_ordering Bary t"] = time.time() - start
+    else:    
+        collected_data["step_ordering ILP t"] = time.time() - start
+
     # zwischenspeichern als debugging-tool
     save_pkl(hiveplot, f"{variant}_{year}_basis_nach_ordering", save, logger)
     if variant == "Barycenterheuristik":
         if paper_like: # originalframework
             # pipeline 3a/b + nachbereitung
+            start = time.time()
             barycenter_crossmin_pipeline(hiveplot, logger, threshold)
+            collected_data["barycenter_crossmin_pipeline t"] = time.time() - start
+
+            start = time.time()
             hiveplot.crossings = hiveplot.count_crossings()
+            collected_data["count_crossings Bary 1 t"] = time.time() - start
+
             edge_node_cleanup(hiveplot)
-            log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - Barycenter - abgeschlossen.")
+            # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - Barycenter - abgeschlossen.")
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
             # achsenexpansion vorbereitung + durchführung + nachbereitung
             _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
+
+            start = time.time()
             hiveplot.post_processing_expansion(node_axis_map)
-            log(logger, "Schritt 5/6 erfolgreich: Achsenexpansion - Barycenter - abgeschlossen.")
+            collected_data["post_processing_expansion Bary t"] = time.time() - start
+
+            # log(logger, "Schritt 5/6 erfolgreich: Achsenexpansion - Barycenter - abgeschlossen.")
             edge_node_cleanup(hiveplot)
+
+            start = time.time()
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
+            collected_data["count_crossings Bary 2 t"] = time.time() - start
+            
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
-            log(logger, "Schritt 6/6 erfolgreich: Speichern - Barycenter - abgeschlossen.")
-            elapsed = time.time() - start
-            log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
+            # log(logger, "Schritt 6/6 erfolgreich: Speichern - Barycenter - abgeschlossen.")
+            # elapsed = time.time() - start
+            # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
+
+            elapsed = time.time() - start_begin
+            collected_data["Barycenter gesamt t"] = elapsed
+            collector.update(f"Laufzeitenvergleich Bary/ILP", year, **collected_data)
         else:
             # pre_processing_expansion + pipeline 3a/b + nachbereitung
             barycenter_crossmin_pipeline(hiveplot, logger, expanded=True)
@@ -196,12 +226,13 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
     else:
         if paper_like: # originalframework
             # pipeline 3a/b + nachbereitung
+            start = time.time()
             ip_model_pipeline(hiveplot, logger, threshold)
-            hiveplot.crossings = hiveplot.count_crossings()
-            elapsed = time.time() - start
+            collected_data["ip_model_pipeline t"] = time.time() - start
 
-            collected_data["Kreuzungen nex"] = hiveplot.crossings
-            collected_data["Laufzeit nex"] = round(elapsed, 5)
+            start = time.time()
+            hiveplot.crossings = hiveplot.count_crossings()
+            collected_data["count_crossings ILP 1 t"] = time.time() - start
             
             edge_node_cleanup(hiveplot)
             # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
@@ -211,20 +242,28 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             save_rendered_hiveplot(svg_path, year, logger)
             # achsenexpansion vorbereitung + durchführung + nachbereitung
             _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
+
+            start = time.time()
             hiveplot.post_processing_expansion(node_axis_map)
+            collected_data["post_processing_expansion ILP t"] = time.time() - start
+
             # log(logger, "Schritt 5/6 erfolgreich: Achsenexpansion - ILP - abgeschlossen.")
             edge_node_cleanup(hiveplot)
+
+            start = time.time()
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
+            collected_data["count_crossings ILP 2 t"] = time.time() - start
+
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
             # log(logger, "Schritt 6/6 erfolgreich: Speichern - ILP - abgeschlossen.")
 
-            elapsed = time.time() - start
-            collected_data["Kreuzungen ex"] = hiveplot.crossings_expanded
-            collected_data["Laufzeit ex"] = round(elapsed, 5)
-            collector.update(f"Laufzeiten und Kreuzungszahlen für tau = {partitions}, GD{year}", run, **collected_data)
+
+            elapsed = time.time() - start_begin
+            collected_data["1L2S-ILP gesamt t"] = elapsed
+            collector.update(f"Laufzeitenvergleich Bary/ILP", year, **collected_data)
             print(f"Speichere x = {run}, Laufzeit = {elapsed:.5f}, crossings = {hiveplot.crossings_expanded}")
             # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
         else:
@@ -248,10 +287,10 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
 def main():
     config = {
         "year": 2016,
-        "output_name": "H1_E3_Funktionstest",
+        "output_name": "",
         "logger": None,
-        # "variant": "Barycenterheuristik",
-        "variant": "1L2S-ILP",
+        "variant": "Barycenterheuristik",
+        # "variant": "1L2S-ILP",
         "paper_like": True,
         # "paper_like": False,
         "partitions": 8,
@@ -279,7 +318,10 @@ def main():
 
     # für batch
     # for i in range(1, 101):
-    #     pipeline(run = i, **config)
+    for year in range(2000, 2025):
+        print(year)
+        config["year"] = year
+        pipeline(run = year, **config)
 
 
     ############################ H1 ##################################
@@ -299,12 +341,12 @@ def main():
     #         print(f"Jahr: {year}, TAU: {partition} - abgeschlossen")
     
     # E2.2 versuch 2: native communities bestimmen, daraus threshold ableiten
-    hypothesis_one(EXPERIMENT_DATA, mode = 2, config=config)
+    # hypothesis_one(EXPERIMENT_DATA, mode = 2, config=config)
     # nach evaluation des ergebnisses dritten threshold auf tau = 12
     
     # E2.5 relative anzahl der intra-axis kanten an der gesamtzahl ermitteln, könnte ein guter indikator für die rechenzeit des ILP für Optimierung der Achsenordnung sein
     # wir normieren über tau = 6 -> guter kompromiss zwischen optimierter ordnung und rechenzeit, wir erfassen zusätzlich die rechenzeit
-    # hypothesis_one(EXPERIMENT_DATA, 3, config)
+    # hypothesis_one(EXPERIMENT_DATA, mode = 3, config = config)
     
     # E2.6 vorherige daten sind noch nicht aussagekräftig, wir ermitteln nochmal für tau=8 und vergleichen die ergebnisse
     # hypothesis_one(EXPERIMENT_DATA, 3, config)
