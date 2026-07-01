@@ -14,6 +14,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, filedialog, messagebox
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
+from experiments import DataCollector
 
 #os path
 ROOT = Path(__file__).resolve().parent.parent
@@ -142,8 +143,10 @@ def save_rendered_hiveplot(svg_path: Path, year: int, logger: logging.Logger) ->
         renderPDF.drawToFile(drawing, str(pdf_path))
         # log(logger, f"PDF erfolgreich gespeichert: {pdf_path}")
 
-def pipeline(year: int, logger: logging.Logger, output_name: str | None, variant: str, paper_like: bool, partitions: int = 8, threshold: int = 5, save: bool = False, debug: bool = False, batch: bool = False, own_pkl: str | None = None, gui: bool = False):
+def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | None, variant: str, paper_like: bool, partitions: int = 8, threshold: int = 5, save: bool = False, debug: bool = False, batch: bool = False, own_pkl: str | None = None, gui: bool = False):
     print("Berechnung Start.")
+    collector = DataCollector()
+    collected_data = {}
     start = time.time()
     # graph erzeugen und partitionieren
     # log(logger, f"Starte Berechnung für {variant} für das Jahr {year}. Ordnung nach Original: {paper_like}.")
@@ -196,8 +199,9 @@ def pipeline(year: int, logger: logging.Logger, output_name: str | None, variant
             ip_model_pipeline(hiveplot, logger, threshold)
             hiveplot.crossings = hiveplot.count_crossings()
             elapsed = time.time() - start
-            log(logger, f"| nex {year:>5} | {elapsed:>5.6f} | {partitions:>5} | {hiveplot.crossings:>5} |")
 
+            collected_data["Kreuzungen nex"] = hiveplot.crossings
+            collected_data["Laufzeit nex"] = round(elapsed, 5)
             
             edge_node_cleanup(hiveplot)
             # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
@@ -216,10 +220,12 @@ def pipeline(year: int, logger: logging.Logger, output_name: str | None, variant
             svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
             # log(logger, "Schritt 6/6 erfolgreich: Speichern - ILP - abgeschlossen.")
+
             elapsed = time.time() - start
-
-            log(logger, f"| ex  {year:>5} | {elapsed:>5.6f} | {partitions:>5} | {hiveplot.crossings_expanded:>5} |")
-
+            collected_data["Kreuzungen ex"] = hiveplot.crossings_expanded
+            collected_data["Laufzeit ex"] = round(elapsed, 5)
+            collector.update(f"Laufzeiten und Kreuzungszahlen für tau = {partitions}, GD{year}", run, **collected_data)
+            print(f"Speichere x = {run}, Laufzeit = {elapsed:.5f}, crossings = {hiveplot.crossings_expanded}")
             # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
         else:
             # pre_processing_expansion + pipeline 3a/b + nachbereitung
@@ -241,7 +247,7 @@ def pipeline(year: int, logger: logging.Logger, output_name: str | None, variant
 
 def main():
     config = {
-        "year": 2019,
+        "year": 2016,
         "output_name": "H1_E3_Funktionstest",
         "logger": None,
         # "variant": "Barycenterheuristik",
@@ -272,10 +278,8 @@ def main():
     # pipeline(**config)
 
     # für batch
-    # for year in range(2000, 2025):
-    #     config["year"] = year
-    #     pipeline(**config)
-    #     print(year)
+    # for i in range(1, 101):
+    #     pipeline(run = i, **config)
 
 
     ############################ H1 ##################################
@@ -295,7 +299,7 @@ def main():
     #         print(f"Jahr: {year}, TAU: {partition} - abgeschlossen")
     
     # E2.2 versuch 2: native communities bestimmen, daraus threshold ableiten
-    # hypothesis_one(EXPERIMENT_DATA, "native_communities_komplett", 2)
+    hypothesis_one(EXPERIMENT_DATA, mode = 2, config=config)
     # nach evaluation des ergebnisses dritten threshold auf tau = 12
     
     # E2.5 relative anzahl der intra-axis kanten an der gesamtzahl ermitteln, könnte ein guter indikator für die rechenzeit des ILP für Optimierung der Achsenordnung sein
@@ -309,19 +313,19 @@ def main():
     # E3 wir haben nun graph_range und partition_range bestimmt und führen die abschließende berechnungen durch, wonach wir die kreuzungszahlen vergleichen
     # berechnung mit 1L2S, paper_like = True, Abbruchparameter für 1L2S = 10
     # erst einzelner testlauf für einen durchgang
-    graph_range = [2000, 2008, 2024] # testgruppe
-    partitions = [4, 6, 8] # threshold tau
-    log(logger, f"| {'Jahr':>5} | {'Rechenzeit':>5} | {'Schwellenwert':>5} | {'Kreuzungen':>5} |")
-    log(logger, f"-----------------------------------------")
-    for year in graph_range:
-        for partition in partitions:
-            print(f"Start, Graph: {year}, tau: {partition}")
-            config["year"] = year
-            config["partitions"] = partition
-            pipeline(**config)
-            print(f"Ende, Graph: {year}, tau: {partition}")
-            print("--------------------")
-    log(logger, f"-----------------------------------------")
+    # graph_range = [2000, 2008, 2024] # testgruppe
+    # partitions = [4, 6, 8] # threshold tau
+    # log(logger, f"| {'Jahr':>5} | {'Rechenzeit':>5} | {'Schwellenwert':>5} | {'Kreuzungen':>5} |")
+    # log(logger, f"-----------------------------------------")
+    # for year in graph_range:
+    #     for partition in partitions:
+    #         print(f"Start, Graph: {year}, tau: {partition}")
+    #         config["year"] = year
+    #         config["partitions"] = partition
+    #         pipeline(**config)
+    #         print(f"Ende, Graph: {year}, tau: {partition}")
+    #         print("--------------------")
+    # log(logger, f"-----------------------------------------")
 
 if __name__ == "__main__":
     main()

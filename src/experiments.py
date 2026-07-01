@@ -70,8 +70,17 @@ class DataCollector:
                     for key in dset:
                         dset[key].pop(index)
             else: # komplett löschen
-                del self.data_sets[data_set]
-            self.save()
+                confirm = input(
+                    f"Datensatz '{data_set}' vollständig löschen? "
+                    "(j/N): "
+                ).strip().lower()
+
+                if confirm in ("j", "y", "ja", "yes"):
+                    del self.data_sets[data_set]
+                    self.save()
+                    print(f"Datensatz {data_set} erfolgreich gelöscht!")
+                else:
+                    print("Löschvorgang abgebrochen.")
         else:
             print("Datenset nicht bekannt!")
 
@@ -79,6 +88,19 @@ class DataCollector:
         if data_set is not None:
             return list(self.data_sets[data_set].keys())
         return list(self.data_sets.keys())
+    
+    def get_data_set(self, data_set: str):
+        if data_set in self.data_sets:
+            dset = self.data_sets[data_set]
+            print(f">>> {data_set} <<<")
+            for key in dset:
+                print(key)
+                print(dset[key])
+                print("--------")
+            return self.data_sets[data_set]
+        else:
+            print("Datensatz unbekannt!")
+        pass
     
     def missing(self) -> list[tuple[str, str | int | float, list[str]]]:
         """Überprüft die Datensätze auf fehlende Einträge. Falls welche gefunden werden gibt es eine Liste aus Tupeln zurück, 
@@ -102,8 +124,6 @@ class DataCollector:
                     missing.append((data_set, label, missing_keys))
         return missing
                     
-
-
     def validate(self, data_set: str) -> bool | None:
         """Ermittelt ob die Einträge des Datensatzes gleich viele Datenpunkte enthalten. 
 
@@ -133,6 +153,8 @@ def hypothesis_one(exp_dir: Path, mode: int, config: dict[str, str | bool | int 
     import time
     from datetime import datetime
     from ordering import node_to_axis_maps
+
+    db = DataCollector()
     if not theme:
          theme = config["output_name"]
     logger = setup_logger(exp_dir, False, theme)
@@ -140,22 +162,30 @@ def hypothesis_one(exp_dir: Path, mode: int, config: dict[str, str | bool | int 
     for year in range(2000, 2025): # graphen lesen
             graphs[year] = init_original(year)
     logger = setup_logger(exp_dir, False, theme)
-    log(logger, f"Tabelle: {theme}")
-    log(logger, f"--------------------------------------------------------------------")
+    # log(logger, f"Tabelle: {theme}")
+    # log(logger, f"--------------------------------------------------------------------")
     if mode == 1: # E1  eingabegraphen bestimmen
         for year in range(2000, 2025):
             graph = graphs[year]
             log(logger, f"|Jahr: {year} | Knoten: {len(graph.nodes):>5} | Kanten: {len(graph.edges):>6} |")
             log(logger, f"--------------------------------------------------------------------")
     elif mode == 2: # E2.2 threshold nativ nicht umsetzbar da achsenordnung zu lang rechnet 17 min für graph 2000 dann abgebrochen, finde native communities für alle graphen heraus
+        ds = {}
         for year in range(2000, 2025):
             graph = graphs[year]
             node_groups = clauset_newman_moore_communities(graph, 0)
-            log(logger, f"|Jahr: {year} | native Partitionen: {len(node_groups.keys()):>5} |")
-            log(logger, f"--------------------------------------------------------------------")
+            ds["Gesamtkanten"] = len(graph.edges())
+            ds["Gesamtknoten"] = len(graph.nodes())
+            ds["Native Communities"] = len(node_groups.keys())
+            ds["kleinste Community"] = min(len(v) for v in node_groups.values())
+            ds["größte Community"] = max(len(v) for v in node_groups.values())
+
+            db.update("GDJahre_gesamt_knoten_kanten_native", year, **ds)
+            
     elif mode == 3: # E2.5 tau=6, E2.6 tau = 8
         table = []
         for year in range(2000, 2025):
+            ds = {}
             runtime = time.time()
             print(f"Berechne: {year}")
             native = clauset_newman_moore_communities(graphs[year], 0)
@@ -168,17 +198,23 @@ def hypothesis_one(exp_dir: Path, mode: int, config: dict[str, str | bool | int 
                  if node_or_axes_span(node_axis_map[edge[0]], node_axis_map[edge[1]], hiveplot.num_axes) >=1:
                     inter_axis_count += 1
             elapsed = time.time() - runtime
-            table.append(f"|Jahr {year:>5} | {inter_axis_count:> 5} | {(inter_axis_count/len(hiveplot.edges())*100):>5.2f} | {len(native.keys()):>5} | {elapsed:>10.5f} |")
+            ds["Gesamtkanten"] = len(hiveplot.edges())
+            ds["absoluter Anteil intra-axis Kanten"] = len(hiveplot.edges()) - inter_axis_count
+            ds["absoluter Anteil inter-axis Kanten"] = inter_axis_count
+            ds["relativer Anteil intra-axis Kanten"] = round(100 - inter_axis_count/len(hiveplot.edges())*100, 2)
+            ds["relativer Anteil inter-axis Kanten"] = round(inter_axis_count/len(hiveplot.edges())*100, 2)
+            db.update("Gesamtkanten und -anteile tau = 8", year, **ds)
+            # table.append(f"|Jahr {year:>5} | {inter_axis_count:> 5} | {(inter_axis_count/len(hiveplot.edges())*100):>5.2f} | {len(native.keys()):>5} | {elapsed:>10.5f} |")
             print(f"Abgeschlossen: {year}")
-        log(logger, f"| {'Jahr':>5} | {'inter-axis Kanten':>5} | {'absoluter Anteil an Kanten':>5} | {'native Partitionen':>5} | {'Rechenzeit':>5} |")
-        log(logger, f"--------------------------------------------------------------------")
-        for tab in table:
-            log(logger, tab)
-            log(logger, f"--------------------------------------------------------------------")
+        # for tab in table:
+            # log(logger, tab)
+            # log(logger, f"--------------------------------------------------------------------")
     elif mode == 4:
-        
         pass
 
 if __name__ == "__main__":
     data = DataCollector()
-    print(data)
+    # data.delete("Laufzeiten und Kreuzungszahlen für tau = 4")
+    # print(data.get_data_set("Laufzeiten und Kreuzungszahlen für tau = 8, GD2000"))
+    # data.get_data_set("Gesamtkanten und -anteile tau = 8")
+    data.get_data_set("GDJahre_gesamt_knoten_kanten_native")
