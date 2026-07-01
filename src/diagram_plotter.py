@@ -200,8 +200,79 @@ def stacked_bar_partition_plot_h_one(title: str, collector: DataCollector, fig, 
                                   label=r"Abnahme zu $\tau$=4"))
     ax.legend(handles=legend_elements, title=r"Schwellwert $\tau$", fontsize=8)
 
+def bar_chart_runtime_bary_ilp(title: str, data_set: dict, axes: plt.Axes):
+    """
+    Gestapeltes Balkendiagramm: Barycenter (blau) vs. 1L2S-ILP (grün).
+    Drei Schichten: Achsenordnung (geteilt) | Kern-Pipeline | Rest.
+
+    Erwartet data_set = collector.data_sets["Laufzeitenvergleich Bary/ILP"]
+    """
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    C_BARY_ORD = "#00f76fce"   # dunkles Blau  – Achsenordnung Bary
+    C_ILP_ORD  = "#0077ff99"   # helles Blau   – Achsenordnung ILP
+    C_ILP_OPT  = "#0044ffe4"   # Grün          – IP-Modell-Pipeline
+    C_REST     = "#a0a0a0"   # Grau          – Sonstige (beide Varianten)
+    C_MED_BARY = "#e05c00"   # Orange        – Median Bary
+    C_MED_ILP  = "#cc0000"   # Rot           – Median ILP
+
+    x_values  = data_set["x"]
+    n         = len(x_values)
+    pos       = np.arange(n)
+    BAR_WIDTH = 0.38
+
+    # ── Daten ────────────────────────────────────────────────────────────
+    b_ord  = data_set["step_ordering Bary t"]
+    b_tot  = data_set["Barycenter gesamt t"]
+    b_rest = [max(0.0, t - o) for t, o in zip(b_tot, b_ord)]
+
+    i_ord  = data_set["step_ordering ILP t"]
+    i_opt  = data_set["ip_model_pipeline t"]
+    i_tot  = data_set["1L2S-ILP gesamt t"]
+    i_rest = [max(0.0, t - o - c) for t, o, c in zip(i_tot, i_ord, i_opt)]
+
+    bary_med = float(np.median(b_tot))
+    ilp_med  = float(np.median(i_tot))
+
+    # ── Balken ───────────────────────────────────────────────────────────
+    axes.bar(pos - BAR_WIDTH/2, b_ord,  width=BAR_WIDTH, color=C_BARY_ORD)
+    axes.bar(pos - BAR_WIDTH/2, b_rest, width=BAR_WIDTH, color=C_REST,
+             bottom=b_ord)
+
+    axes.bar(pos + BAR_WIDTH/2, i_ord,  width=BAR_WIDTH, color=C_ILP_ORD)
+    axes.bar(pos + BAR_WIDTH/2, i_opt,  width=BAR_WIDTH, color=C_ILP_OPT,
+             bottom=i_ord)
+    axes.bar(pos + BAR_WIDTH/2, i_rest, width=BAR_WIDTH, color=C_REST,
+             bottom=[o + c for o, c in zip(i_ord, i_opt)])
+
+    # ── Medianlinien ─────────────────────────────────────────────────────
+    axes.axhline(bary_med, color=C_MED_BARY, linewidth=2.2,
+                 linestyle="--", zorder=5)
+    axes.axhline(ilp_med,  color=C_MED_ILP,  linewidth=2.2,
+                 linestyle="--", zorder=5)
+
+    # ── Achsen ───────────────────────────────────────────────────────────
+    axes.set_title(title)
+    axes.set_xlabel("Jahre")
+    axes.set_ylabel("Laufzeit (s)")
+    axes.set_xticks(pos)
+    axes.set_xticklabels(x_values)
+
+    # ── Legende ──────────────────────────────────────────────────────────
+    legend_elements = [
+        Patch(facecolor=C_BARY_ORD, label=r"ip_ordering (Barycenter)"),
+        Patch(facecolor=C_REST,     label=r"Sonstige"),
+        Patch(facecolor=C_ILP_ORD,  label=r"ip_ordering (1L2S)"),
+        Patch(facecolor=C_ILP_OPT,  label=r"ip_model_pipeline"),
+        Line2D([0], [0], color=C_MED_BARY, linewidth=2.2, linestyle="--",
+               label=rf"Median Bary: ${bary_med:.1f}$\,s"),
+        Line2D([0], [0], color=C_MED_ILP,  linewidth=2.2, linestyle="--",
+               label=rf"Median ILP: ${ilp_med:.1f}$\,s"),
+    ]
+    axes.legend(handles=legend_elements, fontsize=8, loc="upper left")
+
 def plotter(title: str, file_name: str, data_set: str = None, mode: int = 0):
-    colors = ["#4C78A8", "#4C78A8", "#4C78A8", "#4C78A8"]
     collector = DataCollector()
     # fig, axes = plt.subplots() balkendiagramm1
     if mode == 0:
@@ -224,7 +295,10 @@ def plotter(title: str, file_name: str, data_set: str = None, mode: int = 0):
         fig, ax = plt.subplots(figsize=(14, 4))
         dset = collector.data_sets[data_set]
         bar_chart_gesamt_native_min_max(title, dset, ax)
-    
+    elif mode == 4:
+        fig, ax = plt.subplots(figsize=(18, 6))
+        dset = collector.data_sets[data_set]
+        bar_chart_runtime_bary_ilp(title, dset, ax)
     
 
     plt.tight_layout()
@@ -235,5 +309,5 @@ if __name__ == "__main__":
     # plotter(r"Gesamtkanten/-knoten Vergleich über alle Jahre $\tau$ = 8", "k5_diagramm1_absolute_anteile", "Gesamtkanten und -anteile tau = 8", 0)
     # plotter(r" ", "k5_lineplot_laufzeit_zu_tau", mode = 1)
     # plotter(r"Kreuzungszahlen in Abhängigkeit zu $\tau$ - GD2000/2016/2024", "k5_balken_kreuzungen_zu_tau", mode = 2)
-    plotter(r"Native Communities und größte/kleinste Community Vergleich über alle Jahre $\tau = 0$", "k5_balken_nativ", "Gesamtkanten und -anteile tau = 8", mode = 3)
-    
+    # plotter(r"Native Communities und größte/kleinste Community Vergleich über alle Jahre $\tau = 0$", "k5_balken_nativ", "Gesamtkanten und -anteile tau = 8", mode = 3)
+    plotter(r"Laufzeitvergleich Barycenter vs.\ 1L2S-ILP (GD 2000 bis 2024, $\tau = 8$)", data_set = "Laufzeitenvergleich Bary/ILP", file_name = "k5_gesamt_laufzeit_bary_ilp", mode = 4)

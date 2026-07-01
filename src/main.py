@@ -286,7 +286,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
 
 def main():
     config = {
-        "year": 2016,
+        "year": 2017,
         "output_name": "",
         "logger": None,
         "variant": "Barycenterheuristik",
@@ -317,11 +317,10 @@ def main():
     # pipeline(**config)
 
     # für batch
-    # for i in range(1, 101):
-    for year in range(2000, 2025):
-        print(year)
-        config["year"] = year
-        pipeline(run = year, **config)
+    for i in range(1, 101):
+    # for year in range(2000, 2025):
+        print(i)
+        pipeline(run = i, **config)
 
 
     ############################ H1 ##################################
