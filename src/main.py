@@ -231,33 +231,33 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             collected_data["ip_model_pipeline t"] = time.time() - start
 
             start = time.time()
-            hiveplot.crossings = hiveplot.count_crossings()
+            hiveplot.crossings = hiveplot.count_crossings(True)
             collected_data["count_crossings ILP 1 t"] = time.time() - start
             
             edge_node_cleanup(hiveplot)
             # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR) # optionale parameter möglich
+            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
             # achsenexpansion vorbereitung + durchführung + nachbereitung
             _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
 
-            start = time.time()
-            hiveplot.post_processing_expansion(node_axis_map)
-            collected_data["post_processing_expansion ILP t"] = time.time() - start
+            # start = time.time()
+            # hiveplot.post_processing_expansion(node_axis_map)
+            # collected_data["post_processing_expansion ILP t"] = time.time() - start
 
             # log(logger, "Schritt 5/6 erfolgreich: Achsenexpansion - ILP - abgeschlossen.")
-            edge_node_cleanup(hiveplot)
+            # edge_node_cleanup(hiveplot)
 
             start = time.time()
-            hiveplot.crossings_expanded = hiveplot.count_crossings(True)
+            # hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             collected_data["count_crossings ILP 2 t"] = time.time() - start
 
             # zwischenspeichern + rendern
-            save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
-            save_rendered_hiveplot(svg_path, year, logger)
+            # save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", save, logger) # snapshot
+            # svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
+            # save_rendered_hiveplot(svg_path, year, logger)
             # log(logger, "Schritt 6/6 erfolgreich: Speichern - ILP - abgeschlossen.")
 
 
@@ -294,8 +294,8 @@ def main():
         "variant": "1L2S-ILP",
         "paper_like": True,
         # "paper_like": False,
-        "partitions": 8,
-        "threshold": 10,
+        "partitions": 3,
+        "threshold": 0,
         "save": False,
         # "save": True,
         "debug": False,

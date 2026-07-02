@@ -6,6 +6,7 @@ import networkx as nx
 import pulp as pp
 import logging
 from logger_setup import log
+from hiveplot import HivePlotLayout
 
 def get_delta_value(delta, fixed_delta, u, v, axis):
     key = (u, v, axis)
@@ -13,7 +14,19 @@ def get_delta_value(delta, fixed_delta, u, v, axis):
     if key in fixed_delta:
         return fixed_delta[key]
 
-    return delta[key]
+    if key in delta:
+        return delta[key]
+
+    if isinstance(u, int) and isinstance(v, int) and isinstance(axis, int):
+        mirrored_key = (-u, -v, -axis)
+
+        if mirrored_key in fixed_delta:
+            return fixed_delta[mirrored_key]
+
+        if mirrored_key in delta:
+            return delta[mirrored_key]
+
+    raise KeyError(key)
 
 def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dict[str|int, list[int | str]], node_axis_map: dict[str | int, int], threshold: int = int(10), expanded: bool = False) -> None:
     """Enthält die gesamte Logik, um das One Layer Two Sided Integer Linear Program (1L2S ILP) zu definieren und zu berechnen. Die Funktion verändert das HiveplotLayout in-place. Die Pipeline besteht aus Sweeps.
@@ -120,7 +133,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            prob += (induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -170,7 +183,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            prob += (induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -206,6 +219,27 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
         fused_groups = layout.fuse_node_groups_with_dummies(expanded=expanded) # variable achse muss auf geupdatetem stand ermittelt werden
     # print(f"DELTA >>>>>>> {delta}")
+
+def linearize_product(prob, a, b, name):
+    if isinstance(a, int) and isinstance(b, int):
+        return a * b
+
+    if isinstance(a, int):
+        if a == 0:
+            return 0
+        return b
+
+    if isinstance(b, int):
+        if b == 0:
+            return 0
+        return a
+
+    z = pp.LpVariable(name, cat="Binary")
+    prob += z <= a
+    prob += z <= b
+    prob += z >= a + b - 1
+
+    return z
 
 def delta_mapping(fused_groups: dict[int|str, list[int|str]]) -> dict[tuple[int|str, ...], 0|1]:
     """Dient der Initialisierung der Ordnungsvariablen (delta^i_u,v) für das 1L2S-ILP. Erzeugt aus der Vereinigung von virtuellen und realen Knoten das Mapping.
@@ -347,6 +381,13 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     delta_static[key] = 1
                 elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
                     delta_static[key] = 0
+            # variable_count = 0
+
+            # for key in delta_static:
+            #     if isinstance(delta_static[key], pp.LpVariable):
+            #         variable_count += 1
+
+            # print("3b axis", axis, "variables", variable_count)
             # zielfunktion
             pi_plus_idx = (phi_index_map[axis]+1) % len(phi) # achsen index in phi
             pi_plus_axis = phi[pi_plus_idx]
@@ -355,7 +396,15 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            # neighbor_count = 0
+
+            # for key in sorted_neighbors:
+            #     neighbor_count += len(sorted_neighbors[key])
+
+            # print("3b axis", axis, "neighbors", neighbor_count)
+            print("build objective axis", axis)
+            prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            print("objective built axis", axis)
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -366,6 +415,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     vu = get_delta_value(delta_static, fixed_delta, v, u, axis)
                     if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable):
                         prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
+            
             for i in range(len(pi_var)):
                 for j in range(i + 1, len(pi_var)):
                     for k in range(j + 1, len(pi_var)):
@@ -378,7 +428,8 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
-            prob.solve(pp.PULP_CBC_CMD(msg=False))
+            print("build objective axis", axis)
+            prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
             # schreibe problem um nach delta
             # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
             for key in delta:
@@ -407,6 +458,13 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     delta_static[key] = 1
                 elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
                     delta_static[key] = 0
+            # variable_count = 0
+
+            # for key in delta_static:
+            #     if isinstance(delta_static[key], pp.LpVariable):
+            #         variable_count += 1
+
+            # print("3b axis", axis, "variables", variable_count)
             # zielfunktion
             pi_plus_idx = (phi_index_map[axis]+1) % len(phi) # achsen index in phi
             pi_plus_axis = phi[pi_plus_idx]
@@ -415,7 +473,13 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            neighbor_count = 0
+
+            for key in sorted_neighbors:
+                neighbor_count += len(sorted_neighbors[key])
+
+            print("3b axis", axis, "neighbors", neighbor_count)
+            prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -438,7 +502,9 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
-            prob.solve(pp.PULP_CBC_CMD(msg=False))
+            print("build objective axis", axis)
+            prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
+            print("objective built axis", axis)
             if threshold_break == threshold - 1:
                 layout.crossings = pp.value(prob.objective)
             # schreibe problem um nach delta
@@ -460,7 +526,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
         fused_groups = layout.fuse_node_groups_with_dummies(expanded=expanded) # variable achse muss auf geupdatetem stand ermittelt werden
     # print(f"DELTA >>>>>>> {delta}")
 
-def induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_fix, pi_var_id, pi_var):
+def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix, pi_var_id, pi_var):
     terms = []
     for i in range(len(pi_var)):
         for j in range(i + 1, len(pi_var)):
@@ -476,8 +542,10 @@ def induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_fix, pi_va
                         continue
                     del_st = get_delta_value(delta_static, fixed_delta, s, t, pi_fix)
                     del_ts = get_delta_value(delta_static, fixed_delta, t, s, pi_fix)
-                    terms.append(del_uv * del_ts + del_vu * del_st)
-
+                    # terms.append(del_uv * del_ts + del_vu * del_st)
+                    z1 = linearize_product(prob, del_uv, del_ts, f"z_{u}_{v}_{s}_{t}_{pi_var_id}_{pi_fix}_1")
+                    z2 = linearize_product(prob, del_vu, del_st, f"z_{v}_{u}_{s}_{t}_{pi_var_id}_{pi_fix}_2")
+                    terms.append(z1 + z2)
     return pp.lpSum(terms)
 
 def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold: int = int(10), expanded: bool = False) -> None:
@@ -559,7 +627,17 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         # ---------- Vorbereitung Pipeline 3b ----------
         layout.classify_nodes_for_3b()
         layout.freeze_inter_axis_delta()
+        layout.post_processing_expansion(node_axis_map)
 
+        fused_edge_list = layout.fuse_edges_with_edge_dummies()
+        fused_node_list = layout.fuse_node_groups_with_dummies(expanded=True)
+
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+        neighborhood_map = layout.get_proper_neighborhood_map(
+            fused_edge_list,
+            expanded=True,
+        )
+        print(layout.node_groups)
         # ---------- Pipeline 3b ----------
         onelayer_twosided_optimization_3b(
             layout,
@@ -568,11 +646,11 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             threshold=threshold,
             expanded=expanded,
         )
-
+        print(layout.node_groups)
         cm.finish_structured_axis_orders(
             layout,
             isolated_nodes,
-            expanded=expanded,
+            expanded=True,
         )
         # pipeline 3a <<<<<<<<<<<<
         # 1.

@@ -220,41 +220,17 @@ def remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) ->
     return isolated_node_groups
 
 def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: dict[str, list[int]], expanded: bool = False) -> None:
-    """Finalisiert die Achsenordnungen nach der Barycenter-Pipeline.
-
-    Die Funktion fügt zunächst intra-axis Knoten und verbleibende Knoten pro Achse zusammen, hängt danach die zuvor entfernten isolierten Knoten wieder an und stellt sicher, dass intra-axis Kanten im Graphen rekonstruiert werden.
-    Die engültige Reihenfolge ist auf jeder Achse identisch: reine intra axis Knoten (kurze Pfade < lange Pfade) | mixed intra axis Knoten + inter axis Knoten (real) | isolierte Knoten | virtuelle Knoten (dummys). 
-
-    Args:
-        layout: Das HivePlotLayout, dessen node_groups und Kanten finalisiert werden.
-        isolated_node_groups: Pro Achse die während der Pipeline entfernten isolierten Knoten, die wieder angehängt werden sollen.
-    
-    """
-    def _attach_intra_axis_order():
-        """Stellt Reihenfolge in node_groups pro Achse her: reine intra axis Knoten | mixed intra axis Knoten | inter axis Knoten (real)"""
-        merged = {key: layout.intra_axis_nodes[key] + layout.node_groups[key] for key in layout.node_groups}
-        return merged
-    def _attach_isolated_nodes(node_groups: dict[str, list[int]], isolated_node_groups: dict[str, list[int]]) -> None:
-        """Fügt die isolierten Knoten wieder in die Knotenlisten auf den Achsen hinzu.
-
-        Args:
-            node_groups (dict[str, list[int]]): Die persistente Kontenliste des HivePlotLayouts.
-            isolated_node_groups (dict[str, list[int]]): Die isolierten Knoten und ihre Achsenzuordnung.
-        """
+    def _attach_isolated_nodes(node_groups, isolated_node_groups):
         for key in node_groups:
-            node_groups[key].extend(isolated_node_groups[key])
-    def _recover_edges():
-        """Fügt die im Subdivide Schritt aus dem Graphen gefilterten reinen intra axis Kanten wieder dem nx.Graphmodell hinzu."""
-        layout.graph.add_edges_from(layout.intra_axis_edges)
-    
+            if key in isolated_node_groups:
+                node_groups[key].extend(isolated_node_groups[key])
+
     if expanded:
-        _attach_isolated_nodes(layout.node_groups_expanded, isolated_node_groups) # + isolierte Knoten
-        layout.node_groups_expanded = layout.fuse_node_groups_with_dummies(expanded=expanded) # + inter axis (virtuell)
+        _attach_isolated_nodes(layout.node_groups_expanded, isolated_node_groups)
+        layout.node_groups_expanded = layout.fuse_node_groups_with_dummies(expanded=expanded)
     else:
-        layout.node_groups = _attach_intra_axis_order() # intra axis + mixed intra axis + inter axis (real)
-        _attach_isolated_nodes(layout.node_groups, isolated_node_groups) # + isolierte Knoten
-        layout.node_groups = layout.fuse_node_groups_with_dummies() # + inter axis (virtuell)
-        _recover_edges()
+        _attach_isolated_nodes(layout.node_groups, isolated_node_groups)
+        layout.node_groups = layout.fuse_node_groups_with_dummies()
 
 def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | str]], node_axis_map: dict[int | str, int], threshold = float("inf"), real: bool = True, expanded: bool = False) -> None:
     """Führt wiederholte Barycenter-Sweeps im und gegen den Uhrzeigersinn über alle Achsen aus. Abhängig vom Parameter real werden entweder die realen Knoten (node_groups)
