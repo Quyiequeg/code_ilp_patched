@@ -162,8 +162,6 @@ def subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | s
     for node in intra_candidate_node_list:
         axis = node_axis_map[node]
         layout.intra_axis_nodes[axis].append(node)
-        layout.node_groups[axis].remove(node)
-    layout.graph.remove_edges_from(intra_candidate_edge_list)
 
 def parse_dummy_name(name: str) -> tuple[int, int, int]:
     """Zerlegt den Namen eines Dummyknotens in seine Bestandteile: Startknoten, Endknoten und Sequenznummer. (siehe make_dummy_name Funktion für Namensschema)
