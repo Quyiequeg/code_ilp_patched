@@ -281,16 +281,17 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             elapsed = time.time() - start
             log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
     # log(logger, f"-----------------------------------")
+    print(f" FIXED DELTA: {hiveplot.fixed_inter_axis_delta}")
     print("Berechnung Ende.")
 
 
 def main():
     config = {
-        "year": 2017,
+        "year": 2001,
         "output_name": "",
         "logger": None,
-        "variant": "Barycenterheuristik",
-        # "variant": "1L2S-ILP",
+        # "variant": "Barycenterheuristik",
+        "variant": "1L2S-ILP",
         "paper_like": True,
         # "paper_like": False,
         "partitions": 8,
@@ -314,13 +315,12 @@ def main():
     
 
     # für einzeln
-    # pipeline(**config)
-
+    pipeline(run = 0, **config)
     # für batch
-    for i in range(1, 101):
+    # for i in range(1, 101):
     # for year in range(2000, 2025):
-        print(i)
-        pipeline(run = i, **config)
+        # print(i)
+        # pipeline(run = i, **config)
 
 
     ############################ H1 ##################################

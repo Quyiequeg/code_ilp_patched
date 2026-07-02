@@ -39,7 +39,7 @@ class HivePlotLayout:
 
     id_to_name: dict[int, str] = field(default_factory=dict)
     name_to_id: dict[str, int] = field(default_factory=dict)
-
+    fixed_inter_axis_delta: dict | None = None
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
     crossings_expanded: Optional[int] = None
@@ -64,10 +64,12 @@ class HivePlotLayout:
             f"  node_groups_expanded: {self.node_groups_expanded}",
             f"  edges_expanded: {self.edges_expanded}",
             f"  Crossings (standard): {self.crossings}",
-            f"  Crossings (erweitert): {self.crossings_extended}"
+            f"  Crossings (erweitert): {self.crossings_expanded}"
+            f"  fixed_delta: {self.fixed_inter_axis_delta}"
         ]
         return "\n".join(lines)
     
+
     def copy(self):
         "Gibt eine Deepcopy des Hiveplotlayouts zurück."
         return copy.deepcopy(self)
@@ -109,7 +111,7 @@ class HivePlotLayout:
         else:
             return self.node_groups.get(axis, [])
     
-    def fuse_node_groups_with_dummies(self, expanded: bool = False) -> dict[int, list[int]]:
+    def fuse_node_groups_with_dummies(self, expanded: bool = False) -> dict[int, list[int | str]]:
         """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.
         Args:
             expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
@@ -568,6 +570,25 @@ class HivePlotLayout:
                                 crossings += 1
         return crossings
 
+    def freeze_inter_axis_delta(self, groups=None):
+        from ip_model import delta_mapping
+
+        if groups is None:
+            groups = self.intra_axis_nodes
+
+        fused_groups = {}
+
+        for axis in groups:
+            fused_groups[axis] = []
+
+            for node in groups[axis]:
+                fused_groups[axis].append(node)
+
+            if axis in self.node_groups_dummies:
+                for dummy in self.node_groups_dummies[axis]:
+                    fused_groups[axis].append(dummy)
+
+        self.fixed_inter_axis_delta = delta_mapping(fused_groups)
 
 if __name__ == "__main__":
     from graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
