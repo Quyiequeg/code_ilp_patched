@@ -7,6 +7,14 @@ import pulp as pp
 import logging
 from logger_setup import log
 
+def get_delta_value(delta, fixed_delta, u, v, axis):
+    key = (u, v, axis)
+
+    if key in fixed_delta:
+        return fixed_delta[key]
+
+    return delta[key]
+
 def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dict[str|int, list[int | str]], node_axis_map: dict[str | int, int], threshold: int = int(10), expanded: bool = False) -> None:
     """Enthält die gesamte Logik, um das One Layer Two Sided Integer Linear Program (1L2S ILP) zu definieren und zu berechnen. Die Funktion verändert das HiveplotLayout in-place. Die Pipeline besteht aus Sweeps.
     Ein Sweep umfasst eine clockwise und eine counterclockwise Berechnung über jede Achse des Hiveplots. Folgende Schritte werden in der Funktion durchgeführt:
@@ -223,40 +231,253 @@ def delta_mapping(fused_groups: dict[int|str, list[int|str]]) -> dict[tuple[int|
                 delta[(nodes[j], nodes[i], axis)] = 0
     return delta
 
-def induced_crossings(delta_static: dict[tuple[int|str, int|str, int|str], int], sorted_neighbors: dict[int, list[int|str]], pi_fix: int, pi_var_id: int, pi_var: list[int|str]) -> pp.lpSum: # C(pi, pi^+/-), Zielfunktion
-    """Bildet die C(pi_i, pi^+/-) Zielfunktion nach. Die Funktion arbeitet folgendermaßen:
-    1. Betrachte paarweise Knoten u, v auf variabler Achse und ermittle die Ordungsvariablen uv und vu
-    2. bestimme alle Nachbarn s von u und t von v auf der fixierten Achse und iteriere über alle Paare (s, t) mit s != t
-    3. bestimme die Ordnungsvariablen st und ts
-    4. Füge den Kreuzungsterm del_uv * del_ts + del_vu * del_st zur Zielfunktion hinzu
-    5. Rückgabe der Summe aller Kreuzungsterme als Pulp-Ausdruck
+def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: dict[str|int, list[int | str]], node_axis_map: dict[str | int, int], threshold: int = int(10), expanded: bool = False) -> None:
+    """Enthält die gesamte Logik, um das One Layer Two Sided Integer Linear Program (1L2S ILP) zu definieren und zu berechnen. Die Funktion verändert das HiveplotLayout in-place. Die Pipeline besteht aus Sweeps.
+    Ein Sweep umfasst eine clockwise und eine counterclockwise Berechnung über jede Achse des Hiveplots. Folgende Schritte werden in der Funktion durchgeführt:
+    1. Initialisierung der Ordnungsvariablen (delta^i_u,v) durch delta_mapping()
+    2. Initialisierung der Sweepschleife, Abbruch bei Erreichen eines Thresholds
+    3. Danach schließt sich ein Sweep an erst in clockwise dann counterclockwise Richtung, beide habe das gleiche Schema:
+        a. Erstellen einer Probleminstanz und einer Kopie für die aktuelle Achse
+        b. Initialisierung der Ordnungsvariablen für die aktuelle Achse (virtuelle und reale Knotenordnung werden in einem Schritt berechnet, aber die Achsenordnung real < virtuell muss berücksichtigt werden, da Gaps nicht explizit behandelt werden)
+            I: Ordnungsvariablen getrennt für reale und virtuelle Achsenabschnitte
+            II: Ordnungsvariablen für real < virtuell = konstant 1
+            III: Ordnungsvariablen für virtuell < real = konstant 0
+        c. Erstellen der Zielfunktion speziell für die variable Achse
+        d. Erstellen der Nebenbedingungen für:
+            I: Antisymmetrie (im Paper implizit behandelt)
+            II: Transitivität
+        e. Lösen des ILP
+        f. Synchroniesieren der Lösung mit delta
+    4. Aktualisieren des Layouts durch Übersetzung von delta zurück in die Achsenordnung, da die variable Achse auf einem geupdateten Stand ermittelt werden muss, wird dies am Ende eines Sweeps durchgeführt
 
     Args:
-        delta_static (dict[tuple[int | str, int | str, int | str], int]): ordnungsvariable: belegung
-        sorted_neighbors (dict[int, list[int | str]]): (pi^+/pi^- ID, node aus pi_i): Liste der Nachbarn von node auf der jeweiligen Achse
-        pi_fix (int): AchsenID der fixierten Nachbarachse
-        pi_var_id (int): AchsenID der variablen Achse
-        pi_var (int): Liste der Knoten auf der variablen Achse
-
-    Returns:
-        pp.lpSum: Anzahl der induzierten Kreuzungen zwischen pi_var und pi_fix
+        layout (HivePlotLayout): _description_das zugrundeliegende HivePlotLayout
+        neighborhood_map (dict[str | int, list[int  |  str]]): KnotenID: Liste von proper Nachbarn
+        node_axis_map (dict[str  | int, int]): KnotenID: Achse
+        threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10
+        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     """
+    def sorted_neighbor_map(neighborhood_map: dict[str |int, list[int | str]], node_axis_map: dict[str |int, int], pi_var: list[int|str], pi_plus_axis: int, pi_minus_axis: int) -> dict[int, list[int | str]]:
+        """Erzeugt ein dict, das für jeden Knoten in pi_var die Nachbarn auf der pi^+ und pi^- Achse enthält. Wird für die Zielfunktion benötigt, da hierdurch die Nachbarachsen von pi_var fixiert werden.
+
+        Args:
+            neighborhood_map (dict[str  | int, list[int | str]]): KnotenID: Liste von proper Nachbarn
+            node_axis_map (dict[str  | int, int]): KnotenID: Achse
+            pi_var (list[int | str]): variable Achsenordnung pi_i
+            pi_plus_axis (int): fixierte Nachbarachse pi^+
+            pi_minus_axis (int): fixierte Nachbarachse pi^-
+
+        Returns:
+            dict[int, list[int | str]]: (pi^+/pi^- ID, node aus pi_i): Liste der Nachbarn von node auf der jeweiligen Achse
+        """
+        sorted_neighbors = {}
+        for node in pi_var:
+            plus_list = []
+            minus_list = []
+            neighbors = neighborhood_map[node]
+            for neighbor in neighbors:
+                if node_axis_map[neighbor] == pi_minus_axis:
+                    minus_list.append(neighbor)
+                elif node_axis_map[neighbor] == pi_plus_axis:
+                    plus_list.append(neighbor)
+            sorted_neighbors[(pi_minus_axis, node)] = minus_list
+            sorted_neighbors[(pi_plus_axis, node)] = plus_list
+        return sorted_neighbors
+    
+    def delta_to_order(delta: dict[tuple[int|str, int|str, int], int], fused_groups: dict[int, list[int|str]]) -> tuple[dict[int, list[int|str]], dict[int, list[int|str]]]:
+        """Übersetzt und schreibt am Ende des Sweeps delta wieder zurück in das Layout.
+
+        Args:
+            delta (dict[tuple[int | str, int | str, int], int]): delta^i_u,v: 1 | 0
+            fused_groups (dict[int, list[int | str]]): AchsenID: Knotenliste
+
+        Returns:
+            tuple[dict[int, list[int|str]], dict[int, list[int|str]]]: node_groups, node_groups_dummies 
+        """
+        fixed_delta = layout.fixed_inter_axis_delta
+        if fixed_delta is None:
+            fixed_delta = {}
+
+        new_node_groups = {}
+        new_dummy_groups = {}
+        for axis, nodes in fused_groups.items():
+            positions = {}
+
+            for u in nodes:
+                position = 0
+
+                for v in nodes:
+                    if v != u:
+                        position += get_delta_value(delta, fixed_delta, v, u, axis)
+
+                positions[u] = position # rang = anzahl knoten die vor u kommen
+            sorted_nodes = sorted(nodes, key=lambda u: positions[u])
+            new_node_groups[axis]  = [n for n in sorted_nodes if isinstance(n, int)]
+            new_dummy_groups[axis] = [n for n in sorted_nodes if isinstance(n, str)]
+        return new_node_groups, new_dummy_groups
+
+    # node_groups = layout.node_groups
+    fused_groups =  layout.fuse_node_groups_with_dummies(expanded=expanded)
+    phi = layout.axis_order
+    reversed_phi = list(reversed(phi))
+    phi_index_map = {}
+    for index, axis in enumerate(phi):
+        phi_index_map[axis] = index
+    delta = delta_mapping(fused_groups)
+    threshold_break = 0
+    fixed_delta = layout.fixed_inter_axis_delta
+
+    if fixed_delta is None:
+        fixed_delta = {}
+    while threshold_break < threshold:
+        threshold_break += 1
+        for axis in phi:
+            # probleminstanz
+            prob = pp.LpProblem(f"1S2L_ILP_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
+            # variablen: in delta abgelegt
+            delta_static = delta.copy() # aktuelle ordnungsmap
+            for key in delta:
+                if key[2] != axis: # nur zu optimierende Achse
+                    continue
+                if key in fixed_delta:
+                    continue
+                if (isinstance(key[0], int) and isinstance(key[1], int)) or (isinstance(key[0], str) and isinstance(key[1], str)): 
+                    delta_static[key] = pp.LpVariable(f"{key[0]}_{key[1]}_{key[2]}", cat="Binary")
+                elif isinstance(key[0], int) and isinstance(key[1], str): # real < virtuell =  1
+                    delta_static[key] = 1
+                elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
+                    delta_static[key] = 0
+            # zielfunktion
+            pi_plus_idx = (phi_index_map[axis]+1) % len(phi) # achsen index in phi
+            pi_plus_axis = phi[pi_plus_idx]
+            pi_minus_idx = (phi_index_map[axis]-1) % len(phi)
+            pi_minus_axis = phi[pi_minus_idx]
+            pi_var = fused_groups[axis] # knotenliste von pi
+            # pi_var = node_groups[axis] # knotenliste von pi
+            sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
+            prob += (induced_crossings(delta_static, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            # print(f"Zielfunktion: {prob.objective}")
+            # print(f"Nachbarn Beispiel: {sorted_neighbors}")
+            # nebenbedingungen
+            for i in range(len(pi_var)): 
+                for j in range(i+1, len(pi_var)):
+                    u, v = pi_var[i], pi_var[j]
+                    uv = get_delta_value(delta_static, fixed_delta, u, v, axis)
+                    vu = get_delta_value(delta_static, fixed_delta, v, u, axis)
+                    if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable):
+                        prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
+            for i in range(len(pi_var)):
+                for j in range(i + 1, len(pi_var)):
+                    for k in range(j + 1, len(pi_var)):
+                        u, v, w = pi_var[i], pi_var[j], pi_var[k]
+                        uv = get_delta_value(delta_static, fixed_delta, u, v, axis)
+                        vw = get_delta_value(delta_static, fixed_delta, v, w, axis)
+                        uw = get_delta_value(delta_static, fixed_delta, u, w, axis)
+                        prob += uv + vw - uw <= 1
+                        prob += uv + vw - uw >= 0 # prüfen: binärvariablen zwangsweise nicht negativ, ggf performanceleck
+            
+            # lösen
+            # prob.solve(pp.PULP_CBC_CMD(msg=True))
+            prob.solve(pp.PULP_CBC_CMD(msg=False))
+            # schreibe problem um nach delta
+            # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
+            for key in delta:
+                if key[2] != axis:
+                    continue
+                if key in fixed_delta:
+                    continue
+                if isinstance(delta_static[key], pp.LpVariable):
+                    val = pp.value(delta_static[key])
+
+                    if val is not None:
+                        delta[key] = int(val)
+        for axis in reversed_phi:
+            # probleminstanz
+            prob = pp.LpProblem(f"1S2L_ILP_counter_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
+            # variablen: in delta abgelegt
+            delta_static = delta.copy() # aktuelle ordnungsmap
+            for key in delta:
+                if key[2] != axis: # nur zu optimierende Achse
+                    continue
+                if key in fixed_delta:
+                    continue
+                if (isinstance(key[0], int) and isinstance(key[1], int)) or (isinstance(key[0], str) and isinstance(key[1], str)): 
+                    delta_static[key] = pp.LpVariable(f"{key[0]}_{key[1]}_{key[2]}", cat="Binary")
+                elif isinstance(key[0], int) and isinstance(key[1], str): # real < virtuell =  1
+                    delta_static[key] = 1
+                elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
+                    delta_static[key] = 0
+            # zielfunktion
+            pi_plus_idx = (phi_index_map[axis]+1) % len(phi) # achsen index in phi
+            pi_plus_axis = phi[pi_plus_idx]
+            pi_minus_idx = (phi_index_map[axis]-1) % len(phi)
+            pi_minus_axis = phi[pi_minus_idx]
+            pi_var = fused_groups[axis] # knotenliste von pi
+            # pi_var = node_groups[axis] # knotenliste von pi
+            sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
+            prob += (induced_crossings(induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var)) + induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            # print(f"Zielfunktion: {prob.objective}")
+            # print(f"Nachbarn Beispiel: {sorted_neighbors}")
+            # nebenbedingungen
+            for i in range(len(pi_var)): # antisymmetrie, im paper 
+                for j in range(i+1, len(pi_var)):
+                    u, v = pi_var[i], pi_var[j]
+                    uv = get_delta_value(delta_static, fixed_delta, u, v, axis)
+                    vu = get_delta_value(delta_static, fixed_delta, v, u, axis)
+                    if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable): 
+                        prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
+            for i in range(len(pi_var)):
+                for j in range(i + 1, len(pi_var)):
+                    for k in range(j + 1, len(pi_var)):
+                        u, v, w = pi_var[i], pi_var[j], pi_var[k]
+                        uv = get_delta_value(delta_static, fixed_delta, u, v, axis)
+                        vw = get_delta_value(delta_static, fixed_delta, v, w, axis)
+                        uw = get_delta_value(delta_static, fixed_delta, u, w, axis)
+                        prob += uv + vw - uw <= 1
+                        prob += uv + vw - uw >= 0# prüfen: binärvariablen zwangsweise nicht negativ, ggf performanceleck
+            
+            # lösen
+            # prob.solve(pp.PULP_CBC_CMD(msg=True))
+            prob.solve(pp.PULP_CBC_CMD(msg=False))
+            if threshold_break == threshold - 1:
+                layout.crossings = pp.value(prob.objective)
+            # schreibe problem um nach delta
+            # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
+            for key in delta:
+                if key[2] != axis:
+                    continue
+                if key in fixed_delta:
+                    continue
+                if isinstance(delta_static[key], pp.LpVariable):
+                    val = pp.value(delta_static[key])
+
+                    if val is not None:
+                        delta[key] = int(val)
+        if expanded:
+            layout.node_groups_expanded, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
+        else:
+            layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
+        fused_groups = layout.fuse_node_groups_with_dummies(expanded=expanded) # variable achse muss auf geupdatetem stand ermittelt werden
+    # print(f"DELTA >>>>>>> {delta}")
+
+def induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_fix, pi_var_id, pi_var):
     terms = []
     for i in range(len(pi_var)):
-        for j in range(i+1, len(pi_var)):
+        for j in range(i + 1, len(pi_var)):
             u = pi_var[i]
             v = pi_var[j]
-            del_uv = delta_static[(u, v, pi_var_id)]
-            del_vu = delta_static[(v, u, pi_var_id)]
+            del_uv = get_delta_value(delta_static, fixed_delta, u, v, pi_var_id)
+            del_vu = get_delta_value(delta_static, fixed_delta, v, u, pi_var_id)
             neighbor_u = sorted_neighbors[pi_fix, u]
             neighbor_v = sorted_neighbors[pi_fix, v]
             for s in neighbor_u:
                 for t in neighbor_v:
-                    if s == t: # nachbarlisten nicht zwangsweise disjunkt
+                    if s == t:
                         continue
-                    del_st = delta_static[(s, t, pi_fix)]
-                    del_ts = delta_static[(t, s, pi_fix)]
+                    del_st = get_delta_value(delta_static, fixed_delta, s, t, pi_fix)
+                    del_ts = get_delta_value(delta_static, fixed_delta, t, s, pi_fix)
                     terms.append(del_uv * del_ts + del_vu * del_st)
+
     return pp.lpSum(terms)
 
 def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold: int = int(10), expanded: bool = False) -> None:
