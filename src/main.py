@@ -281,7 +281,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             elapsed = time.time() - start
             log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
     # log(logger, f"-----------------------------------")
-    print(f" FIXED DELTA: {hiveplot.fixed_inter_axis_delta}")
+    # print(f" FIXED DELTA: {hiveplot.fixed_inter_axis_delta}")
     print("Berechnung Ende.")
 
 

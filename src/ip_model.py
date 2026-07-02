@@ -120,7 +120,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(delta_static, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            prob += (induced_crossings(delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -170,7 +170,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(delta_static, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            prob += (induced_crossings(delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -355,7 +355,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(delta_static, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            prob += (induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -415,7 +415,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
             sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            prob += (induced_crossings(induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var)) + induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            prob += (induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -531,39 +531,82 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         # log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
 
     else:
-        # pipeline 3a <<<<<<<<<<<<
-        # 1.
         isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
-        # 2.
+
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
-        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges())
+
         cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        # log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
-        # print(f"DELTAGROUPS: {delta}")
-        # print(f"ISOLATED NODES: {isolated_nodes}")
-        # print(f"DUMMIES: {layout.node_groups_dummies}")
-        # 3.
-        fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
-        fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
-        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
-        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
-        onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
+
+        fused_edge_list = layout.fuse_edges_with_edge_dummies()
+        fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded)
+
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+        neighborhood_map = layout.get_proper_neighborhood_map(
+            fused_edge_list,
+            expanded=expanded,
+        )
+
+        # ---------- Pipeline 3a ----------
+        onelayer_twosided_optimization(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            expanded=expanded,
+        )
+
+        # ---------- Vorbereitung Pipeline 3b ----------
         layout.classify_nodes_for_3b()
         layout.freeze_inter_axis_delta()
-        
-        # log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
-        # print(f"REAL: {layout.node_groups}")
-        # print(f"DUMMY: {layout.node_groups_dummies}")
-        # 5.
-        cm.intra_axis_handler(layout)
-        # log(logger, "ILP Schritt 3a/b - intra-axis Handling abgeschlossen.")
-        # 6.
-        cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
-        # log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
 
-        # print("NODE_AXIS_MAP")
-        # print(node_axis_map)
-        # print(len(node_axis_map))
+        # ---------- Pipeline 3b ----------
+        onelayer_twosided_optimization_3b(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            expanded=expanded,
+        )
+
+        cm.finish_structured_axis_orders(
+            layout,
+            isolated_nodes,
+            expanded=expanded,
+        )
+        # pipeline 3a <<<<<<<<<<<<
+        # 1.
+        # isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
+        # # 2.
+        # node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
+        # neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
+        # cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+        # # log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
+        # # print(f"DELTAGROUPS: {delta}")
+        # # print(f"ISOLATED NODES: {isolated_nodes}")
+        # # print(f"DUMMIES: {layout.node_groups_dummies}")
+        # # 3.
+        # fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
+        # fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
+        # node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
+        # neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
+        # onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
+        # layout.classify_nodes_for_3b()
+        # layout.freeze_inter_axis_delta()
+        
+        # # log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
+        # # print(f"REAL: {layout.node_groups}")
+        # # print(f"DUMMY: {layout.node_groups_dummies}")
+        # # 5.
+        # cm.intra_axis_handler(layout)
+        # # log(logger, "ILP Schritt 3a/b - intra-axis Handling abgeschlossen.")
+        # # 6.
+        # cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
+        # # log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
+
+        # # print("NODE_AXIS_MAP")
+        # # print(node_axis_map)
+        # # print(len(node_axis_map))
 
 if __name__ == "__main__":
     import partitioning as pt
