@@ -43,7 +43,8 @@ class HivePlotLayout:
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
     crossings_expanded: Optional[int] = None
-
+    fixed_3a_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
+    strict_intra_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
     def __str__(self):
         """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
 
@@ -569,26 +570,68 @@ class HivePlotLayout:
                             if (node_axis_map.get(s) == axis_j and node_axis_map.get(t) == axis_j and node_positions_pi[t] < node_positions_pi[s]):
                                 crossings += 1
         return crossings
+    
+    def classify_nodes_for_3b(self) -> None:
+        """Klassifiziert die Knoten für den zweiten Optimierungsschritt (3b).
 
-    def freeze_inter_axis_delta(self, groups=None):
+        fixed_3a_nodes_by_axis:
+            Alle Knoten, deren relative Ordnung bereits in 3a bestimmt wurde
+            (mixed + inter-axis).
+
+        strict_intra_nodes_by_axis:
+            Alle reinen intra-axis Knoten, deren Reihenfolge erst in 3b
+            optimiert werden soll.
+        """
+
+        self.fixed_3a_nodes_by_axis = {}
+        self.strict_intra_nodes_by_axis = {}
+
+        for axis in self.node_groups:
+
+            self.fixed_3a_nodes_by_axis[axis] = []
+            self.strict_intra_nodes_by_axis[axis] = []
+
+            for node in self.node_groups[axis]:
+
+                if node in self.intra_axis_nodes.get(axis, []):
+                    self.strict_intra_nodes_by_axis[axis].append(node)
+                else:
+                    self.fixed_3a_nodes_by_axis[axis].append(node)
+    
+    def freeze_inter_axis_delta(self):
         from ip_model import delta_mapping
 
-        if groups is None:
-            groups = self.intra_axis_nodes
+        groups_copy = {}
 
-        fused_groups = {}
+        for axis in self.node_groups:
+            groups_copy[axis] = []
 
-        for axis in groups:
-            fused_groups[axis] = []
+            for node in self.node_groups[axis]:
+                groups_copy[axis].append(node)
 
-            for node in groups[axis]:
-                fused_groups[axis].append(node)
+        full_delta = delta_mapping(groups_copy)
+        partial_delta = {}
 
-            if axis in self.node_groups_dummies:
-                for dummy in self.node_groups_dummies[axis]:
-                    fused_groups[axis].append(dummy)
+        for key in full_delta:
+            u = key[0]
+            v = key[1]
+            axis = key[2]
 
-        self.fixed_inter_axis_delta = delta_mapping(fused_groups)
+            u_is_fixed = False
+            v_is_fixed = False
+
+            if axis in self.fixed_3a_nodes_by_axis:
+                for fixed_node in self.fixed_3a_nodes_by_axis[axis]:
+                    if u == fixed_node:
+                        u_is_fixed = True
+                    if v == fixed_node:
+                        v_is_fixed = True
+
+            if u_is_fixed and v_is_fixed:
+                partial_delta[key] = full_delta[key]
+
+        self.fixed_inter_axis_delta = partial_delta
+
 
 if __name__ == "__main__":
     from graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended

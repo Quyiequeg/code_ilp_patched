@@ -326,14 +326,10 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
         neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
-        print("DEBUG fused_node_list before freeze:")
-        print(fused_node_list)
-        print("DEBUG layout.node_groups before freeze:")
-        print(layout.node_groups)
-        print("DEBUG layout.intra_axis_nodes before freeze:")
-        print(layout.intra_axis_nodes)
         onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
+        layout.classify_nodes_for_3b()
         layout.freeze_inter_axis_delta()
+        
         # log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
         # print(f"REAL: {layout.node_groups}")
         # print(f"DUMMY: {layout.node_groups_dummies}")
