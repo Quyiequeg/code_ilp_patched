@@ -680,7 +680,7 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), layout_expanded=False)
 
         # 2. Danach expandieren
-        layout.post_processing_expansion(node_axis_map)
+        layout.pre_processing_expansion(node_axis_map)
         layout_expanded = True
 
         # 3. Subdivide im expandierten Zustand
