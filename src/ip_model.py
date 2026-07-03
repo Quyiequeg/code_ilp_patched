@@ -340,6 +340,13 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             new_node_groups[axis]  = [n for n in sorted_nodes if isinstance(n, int)]
             new_dummy_groups[axis] = [n for n in sorted_nodes if isinstance(n, str)]
         return new_node_groups, new_dummy_groups
+    
+    def mirror_node(node):
+        if isinstance(node, int):
+            return -node
+        u, v, seq = cm.parse_dummy_name(node)
+        return f"d_{u}_{v}_{-seq}"
+    
     # node_groups = layout.node_groups
     fused_groups =  layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
     phi = layout.axis_order
@@ -356,8 +363,8 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
     while threshold_break < threshold:
         threshold_break += 1
         for axis in phi:
-            
-
+            if paper_like and axis < 0:
+                continue
             # probleminstanz
             prob = pp.LpProblem(f"1S2L_ILP_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
             # variablen: in delta abgelegt
@@ -454,7 +461,9 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     if val is not None:
                         delta[key] = int(val)
         for axis in reversed_phi:
-
+            for axis in phi:
+                if paper_like and axis < 0:
+                    continue
 
             # probleminstanz
             prob = pp.LpProblem(f"1S2L_ILP_counter_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
@@ -546,8 +555,17 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                         delta[key] = int(val)
         if layout_expanded:
             layout.node_groups_expanded, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
+
+            if paper_like:
+                for axis in list(layout.node_groups_expanded.keys()):
+                    if axis > 0 and -axis in layout.node_groups_expanded:
+                        layout.node_groups_expanded[-axis] = [
+                            mirror_node(node)
+                            for node in layout.node_groups_expanded[axis]
+                        ]
         else:
             layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
+
         fused_groups = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded) # variable achse muss auf geupdatetem stand ermittelt werden
 
 def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix, pi_var_id, pi_var):

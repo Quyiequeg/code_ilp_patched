@@ -190,11 +190,11 @@ def render_svg(filename: Path | str, width: int, height: int, elements: list[str
     with open(filename, "w", encoding="utf-8") as file:
         file.write("\n".join(svg))
 
-def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree: bool = True, expanded_layout: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False, paper_like:bool = False) -> Path:
+def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree: bool = True, layout_expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False, paper_like:bool = False) -> Path:
     """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (.svg) realisiert.
     """
     id_to_label_map = layout.id_to_name
-    if expanded_layout:
+    if layout_expanded:
         node_groups = layout.node_groups_expanded
     else:
         node_groups = layout.node_groups
@@ -210,7 +210,7 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree
     elements.extend(nod)
     if node_labels:
         elements.extend(lab)
-    if expanded_layout:
+    if layout_expanded:
         elements.append( f'<text x="12" y="20" font-size="24" fill="#000000">'f'Kreuzungen: {layout.crossings_expanded}'f'</text>')
     else:
         elements.append( f'<text x="12" y="20" font-size="24" fill="#000000">'f'Kreuzungen: {layout.crossings}'f'</text>')

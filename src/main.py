@@ -226,21 +226,21 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
     else:
         if paper_like: # originalframework
             # pipeline 3a/b + nachbereitung
-            start = time.time()
+            # start = time.time()
             ip_model_pipeline(hiveplot, logger, threshold, paper_like)
-            collected_data["ip_model_pipeline t"] = time.time() - start
+            # collected_data["ip_model_pipeline t"] = time.time() - start
 
-            start = time.time()
+            # start = time.time()
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             print(hiveplot.crossings_expanded)
-            collected_data["count_crossings ILP 1 t"] = time.time() - start
+            # collected_data["count_crossings ILP 1 t"] = time.time() - start
             
             # edge_node_cleanup(hiveplot)
             # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
             # zwischenspeichern + rendern
-            # save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            # svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR,  paper_like) # optionale parameter möglich
-            # save_rendered_hiveplot(svg_path, year, logger)
+            save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
+            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
+            save_rendered_hiveplot(svg_path, year, logger)
             # achsenexpansion vorbereitung + durchführung + nachbereitung
             # _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
 
@@ -251,9 +251,9 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             # log(logger, "Schritt 5/6 erfolgreich: Achsenexpansion - ILP - abgeschlossen.")
             # edge_node_cleanup(hiveplot)
 
-            start = time.time()
+            # start = time.time()
             # hiveplot.crossings_expanded = hiveplot.count_crossings(True)
-            collected_data["count_crossings ILP 2 t"] = time.time() - start
+            # collected_data["count_crossings ILP 2 t"] = time.time() - start
 
             # zwischenspeichern + rendern
             # save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", save, logger) # snapshot
@@ -262,9 +262,9 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             # log(logger, "Schritt 6/6 erfolgreich: Speichern - ILP - abgeschlossen.")
 
 
-            elapsed = time.time() - start_begin
-            collected_data["1L2S-ILP gesamt t"] = elapsed
-            collector.update(f"Laufzeitenvergleich Bary/ILP", year, **collected_data)
+            # elapsed = time.time() - start_begin
+            # collected_data["1L2S-ILP gesamt t"] = elapsed
+            # collector.update(f"Laufzeitenvergleich Bary/ILP", year, **collected_data)
             # print(f"Speichere x = {run}, Laufzeit = {elapsed:.5f}, crossings = {hiveplot.crossings_expanded}")
             # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
         else:
