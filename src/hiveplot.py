@@ -336,7 +336,6 @@ class HivePlotLayout:
             else:
                 return (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) # falls neue kante
         
-        dummy_mirror_map = {}
         if dummy_copy is None:
             dummy_edges = self.dummy_edge_segments
         else:
@@ -385,6 +384,11 @@ class HivePlotLayout:
                         dummy_edges.append((node, new_dummy))
         self.axis_order = list(node_groups_expanded.keys()) # hpl update phi
         self.num_axes = len(self.axis_order) 
+        for axis, dummies in self.node_groups_dummies.items():
+            node_groups_expanded.setdefault(axis, [])
+            for dummy in dummies:
+                if dummy not in node_groups_expanded[axis]:
+                    node_groups_expanded[axis].append(dummy)
         _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_expanded) # snapshot nach expansion zusätzlich mit negativen knoten
         edge_axis_map = {edge: (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) for edge in self.edges()} # enthält nur achsen mit positiven ids
         axis_position_map = {}

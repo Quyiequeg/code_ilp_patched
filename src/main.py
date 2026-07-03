@@ -169,46 +169,12 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
     save_pkl(hiveplot, f"{variant}_{year}_basis_nach_ordering", save, logger)
     if variant == "Barycenterheuristik":
         if paper_like: # originalframework
-            # pipeline 3a/b + nachbereitung
-            start = time.time()
-            barycenter_crossmin_pipeline(hiveplot, logger, threshold)
-            collected_data["barycenter_crossmin_pipeline t"] = time.time() - start
-
-            start = time.time()
-            hiveplot.crossings = hiveplot.count_crossings()
-            collected_data["count_crossings Bary 1 t"] = time.time() - start
-
-            edge_node_cleanup(hiveplot)
-            # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - Barycenter - abgeschlossen.")
-            # zwischenspeichern + rendern
-            save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR) # optionale parameter möglich
-            save_rendered_hiveplot(svg_path, year, logger)
-            # achsenexpansion vorbereitung + durchführung + nachbereitung
-            _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
-
-            start = time.time()
-            hiveplot.post_processing_expansion(node_axis_map)
-            collected_data["post_processing_expansion Bary t"] = time.time() - start
-
-            # log(logger, "Schritt 5/6 erfolgreich: Achsenexpansion - Barycenter - abgeschlossen.")
-            edge_node_cleanup(hiveplot)
-
-            start = time.time()
+            barycenter_crossmin_pipeline(hiveplot, logger, paper_like)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
-            collected_data["count_crossings Bary 2 t"] = time.time() - start
-            
-            # zwischenspeichern + rendern
-            save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, paper_like) # optionale parameter möglich
+            print(hiveplot.crossings_expanded)
+            save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
+            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
-            # log(logger, "Schritt 6/6 erfolgreich: Speichern - Barycenter - abgeschlossen.")
-            # elapsed = time.time() - start
-            # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
-
-            elapsed = time.time() - start_begin
-            collected_data["Barycenter gesamt t"] = elapsed
-            collector.update(f"Laufzeitenvergleich Bary/ILP", year, **collected_data)
         else:
             barycenter_crossmin_pipeline(hiveplot, logger, paper_like=False)
             edge_node_cleanup(hiveplot)
@@ -239,10 +205,10 @@ def main():
         "year": 2017,
         "output_name": "",
         "logger": None,
-        # "variant": "Barycenterheuristik",
-        "variant": "1L2S-ILP",
-        # "paper_like": True,
-        "paper_like": False,
+        "variant": "Barycenterheuristik",
+        # "variant": "1L2S-ILP",
+        "paper_like": True,
+        # "paper_like": False,
         "partitions": 8,
         "threshold": 1,
         "save": False,

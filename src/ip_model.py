@@ -666,6 +666,7 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             layout_expanded = layout_expanded,
             paper_like=paper_like
         )
+        # ---------- Finish ----------
         cm.finish_structured_axis_orders(
             layout,
             isolated_nodes,
