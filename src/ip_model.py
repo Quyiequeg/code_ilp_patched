@@ -103,6 +103,9 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             new_dummy_groups[axis] = [n for n in sorted_nodes if isinstance(n, str)]
         return new_node_groups, new_dummy_groups
 
+    def safe_name(*parts):
+        return "_".join(str(p).replace("-", "m") for p in parts)
+    
     fused_groups =  layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
@@ -122,7 +125,8 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
                 if key[2] != axis: # nur zu optimierende Achse
                     continue
                 if (isinstance(key[0], int) and isinstance(key[1], int)) or (isinstance(key[0], str) and isinstance(key[1], str)): 
-                    delta_static[key] = pp.LpVariable(f"{key[0]}_{key[1]}_{key[2]}", cat="Binary")
+                    var_name = safe_name(key[0], key[1], key[2])
+                    delta_static[key] = pp.LpVariable(var_name, cat="Binary")
                 elif isinstance(key[0], int) and isinstance(key[1], str): # real < virtuell =  1
                     delta_static[key] = 1
                 elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
@@ -168,7 +172,8 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
                 if key[2] != axis: # nur zu optimierende Achse
                     continue
                 if (isinstance(key[0], int) and isinstance(key[1], int)) or (isinstance(key[0], str) and isinstance(key[1], str)): 
-                    delta_static[key] = pp.LpVariable(f"{key[0]}_{key[1]}_{key[2]}", cat="Binary")
+                    var_name = safe_name(key[0], key[1], key[2])
+                    delta_static[key] = pp.LpVariable(var_name, cat="Binary")
                 elif isinstance(key[0], int) and isinstance(key[1], str): # real < virtuell =  1
                     delta_static[key] = 1
                 elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
@@ -667,61 +672,49 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             layout_expanded = layout_expanded,
         )
     else:
+        # 1. Originalzustand
         layout_expanded = False
         isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
 
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
-        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges())
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), layout_expanded=False)
 
-        cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        # print("edges sample after subdivide", list(layout.edges())[:10])
-        fused_edge_list = layout.fuse_edges_with_edge_dummies()
-        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded = layout_expanded)
-
-        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
-        neighborhood_map = layout.get_proper_neighborhood_map(
-            fused_edge_list,
-            layout_expanded,
-        )
-
-        # ---------- Pipeline 3a ----------
-        onelayer_twosided_optimization(
-            layout,
-            neighborhood_map,
-            node_axis_map,
-            threshold=threshold,
-            layout_expanded = layout_expanded,
-            paper_like=paper_like
-        )
-        
-        # ---------- Vorbereitung Pipeline 3b ----------
-        layout.classify_nodes_for_3b()
-        layout.freeze_inter_axis_delta()
+        # 2. Danach expandieren
         layout.post_processing_expansion(node_axis_map)
         layout_expanded = True
 
-        fused_edge_list = layout.fuse_edges_with_edge_dummies()
+        # 3. Subdivide im expandierten Zustand
+        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=True)
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), layout_expanded=True)
+
+        cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+
+        # 4. Daten neu aufbauen
+        fused_edge_list = layout.fuse_edges_with_edge_dummies(layout_expanded=layout_expanded)
         fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
 
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
         neighborhood_map = layout.get_proper_neighborhood_map(
             fused_edge_list,
-            layout_expanded = layout_expanded,
+            layout_expanded=layout_expanded,
         )
 
-        # ---------- Pipeline 3b ----------
-        onelayer_twosided_optimization_3b(
+        # 5. 3a auf expandierter Struktur
+        onelayer_twosided_optimization(
             layout,
             neighborhood_map,
             node_axis_map,
             threshold=threshold,
-            layout_expanded = layout_expanded,
-            paper_like=paper_like
+            layout_expanded=layout_expanded,
+            paper_like=paper_like,
         )
+
+        # 6. Finish
         cm.finish_structured_axis_orders(
             layout,
             isolated_nodes,
-            layout_expanded = layout_expanded,
+            layout_expanded=layout_expanded,
         )
      
 if __name__ == "__main__":

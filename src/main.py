@@ -269,18 +269,18 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
         else:
             # pre_processing_expansion + pipeline 3a/b + nachbereitung
-            ip_model_pipeline(hiveplot, logger, threshold, expanded = True)
-            log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
+            ip_model_pipeline(hiveplot, logger, threshold, paper_like=False)
+            # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
             edge_node_cleanup(hiveplot)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
-            log(logger, "Schritt 5/6 erfolgreich: Bereinigung - ILP - abgeschlossen.")
+            # log(logger, "Schritt 5/6 erfolgreich: Bereinigung - ILP - abgeschlossen.")
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_ungeordnet_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_ungeordnet_P({partitions})", hiveplot, DEBUG_DIR, expanded = True, unordered = True) # optionale parameter möglich
+            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_ungeordnet_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded=True, unordered = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
-            log(logger, "Schritt 6/6 erfolgreich: Rendern und Speichern - ILP - abgeschlossen.")
-            elapsed = time.time() - start
-            log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
+            # log(logger, "Schritt 6/6 erfolgreich: Rendern und Speichern - ILP - abgeschlossen.")
+            # elapsed = time.time() - start
+            # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
     # log(logger, f"-----------------------------------")
     # print(f" FIXED DELTA: {hiveplot.fixed_inter_axis_delta}")
     print("Berechnung Ende.")
@@ -293,8 +293,8 @@ def main():
         "logger": None,
         # "variant": "Barycenterheuristik",
         "variant": "1L2S-ILP",
-        "paper_like": True,
-        # "paper_like": False,
+        # "paper_like": True,
+        "paper_like": False,
         "partitions": 3,
         "threshold": 1,
         "save": False,
