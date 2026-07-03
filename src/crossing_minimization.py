@@ -236,7 +236,7 @@ def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: 
         _attach_isolated_nodes(layout.node_groups, isolated_node_groups)
         layout.node_groups = layout.fuse_node_groups_with_dummies()
 
-def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | str]], node_axis_map: dict[int | str, int], threshold = float("inf"), real: bool = True, layout_expanded: bool = False) -> None:
+def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | str]], node_axis_map: dict[int | str, int], threshold = float("inf"), real: bool = True, layout_expanded: bool = False, use_fixed_positions: bool = False) -> None:
     """Führt wiederholte Barycenter-Sweeps im und gegen den Uhrzeigersinn über alle Achsen aus. Abhängig vom Parameter real werden entweder die realen Knoten (node_groups)
     oder die Dummy-Knoten (node_groups_dummies) pro Achse entsprechend der Barycenterposition ihrer Nachbarn umsortiert. Der Sweep endet, wenn keine Änderung mehr auftritt oder der threshold an Iterationen erreicht ist. Es kann zu Osszilationen im Sweep kommen, wenn
     z.B. wenn zwei Knoten die gleiche Barycenter Position haben oder in den Sweeps einfach nur ihre Positionen hin- und hertauschen. Dies führt dazu, dass die Schleife nie terminiert. In state_set werden dementsprechend alle erreichten Zustände gehasht und beim Wiederkehren eines zuvor errechneten Zustands kann die Schleife vor einem neuen Durchgang abbrechen.
@@ -262,60 +262,94 @@ def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | st
         node_groups = layout.node_groups
     else:
         node_groups = layout.node_groups_dummies
-    state_set = set() # states sammeln um osszilation von zuständen zu erkennen
-    # sweep-logik für reale knoten:
-    while  threshold_run < threshold and changed == True:
-        state = tuple(tuple(node_groups.get(axis, [])) for axis in phi) # aktueller zustand
-        if state in state_set: # falls aktueller zustand schon einmal gesehen
-            print("ZUSTAND WIEDERERKANNT")
+    phi = layout.axis_order
+    reversed_phi = list(reversed(phi))
+
+    changed = True
+    threshold_run = 0
+    state_set = set()
+    fixed_positions_by_axis = layout.fixed_positions_by_axis or {}
+    while threshold_run < threshold and changed:
+        state = tuple(tuple(node_groups.get(axis, [])) for axis in phi)
+
+        if state in state_set:
             break
+
         state_set.add(state)
         threshold_run += 1
         changed = False
-        for axis in phi: # clockwise
+
+        for axis in phi:
             bary_axis_order = node_groups.get(axis, [])
+            fixed_positions = fixed_positions_by_axis.get(axis, {})
+
             bary_positions_axis = []
             for i, node in enumerate(bary_axis_order):
-                node_neighbors = neighborhood_map[node]
-                if len(node_neighbors) == 0:
-                    bary_positions_axis.append(i / max(1, len(bary_axis_order)))
+                if use_fixed_positions and node in fixed_positions:
+                    bary_positions_axis.append(fixed_positions[node])
                 else:
-                    bary_positions_axis.append(
-                        calculate_barycenter_position(
-                            layout,
-                            node_neighbors,
-                            node_axis_map,
-                            real,
-                            layout_expanded,
+                    node_neighbors = neighborhood_map[node]
+                    if len(node_neighbors) == 0:
+                        bary_positions_axis.append(i / max(1, len(bary_axis_order)))
+                    else:
+                        bary_positions_axis.append(
+                            calculate_barycenter_position(
+                                layout,
+                                node_neighbors,
+                                node_axis_map,
+                                real,
+                                layout_expanded,
+                            )
                         )
-                    )
-            # umsortierung der knotenliste nach positionen
-            new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
-            if node_groups.get(axis, []) != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
+
+            new_order = [
+                node
+                for position, node in sorted(
+                    enumerate(bary_axis_order),
+                    key=lambda t: (bary_positions_axis[t[0]], t[0]),
+                )
+            ]
+
+            if node_groups.get(axis, []) != new_order:
                 changed = True
+
             node_groups[axis] = new_order
-        for axis in reversed_phi: # counter clockwise
+
+        for axis in reversed_phi:
+            
             bary_axis_order = node_groups.get(axis, [])
+            fixed_positions = fixed_positions_by_axis.get(axis, {})
+
             bary_positions_axis = []
             for i, node in enumerate(bary_axis_order):
-                node_neighbors = neighborhood_map[node]
-                if len(node_neighbors) == 0:
-                    bary_positions_axis.append(i / max(1, len(bary_axis_order)))
+                if use_fixed_positions and node in fixed_positions:
+                    bary_positions_axis.append(fixed_positions[node])
                 else:
-                    bary_positions_axis.append(
-                        calculate_barycenter_position(
-                            layout,
-                            node_neighbors,
-                            node_axis_map,
-                            real,
-                            layout_expanded,
+                    node_neighbors = neighborhood_map[node]
+                    if len(node_neighbors) == 0:
+                        bary_positions_axis.append(i / max(1, len(bary_axis_order)))
+                    else:
+                        bary_positions_axis.append(
+                            calculate_barycenter_position(
+                                layout,
+                                node_neighbors,
+                                node_axis_map,
+                                real,
+                                layout_expanded,
+                            )
                         )
-                    )
-            # umsortierung der knotenliste nach positionen
-            # besser (stable sort mit Tiebreak auf aktuelle Position):
-            new_order = [node for position, node in sorted(enumerate(bary_axis_order), key=lambda t: (bary_positions_axis[t[0]], t[0]))] # stabile sortierung, bei gleichen positionen wird die reihenfolge erhalten
-            if node_groups.get(axis, []) != new_order: # sichergehen, dass nur einmal geflaggt wird (reicht aus für abbruch)
+
+            new_order = [
+                node
+                for position, node in sorted(
+                    enumerate(bary_axis_order),
+                    key=lambda t: (bary_positions_axis[t[0]], t[0]),
+                )
+            ]
+
+            if node_groups.get(axis, []) != new_order:
                 changed = True
+
             node_groups[axis] = new_order
 
 def intra_axis_handler(layout: HivePlotLayout) -> None:
@@ -470,10 +504,12 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
         
         # ---------- Vorbereitung Pipeline 3b ----------
         layout.classify_nodes_for_3b()
-        # layout.freeze_barycenter_positions()
+        layout.freeze_barycenter_positions()
         fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
         layout.post_processing_expansion(node_axis_map)
+        loops = [e for e in layout.graph.edges() if e[0] == e[1]]
+        print("loops after post expansion", len(loops), loops[:20])
         layout_expanded = True
 
         fused_edge_list = layout.fuse_edges_with_edge_dummies()
@@ -486,9 +522,9 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
         )
         # ---------- Pipeline 3b ----------
         ## barycenter_heuristic real = True
-        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, layout_expanded = layout_expanded) # nur real
+        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, layout_expanded = layout_expanded, use_fixed_positions=True) # nur real
         ## barycenter_heuristic real = False
-        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, layout_expanded = layout_expanded)
+        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, layout_expanded = layout_expanded, use_fixed_positions=False)
         finish_structured_axis_orders(
             layout,
             isolated_nodes,

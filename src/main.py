@@ -171,7 +171,24 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
         if paper_like: # originalframework
             barycenter_crossmin_pipeline(hiveplot, logger, paper_like)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
+            edge_node_cleanup(hiveplot)
+
             print(hiveplot.crossings_expanded)
+            loops = [e for e in hiveplot.edges() if e[0] == e[1]]
+
+            dummy_loops = [
+                e for e in hiveplot.edges()
+                if e[0] == e[1] and isinstance(e[0], str)
+            ]
+
+            missing_dummy_edges = [
+                e for e in hiveplot.dummy_edge_segments
+                if not hiveplot.graph.has_edge(*e)
+            ]
+
+            print("loops", len(loops), loops[:20])
+            print("dummy loops", len(dummy_loops), dummy_loops[:20])
+            print("missing dummy edges", len(missing_dummy_edges), missing_dummy_edges[:20])
             save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
@@ -202,7 +219,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
 
 def main():
     config = {
-        "year": 2017,
+        "year": 2024,
         "output_name": "",
         "logger": None,
         "variant": "Barycenterheuristik",
