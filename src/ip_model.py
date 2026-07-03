@@ -367,6 +367,9 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
     while threshold_break < threshold:
         threshold_break += 1
         for axis in phi:
+
+            mirror_axis = -axis
+
             # probleminstanz
             prob = pp.LpProblem(f"1S2L_ILP_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
             # variablen: in delta abgelegt
@@ -392,14 +395,31 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             pi_minus_axis = phi[pi_minus_idx]
             pi_var = fused_groups[axis] # knotenliste von pi
             # pi_var = node_groups[axis] # knotenliste von pi
-            sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
+            # sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
+            sorted_neighbors = sorted_neighbor_map(
+                neighborhood_map,
+                node_axis_map,
+                pi_var,
+                mirror_axis,
+                mirror_axis,
+            )
             # neighbor_count = 0
 
             # for key in sorted_neighbors:
             #     neighbor_count += len(sorted_neighbors[key])
 
             # print("3b axis", axis, "neighbors", neighbor_count)
-            prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            # prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            prob += induced_crossings(
+                prob,
+                delta_static,
+                fixed_delta,
+                sorted_neighbors,
+                mirror_axis,
+                axis,
+                pi_var,
+            ), "1L2S-Kreuzungsminimierung"
+            
             # print(f"Zielfunktion: {prob.objective}")
             # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
@@ -448,6 +468,8 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     if val is not None:
                         delta[key] = int(val)
         for axis in reversed_phi:
+
+
             # probleminstanz
             prob = pp.LpProblem(f"1S2L_ILP_counter_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
             # variablen: in delta abgelegt
@@ -468,21 +490,47 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             pi_minus_idx = (phi_index_map[axis]-1) % len(phi)
             pi_minus_axis = phi[pi_minus_idx]
             pi_var = fused_groups[axis] # knotenliste von pi
-            sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            neighbor_count = 0
+            print("axis", axis, "pi_var len", len(pi_var), "pi_fix", mirror_axis)
 
-            for key in sorted_neighbors:
-                neighbor_count += len(sorted_neighbors[key])
+            if len(pi_var) == 0:
+                continue
+            mirror_axis = -axis
+            
+            # sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
+            sorted_neighbors = sorted_neighbor_map(
+                neighborhood_map,
+                node_axis_map,
+                pi_var,
+                mirror_axis,
+                mirror_axis,
+            )
+            print("pi_var first", pi_var[:5])
+            print("sorted key sample", list(sorted_neighbors.keys())[:5])
+            print("sample neighbors", sorted_neighbors.get((mirror_axis, pi_var[0])))
+            # neighbor_count = 0
 
-            prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+            # for key in sorted_neighbors:
+            #     neighbor_count += len(sorted_neighbors[key])
+
+            # prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
+        
+            prob += induced_crossings(
+                prob,
+                delta_static,
+                fixed_delta,
+                sorted_neighbors,
+                mirror_axis,
+                axis,
+                pi_var,
+            ), "1L2S-Kreuzungsminimierung"
+            
             # nebenbedingungen
             for i in range(len(pi_var)): # antisymmetrie, im paper 
                 for j in range(i+1, len(pi_var)):
                     u, v = pi_var[i], pi_var[j]
                     uv = get_delta_value(delta_static, fixed_delta, u, v, axis)
                     vu = get_delta_value(delta_static, fixed_delta, v, u, axis)
-                    if isinstance(uv, pp.LpVariable) and isinstance(vu, pp.LpVariable): 
-                        prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
+                    prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
             for i in range(len(pi_var)):
                 for j in range(i + 1, len(pi_var)):
                     for k in range(j + 1, len(pi_var)):
@@ -537,6 +585,13 @@ def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix,
             del_vu = get_delta_value(delta_static, fixed_delta, v, u, pi_var_id)
             neighbor_u = sorted_neighbors[pi_fix, u]
             neighbor_v = sorted_neighbors[pi_fix, v]
+            if neighbor_u or neighbor_v:
+
+                print(
+                                f"{u=} {v=} "
+                                f"len(neighbor_u)={len(neighbor_u)} "
+                                f"len(neighbor_v)={len(neighbor_v)}"
+                            )
             for s in neighbor_u:
                 for t in neighbor_v:
                     if s == t:
@@ -547,6 +602,7 @@ def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix,
                     z1 = linearize_product(prob, del_uv, del_ts, f"z_{u}_{v}_{s}_{t}_{pi_var_id}_{pi_fix}_1")
                     z2 = linearize_product(prob, del_vu, del_st, f"z_{v}_{u}_{s}_{t}_{pi_var_id}_{pi_fix}_2")
                     terms.append(z1 + z2)
+    print("terms", pi_var_id, pi_fix, len(terms))
     return pp.lpSum(terms)
 
 def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold: int = int(10), expanded: bool = False) -> None:
@@ -638,7 +694,21 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             fused_edge_list,
             expanded=True,
         )
+
         # ---------- Pipeline 3b ----------
+        # before_3b = {}
+        # for axis in layout.node_groups_expanded:
+        #     before_3b[axis] = list(layout.node_groups_expanded[axis])
+        # print("edges_expanded:", layout.edges_expanded[:20])
+        # print("len edges_expanded:", len(layout.edges_expanded))
+        # print("neighborhood nonempty:")
+        print("axis of -63:", node_axis_map.get(-63))
+        print("axis of -62:", node_axis_map.get(-62))
+        print("axis of -29:", node_axis_map.get(-29))
+        print("neighbors 64:", neighborhood_map.get(64))
+        for node in neighborhood_map:
+            if len(neighborhood_map[node]) > 0:
+                print(node, neighborhood_map[node])
         onelayer_twosided_optimization_3b(
             layout,
             neighborhood_map,
@@ -646,6 +716,13 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             threshold=threshold,
             expanded=expanded,
         )
+        # after_3b = layout.node_groups_expanded
+
+        # for axis in before_3b:
+        #     if before_3b[axis] != after_3b[axis]:
+        #         print("3b changed axis:", axis)
+        #         print("before:", before_3b[axis])
+        #         print("after: ", after_3b[axis])
         cm.finish_structured_axis_orders(
             layout,
             isolated_nodes,
