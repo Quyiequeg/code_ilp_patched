@@ -162,8 +162,7 @@ def subdivide_long_edges(layout: HivePlotLayout, node_position_map: dict[int | s
     for node in intra_candidate_node_list:
         axis = node_axis_map[node]
         layout.intra_axis_nodes[axis].append(node)
-    print("long_edges", list(long_edges)[:10], "count", len(long_edges))
-    print("dummy_edges", dummy_edges[:10], "count", len(dummy_edges))
+ 
     layout.graph.remove_edges_from(intra_candidate_edge_list)
     layout.graph.remove_edges_from(long_edges)
     layout.graph.add_edges_from(dummy_edges)
@@ -224,15 +223,15 @@ def remove_isolated_nodes(graph: nx.Graph, node_groups: dict[int, list[int]]) ->
         node_groups[key] = non_isolated_node_groups
     return isolated_node_groups
 
-def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: dict[str, list[int]], expanded: bool = False) -> None:
+def finish_structured_axis_orders(layout: HivePlotLayout, isolated_node_groups: dict[str, list[int]], layout_expanded: bool = False) -> None:
     def _attach_isolated_nodes(node_groups, isolated_node_groups):
         for key in node_groups:
             if key in isolated_node_groups:
                 node_groups[key].extend(isolated_node_groups[key])
 
-    if expanded:
+    if layout_expanded:
         _attach_isolated_nodes(layout.node_groups_expanded, isolated_node_groups)
-        layout.node_groups_expanded = layout.fuse_node_groups_with_dummies(expanded=expanded)
+        layout.node_groups_expanded = layout.fuse_node_groups_with_dummies(layout_expanded)
     else:
         _attach_isolated_nodes(layout.node_groups, isolated_node_groups)
         layout.node_groups = layout.fuse_node_groups_with_dummies()

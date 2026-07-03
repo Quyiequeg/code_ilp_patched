@@ -57,7 +57,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
         threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10
         expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     """
-    def sorted_neighbor_map(neighborhood_map: dict[str |int, list[int | str]], node_axis_map: dict[str |int, int], pi_var: list[int|str], pi_plus_axis: int, pi_minus_axis: int) -> dict[int, list[int | str]]:
+    def sorted_neighbor_map_3a(neighborhood_map: dict[str |int, list[int | str]], node_axis_map: dict[str |int, int], pi_var: list[int|str], pi_plus_axis: int, pi_minus_axis: int) -> dict[int, list[int | str]]:
         """Erzeugt ein dict, das für jeden Knoten in pi_var die Nachbarn auf der pi^+ und pi^- Achse enthält. Wird für die Zielfunktion benötigt, da hierdurch die Nachbarachsen von pi_var fixiert werden.
 
         Args:
@@ -75,16 +75,6 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             plus_list = []
             minus_list = []
             neighbors = neighborhood_map[node]
-            if neighbors:
-                print(
-                    "snm",
-                    node,
-                    "axis", node_axis_map[node],
-                    "neighbors", neighbors,
-                    "neighbor_axes", [node_axis_map[n] for n in neighbors],
-                    "minus/plus", pi_minus_axis, pi_plus_axis,
-                )
-                break
             for neighbor in neighbors:
                 if node_axis_map[neighbor] == pi_minus_axis:
                     minus_list.append(neighbor)
@@ -113,8 +103,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             new_dummy_groups[axis] = [n for n in sorted_nodes if isinstance(n, str)]
         return new_node_groups, new_dummy_groups
 
-    # node_groups = layout.node_groups
-    fused_groups =  layout.fuse_node_groups_with_dummies(expanded=expanded)
+    fused_groups =  layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
     phi_index_map = {}
@@ -144,18 +133,8 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             pi_minus_idx = (phi_index_map[axis]-1) % len(phi)
             pi_minus_axis = phi[pi_minus_idx]
             pi_var = fused_groups[axis] # knotenliste von pi
-            print("axis", axis, "minus", pi_minus_axis, "plus", pi_plus_axis)
-            print("pi_var first", pi_var[:5])
-            for n in pi_var[:5]:
-                print(n, neighborhood_map.get(n), [node_axis_map.get(x) for x in neighborhood_map.get(n, [])])
-            sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            # print("sorted_neighbors nonempty",
-            #     sum(1 for v in sorted_neighbors.values() if v),
-            #     "of", len(sorted_neighbors))
-            # print({k: v for k, v in list(sorted_neighbors.items())[:5]})
+            sorted_neighbors = sorted_neighbor_map_3a(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
             prob += (induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
-            # print(f"Zielfunktion: {prob.objective}")
-            # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
             for i in range(len(pi_var)): 
                 for j in range(i+1, len(pi_var)):
@@ -175,7 +154,6 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
             prob.solve(pp.PULP_CBC_CMD(msg=False))
             # schreibe problem um nach delta
-            # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
             for key in delta:
                 if key[2] == axis and isinstance(delta_static[key], pp.LpVariable):
                     val = pp.value(delta_static[key])
@@ -201,13 +179,9 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             pi_minus_idx = (phi_index_map[axis]-1) % len(phi)
             pi_minus_axis = phi[pi_minus_idx]
             pi_var = fused_groups[axis] # knotenliste von pi
-            sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            # print("sorted_neighbors nonempty",
-            #     sum(1 for v in sorted_neighbors.values() if v),
-            #     "of", len(sorted_neighbors))
-            # print({k: v for k, v in list(sorted_neighbors.items())[:5]})
+            sorted_neighbors = sorted_neighbor_map_3a(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
             prob += (induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, {}, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
-   
+            
             for i in range(len(pi_var)): # antisymmetrie, im paper 
                 for j in range(i+1, len(pi_var)):
                     u, v = pi_var[i], pi_var[j]
@@ -228,18 +202,16 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             if threshold_break == threshold - 1:
                 layout.crossings = pp.value(prob.objective)
             # schreibe problem um nach delta
-            # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
             for key in delta:
                 if key[2] == axis and isinstance(delta_static[key], pp.LpVariable):
                     val = pp.value(delta_static[key])
                     if val is not None:
                         delta[key] = int(val)
-        if expanded:
+        if layout_expanded:
             layout.node_groups_expanded, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
         else:
             layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
-        fused_groups = layout.fuse_node_groups_with_dummies(expanded=expanded) # variable achse muss auf geupdatetem stand ermittelt werden
-    # print(f"DELTA >>>>>>> {delta}")
+        fused_groups = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded) # variable achse muss auf geupdatetem stand ermittelt werden
 
 def linearize_product(prob, a, b, name):
     if isinstance(a, int) and isinstance(b, int):
@@ -273,17 +245,10 @@ def delta_mapping(fused_groups: dict[int|str, list[int|str]]) -> dict[tuple[int|
         dict[tuple[int | str, ...], None]: key: (u, v, alpha(u,v)), value: None
     """
     delta = {}
-    # node_groups = layout.node_groups
-    # node_groups_dummies = layout.node_groups_dummies
     for axis, nodes in fused_groups.items():
         for i in range(len(nodes)):
             for j in range(i + 1, len(nodes)):
                 delta[(nodes[i], nodes[j], axis)] = 1
-                # print("----------------------------------")
-                # print(f"{nodes[i]}:{isinstance(nodes[i], str)}")
-                # print(f"{nodes[j]}:{isinstance(nodes[j], str)}")
-                # print(f"{axis}:{isinstance(axis, int)}")
-                # print("----------------------------------")
                 delta[(nodes[j], nodes[i], axis)] = 0
     return delta
 
@@ -313,7 +278,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
         threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10
         expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     """
-    def sorted_neighbor_map(neighborhood_map: dict[str |int, list[int | str]], node_axis_map: dict[str |int, int], pi_var: list[int|str], pi_plus_axis: int, pi_minus_axis: int) -> dict[int, list[int | str]]:
+    def sorted_neighbor_map_3b(neighborhood_map: dict[str |int, list[int | str]], node_axis_map: dict[str |int, int], pi_var: list[int|str], pi_plus_axis: int, pi_minus_axis: int) -> dict[int, list[int | str]]:
         """Erzeugt ein dict, das für jeden Knoten in pi_var die Nachbarn auf der pi^+ und pi^- Achse enthält. Wird für die Zielfunktion benötigt, da hierdurch die Nachbarachsen von pi_var fixiert werden.
 
         Args:
@@ -336,8 +301,11 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     minus_list.append(neighbor)
                 elif node_axis_map[neighbor] == pi_plus_axis:
                     plus_list.append(neighbor)
-            sorted_neighbors[(pi_minus_axis, node)] = minus_list
-            sorted_neighbors[(pi_plus_axis, node)] = plus_list
+            if pi_minus_axis == pi_plus_axis:
+                sorted_neighbors[(pi_minus_axis, node)] = list(dict.fromkeys(minus_list + plus_list))
+            else:
+                sorted_neighbors[(pi_minus_axis, node)] = minus_list
+                sorted_neighbors[(pi_plus_axis, node)] = plus_list
         return sorted_neighbors
     
     def delta_to_order(delta: dict[tuple[int|str, int|str, int], int], fused_groups: dict[int, list[int|str]]) -> tuple[dict[int, list[int|str]], dict[int, list[int|str]]]:
@@ -373,14 +341,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             new_dummy_groups[axis] = [n for n in sorted_nodes if isinstance(n, str)]
         return new_node_groups, new_dummy_groups
     # node_groups = layout.node_groups
-    fused_groups =  layout.fuse_node_groups_with_dummies(expanded=expanded)
-    # print("3b fused groups", {a: len(v) for a, v in fused_groups.items()})
-    # print(
-    #     "3b neighborhood nonempty",
-    #     sum(1 for v in neighborhood_map.values() if v),
-    #     "of",
-    #     len(neighborhood_map),
-    # )
+    fused_groups =  layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
     phi_index_map = {}
@@ -395,8 +356,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
     while threshold_break < threshold:
         threshold_break += 1
         for axis in phi:
-
-            mirror_axis = -axis
+            
 
             # probleminstanz
             prob = pp.LpProblem(f"1S2L_ILP_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
@@ -422,9 +382,13 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             pi_minus_idx = (phi_index_map[axis]-1) % len(phi)
             pi_minus_axis = phi[pi_minus_idx]
             pi_var = fused_groups[axis] # knotenliste von pi
-            # pi_var = node_groups[axis] # knotenliste von pi
-            # sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            sorted_neighbors = sorted_neighbor_map(
+            
+            if len(pi_var) == 0:
+                continue
+            
+            mirror_axis = -axis
+
+            sorted_neighbors = sorted_neighbor_map_3b(
                 neighborhood_map,
                 node_axis_map,
                 pi_var,
@@ -518,18 +482,13 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             mirror_axis = -axis
             
             # sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
-            sorted_neighbors = sorted_neighbor_map(
+            sorted_neighbors = sorted_neighbor_map_3b(
                 neighborhood_map,
                 node_axis_map,
                 pi_var,
                 mirror_axis,
                 mirror_axis,
             )
-            # neighbor_count = 0
-
-            # for key in sorted_neighbors:
-            #     neighbor_count += len(sorted_neighbors[key])
-
             # prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             prob += induced_crossings(
                 prob,
@@ -585,12 +544,11 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
 
                     if val is not None:
                         delta[key] = int(val)
-        if expanded:
+        if layout_expanded:
             layout.node_groups_expanded, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
         else:
             layout.node_groups, layout.node_groups_dummies = delta_to_order(delta, fused_groups)
-        fused_groups = layout.fuse_node_groups_with_dummies(expanded=expanded) # variable achse muss auf geupdatetem stand ermittelt werden
-    # print(f"DELTA >>>>>>> {delta}")
+        fused_groups = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded) # variable achse muss auf geupdatetem stand ermittelt werden
 
 def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix, pi_var_id, pi_var):
     terms = []
@@ -600,8 +558,8 @@ def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix,
             v = pi_var[j]
             del_uv = get_delta_value(delta_static, fixed_delta, u, v, pi_var_id)
             del_vu = get_delta_value(delta_static, fixed_delta, v, u, pi_var_id)
-            neighbor_u = sorted_neighbors.get((pi_fix, u), sorted_neighbors.get((pi_var_id, u), []))
-            neighbor_v = sorted_neighbors.get((pi_fix, v), sorted_neighbors.get((pi_var_id, v), []))
+            neighbor_u = sorted_neighbors[(pi_fix, u)]
+            neighbor_v = sorted_neighbors[(pi_fix, v)]
             for s in neighbor_u:
                 for t in neighbor_v:
                     if s == t:
@@ -612,7 +570,6 @@ def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix,
                     z1 = linearize_product(prob, del_uv, del_ts, f"z_{u}_{v}_{s}_{t}_{pi_var_id}_{pi_fix}_1")
                     z2 = linearize_product(prob, del_vu, del_st, f"z_{v}_{u}_{s}_{t}_{pi_var_id}_{pi_fix}_2")
                     terms.append(z1 + z2)
-    # print("terms", pi_var_id, pi_fix, len(terms))
     return pp.lpSum(terms)
 
 def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold: int = int(10), paper_like: bool = True) -> None:
@@ -638,33 +595,60 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
 
     """
     if paper_like:
-        # pipeline 3a <<<<<<<<<<<<
-        # 1.
-        layout_expanded = True
+        layout_expanded = False
+        isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
+
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
-        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
-        layout.pre_processing_expansion(node_axis_map)
-        # log(logger, "ILP - pre_processing_expansion abgeschlossen.")
-        # 2.
-        isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups_expanded)
-        node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups_expanded) # UPDATE mit n_g_expanded
-        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges(), layout_expanded = layout_expanded) # UPDATE
+        neighborhood_map = layout.get_proper_neighborhood_map(layout.edges())
+
         cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        # log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
-        # 3.
-        fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
-        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded = layout_expanded) # UPDATE !!!
-        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
-        neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, layout_expanded = layout_expanded)
-        onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold, layout_expanded = layout_expanded)
-        # log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
-        # print(f"REAL: {layout.node_groups}")
-        # print(f"DUMMY: {layout.node_groups_dummies}")
-        # 5.
-        # cm.intra_axis_handler(layout)
-        # 6.
-        cm.finish_structured_axis_orders(layout, isolated_nodes, layout_expanded = layout_expanded)
-        # log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
+        fused_edge_list = layout.fuse_edges_with_edge_dummies()
+        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded = layout_expanded)
+
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+        neighborhood_map = layout.get_proper_neighborhood_map(
+            fused_edge_list,
+            layout_expanded,
+        )
+                # ---------- Pipeline 3a ----------
+        onelayer_twosided_optimization(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            layout_expanded = layout_expanded,
+            paper_like=paper_like
+        )
+        
+        # ---------- Vorbereitung Pipeline 3b ----------
+        layout.classify_nodes_for_3b()
+        layout.freeze_inter_axis_delta()
+        layout.post_processing_expansion(node_axis_map)
+        layout_expanded = True
+
+        fused_edge_list = layout.fuse_edges_with_edge_dummies()
+        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
+
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+        neighborhood_map = layout.get_proper_neighborhood_map(
+            fused_edge_list,
+            layout_expanded = layout_expanded,
+        )
+        
+        # ---------- Pipeline 3b ----------
+        onelayer_twosided_optimization_3b(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            layout_expanded = layout_expanded,
+            paper_like=paper_like
+        )
+        cm.finish_structured_axis_orders(
+            layout,
+            isolated_nodes,
+            layout_expanded = layout_expanded,
+        )
 
     else:
         layout_expanded = False
@@ -676,7 +660,6 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
         # print("edges sample after subdivide", list(layout.edges())[:10])
         fused_edge_list = layout.fuse_edges_with_edge_dummies()
-        print("fused_edge_list sample", fused_edge_list[:20])
         fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded = layout_expanded)
 
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
@@ -711,14 +694,6 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
         )
 
         # ---------- Pipeline 3b ----------
-        # before_3b = {}
-        # for axis in layout.node_groups_expanded:
-        #     before_3b[axis] = list(layout.node_groups_expanded[axis])
-        # print("edges_expanded:", layout.edges_expanded[:20])
-        # print("len edges_expanded:", len(layout.edges_expanded))
-        # print("neighborhood nonempty:")
-        print("intra_axis_nodes", {a: len(v) for a, v in layout.intra_axis_nodes.items()})
-        print("intra_axis_edges", len(layout.intra_axis_edges))
         onelayer_twosided_optimization_3b(
             layout,
             neighborhood_map,
@@ -727,90 +702,11 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             layout_expanded = layout_expanded,
             paper_like=paper_like
         )
-        # after_3b = layout.node_groups_expanded
-
-        # for axis in before_3b:
-        #     if before_3b[axis] != after_3b[axis]:
-        #         print("3b changed axis:", axis)
-        #         print("before:", before_3b[axis])
-        #         print("after: ", after_3b[axis])
         cm.finish_structured_axis_orders(
             layout,
             isolated_nodes,
             layout_expanded = layout_expanded,
         )
-        # pipeline 3a <<<<<<<<<<<<
-        # 1.
-        # isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
-        # # 2.
-        # node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
-        # neighborhood_map = layout.get_proper_neighborhood_map(layout.edges()) # initialisieren aus layout.graph
-        # cm.subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
-        # # log(logger, "ILP Schritt 3* - Segmentierung abgeschlossen.")
-        # # print(f"DELTAGROUPS: {delta}")
-        # # print(f"ISOLATED NODES: {isolated_nodes}")
-        # # print(f"DUMMIES: {layout.node_groups_dummies}")
-        # # 3.
-        # fused_edge_list = layout.fuse_edges_with_edge_dummies() # dummykanten einbeziehen
-        # fused_node_list = layout.fuse_node_groups_with_dummies(expanded=expanded) # UPDATE !!!
-        # node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list) # UPDATE !!!
-        # neighborhood_map = layout.get_proper_neighborhood_map(fused_edge_list, expanded=expanded)
-        # onelayer_twosided_optimization(layout, neighborhood_map, node_axis_map, threshold=threshold)
-        # layout.classify_nodes_for_3b()
-        # layout.freeze_inter_axis_delta()
-        
-        # # log(logger, "ILP Schritt 3a/b - Optimierung abgeschlossen.")
-        # # print(f"REAL: {layout.node_groups}")
-        # # print(f"DUMMY: {layout.node_groups_dummies}")
-        # # 5.
-        # cm.intra_axis_handler(layout)
-        # # log(logger, "ILP Schritt 3a/b - intra-axis Handling abgeschlossen.")
-        # # 6.
-        # cm.finish_structured_axis_orders(layout, isolated_nodes, expanded=expanded)
-        # # log(logger, "ILP Schritt 3a/b - Finish abgeschlossen.")
-
-        # # print("NODE_AXIS_MAP")
-        # # print(node_axis_map)
-        # # print(len(node_axis_map))
-
+     
 if __name__ == "__main__":
-    import partitioning as pt
-    import hiveplot as hp
-    import crossing_minimization as cm
-    import pickle
-    import networkx as nx
-    import dblp_parser as pr
-    import renderer as rr
-
-    year = 2024
-    # pipeline = "barycenter"
-    # method = "paper"
-    # cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\gd_graphs.pkl"
-    cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\self_ILP_k16_2024_12.06--10.49_edges973_intra0.pkl"
-    with open(cache_path, "rb") as file:
-        hpl = pickle.load(file)
-    
-    # hpl = graphs[year]
-    # print(hpl.dummy_edge_segments)
-    # Initialisiere Hiveplotlayout
-    # id_to_name, name_to_id = build_node_identity_maps(graphs[year].nodes())
-    # original_edges = graphs[year].edges()
-    # edges = []
-    # for edge in original_edges:
-    #     edges.append((name_to_id[edge[0]], name_to_id[edge[1]]))
-    # # logger.info(edges)
-    # # logger.info(id_to_name, name_to_id)
-    # G = nx.Graph()
-    # G.add_edges_from(edges)
-    # # logger.info(graphs[year])
-    # # logger.info(G)
-    # # check auf graphs[year] nodes/edges == G?
-    # node_grps = clauset_newman_moore_communities(G, 8)
-    # axes = list(node_grps.keys())
-    # # logger.info(node_groups)
-    # hpl = HivePlotLayout(
-    #     graph=G,
-    #     num_axes=len(axes),
-    #     axis_order=axes,
-    #     node_groups=node_grps
-    # )
+    pass

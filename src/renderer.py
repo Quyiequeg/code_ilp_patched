@@ -190,11 +190,11 @@ def render_svg(filename: Path | str, width: int, height: int, elements: list[str
     with open(filename, "w", encoding="utf-8") as file:
         file.write("\n".join(svg))
 
-def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree: bool = True, expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False) -> Path:
+def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree: bool = True, expanded_layout: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False, paper_like:bool = False) -> Path:
     """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (.svg) realisiert.
     """
     id_to_label_map = layout.id_to_name
-    if expanded:
+    if expanded_layout:
         node_groups = layout.node_groups_expanded
     else:
         node_groups = layout.node_groups
@@ -210,7 +210,7 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree
     elements.extend(nod)
     if node_labels:
         elements.extend(lab)
-    if expanded:
+    if expanded_layout:
         elements.append( f'<text x="12" y="20" font-size="24" fill="#000000">'f'Kreuzungen: {layout.crossings_expanded}'f'</text>')
     else:
         elements.append( f'<text x="12" y="20" font-size="24" fill="#000000">'f'Kreuzungen: {layout.crossings}'f'</text>')
@@ -221,30 +221,4 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree
     
 
 if __name__ == "__main__":
-    from partitioning import (
-    clauset_newman_moore_communities,
-    louvain_community_detection,
-    )
-    from dblp_parser import (
-        build_node_identity_maps,
-    )
-    from ordering import (
-        native_order,
-        node_groups,
-        brute_force_ordering,
-        reordered_node_groups,
-        node_to_axis_maps,
-    )
-    import crossing_minimization as cm
-    from ip_model import (
-        ip_model_pipeline
-    )
-
-    from hiveplot import HivePlotLayout
-    from renderer import hiveplot_renderer
-    import re
-    from svglib.svglib import svg2rlg
-    from reportlab.graphics import renderPDF
-    gr.settings(fr"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.svg", node_pt=8, line_pt=3, text_pt=25, draw_dummys=False)
-    drawing = svg2rlg(r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.svg")
-    renderPDF.drawToFile(drawing, r"E:\Programming Workspace\Python\BA-Sauerteig\output\ba\beispiel_vor_3a.pdf")
+    pass

@@ -238,7 +238,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, paper_like) # optionale parameter möglich
+            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR,  paper_like) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
             # achsenexpansion vorbereitung + durchführung + nachbereitung
             _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)

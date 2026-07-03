@@ -70,7 +70,6 @@ class HivePlotLayout:
         ]
         return "\n".join(lines)
     
-
     def copy(self):
         "Gibt eine Deepcopy des Hiveplotlayouts zurück."
         return copy.deepcopy(self)
@@ -112,7 +111,7 @@ class HivePlotLayout:
         else:
             return self.node_groups.get(axis, [])
     
-    def fuse_node_groups_with_dummies(self, expanded: bool = False) -> dict[int, list[int | str]]:
+    def fuse_node_groups_with_dummies(self, layout_expanded:bool = False) -> dict[int, list[int | str]]:
         """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.
         Args:
             expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
@@ -121,7 +120,7 @@ class HivePlotLayout:
         """
         fused_groups = {}
         for axis in self.axis_order:
-            if expanded:
+            if layout_expanded:
                 original_nodes = self.node_groups_expanded.get(axis, [])
                 dummy_nodes = self.node_groups_dummies.get(axis, [])
                 fused_groups[axis] = list(original_nodes) + list(dummy_nodes)
@@ -131,7 +130,7 @@ class HivePlotLayout:
                 fused_groups[axis] = list(original_nodes) + list(dummy_nodes)
         return fused_groups
 
-    def fuse_edges_with_edge_dummies(self, expanded: bool = False) -> list[tuple[int, int]]:
+    def fuse_edges_with_edge_dummies(self,  layout_expanded:bool = False) -> list[tuple[int, int]]:
         """Erzeugt eine Liste die alle kurzen Kanten und Dummykanten vereinigt zurückgibt.
 
         Returns:
@@ -141,7 +140,7 @@ class HivePlotLayout:
         fused_edges = direct_edges + self.dummy_edge_segments
         return fused_edges
     
-    def get_proper_neighborhood_map(self, fused_edge_list: list[tuple[int | str, int | str]], expanded: bool = False) -> dict[int | str: list[int | str]]:
+    def get_proper_neighborhood_map(self, fused_edge_list: list[tuple[int | str, int | str]],  layout_expanded:bool = False) -> dict[int | str: list[int | str]]:
         """Die Funktion ermittelt eine Liste, die jeden Knoten (sowohl real als auch virtuell) auf eine Liste seiner Nachbarn mappt.
 
         Args:
@@ -151,7 +150,7 @@ class HivePlotLayout:
             dict[int | str: list[int | str]]: KnotenID: Nachbarliste
         """
         neighbor_map = {}
-        fused_node_groups = self.fuse_node_groups_with_dummies(expanded)
+        fused_node_groups = self.fuse_node_groups_with_dummies(layout_expanded)
         node_list = self.updated_nodes(fused_node_groups)
         for node in node_list:
             neighbor_map[node] = set()
@@ -352,6 +351,11 @@ class HivePlotLayout:
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
                 intra_expandables.setdefault(edge_positions[0], []).append(edge) # originale achsen ids
+        for edge in self.intra_axis_edges:
+            axis_u = node_axis_map[edge[0]]
+            axis_v = node_axis_map[edge[1]]
+            if axis_u == axis_v:
+                intra_expandables.setdefault(axis_u, []).append(edge)
         for edge in edge_axis_map: # zu expandierende inter kanten filtern
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]: # intra
@@ -379,11 +383,6 @@ class HivePlotLayout:
                         node_groups_expanded[-axis].append(new_dummy) # indent ->
                         self.graph.add_edge(node, new_dummy)
                         dummy_edges.append((node, new_dummy))
-        # self.dummy_edge_segments = [
-        #         e for e in self.dummy_edge_segments
-        #         if e[0] not in dummy_mirror_map and e[1] not in dummy_mirror_map
-        # ]
-
         self.axis_order = list(node_groups_expanded.keys()) # hpl update phi
         self.num_axes = len(self.axis_order) 
         _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_expanded) # snapshot nach expansion zusätzlich mit negativen knoten
@@ -398,7 +397,6 @@ class HivePlotLayout:
                 new_intra_edges.append((-edge[0], edge[1]))
                 new_intra_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_intra_edges)
-        print(dummy_mirror_map)
         for axis in inter_expandables: # fallprüfung und entfernen/einpflegen der zu expandierenden kanten (vorher/nachher)
             self.graph.remove_edges_from(inter_expandables[axis]) # zu expandierende real inter knoten aus hpl.graph löschen, die expandiert werden müssen
             new_inter_edges = []
@@ -536,21 +534,21 @@ class HivePlotLayout:
             if edge not in self.intra_axis_edges:
                 self.intra_axis_edges.append(edge)
         
-    def count_crossings(self: HivePlotLayout, expanded: bool = False) -> int:
-        if expanded:
+    def count_crossings(self: HivePlotLayout,  layout_expanded:bool = False) -> int:
+        if layout_expanded:
             node_groups = self.node_groups_expanded
         else:
             node_groups = self.node_groups
         hpl_copy = self.copy()
         for edge in self.intra_axis_edges:
-            if edge in self.graph.edges() and not expanded:
+            if edge in self.graph.edges() and not layout_expanded:
                 hpl_copy.graph.remove_edge(edge[0], edge[1])
         
-        if expanded:
-            neighbor_map = self.get_proper_neighborhood_map(self.edges(), expanded)
+        if layout_expanded:
+            neighbor_map = self.get_proper_neighborhood_map(self.edges(), layout_expanded)
         else:
             hpl_copy.graph.add_edges_from(self.dummy_edge_segments)
-            neighbor_map = self.get_proper_neighborhood_map(hpl_copy.edges(), expanded)
+            neighbor_map = self.get_proper_neighborhood_map(hpl_copy.edges(), layout_expanded)
         node_positions_pi = {} # knoten -> position in pi
         node_axis_map = {} 
         for axis in node_groups: 
@@ -634,34 +632,4 @@ class HivePlotLayout:
 
 
 if __name__ == "__main__":
-    from graphs import sample_graph_multipartite, sample_graph_selfconstructed_extended
-    from ordering import native_order, node_groups, node_to_axis_maps, brute_force_ordering, reordered_node_groups
-    from debug_renderer import render_debug
-    graph_mode = 3
-    G = sample_graph_selfconstructed_extended(graph_mode)
-    nodes = list(G.nodes(data="subset"))
-    axes = [0, 1, 5, 4, 2, 3]
-    # ng = node_groups(nodes)
-    ng = {0: [1, 2, 0, 'd_4_11_1', 'd_5_11_1'], 1: [3, 4, 5, 'd_0_24_1'], 5: [19, 20, 21, 22, 24, 23, 25, 27, 28, 26, 'd_5_18_1'], 4: [14, 16, 15, 13, 17, 18], 2: [7, 6, 8, 'd_9_16_1'], 3: [9, 10, 11, 12, 'd_1_7_1', 'd_2_8_1']}
-    # print("Layout ORIGINAL")
-    hpl = HivePlotLayout(
-        graph=G,
-        num_axes=len(axes),
-        axis_order=axes,
-        node_groups=ng,
-        dummy_edge_segments=[(0, 'd_0_24_1'), ('d_0_24_1', 24), (1, 'd_1_7_1'), ('d_1_7_1', 7), (2, 'd_2_8_1'), ('d_2_8_1', 8), (4, 'd_4_11_1'), ('d_4_11_1', 11), (5, 'd_5_11_1'), ('d_5_11_1', 11), (5, 'd_5_18_1'), ('d_5_18_1', 18), (9, 'd_9_16_1'), ('d_9_16_1', 16)]
-    )
-    # hpl.axis_order = brute_force_ordering(axes, ng, list(G.edges()))
-    # hpl.node_groups = reordered_node_groups(ng, hpl.axis_order)
-    # isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
-    node_position_map, node_axis_map = node_to_axis_maps(hpl, hpl.node_groups)
-    # hpl.pre_processing_expansion(node_axis_map)
-    hpl.dummy_edge_segments = []
-    hpl.post_processing_expansion(node_axis_map)
-    render_debug(hpl, title="renderer_test")
-    print(hpl)
-    # print(hpl.edges())
-    # print(hpl.graph.nodes)
-    print("##########################################")
-    print("##########################################")
-    # print("##########################################")
+   pass
