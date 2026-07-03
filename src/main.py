@@ -231,17 +231,18 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             collected_data["ip_model_pipeline t"] = time.time() - start
 
             start = time.time()
-            hiveplot.crossings = hiveplot.count_crossings(True)
+            hiveplot.crossings_expanded = hiveplot.count_crossings(True)
+            print(hiveplot.crossings_expanded)
             collected_data["count_crossings ILP 1 t"] = time.time() - start
             
-            edge_node_cleanup(hiveplot)
+            # edge_node_cleanup(hiveplot)
             # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
             # zwischenspeichern + rendern
-            save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR,  paper_like) # optionale parameter möglich
-            save_rendered_hiveplot(svg_path, year, logger)
+            # save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
+            # svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR,  paper_like) # optionale parameter möglich
+            # save_rendered_hiveplot(svg_path, year, logger)
             # achsenexpansion vorbereitung + durchführung + nachbereitung
-            _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
+            # _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
 
             # start = time.time()
             # hiveplot.post_processing_expansion(node_axis_map)
@@ -264,7 +265,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             elapsed = time.time() - start_begin
             collected_data["1L2S-ILP gesamt t"] = elapsed
             collector.update(f"Laufzeitenvergleich Bary/ILP", year, **collected_data)
-            print(f"Speichere x = {run}, Laufzeit = {elapsed:.5f}, crossings = {hiveplot.crossings_expanded}")
+            # print(f"Speichere x = {run}, Laufzeit = {elapsed:.5f}, crossings = {hiveplot.crossings_expanded}")
             # log(logger, f"Pipeline ENDE nach {elapsed:.2f}s")
         else:
             # pre_processing_expansion + pipeline 3a/b + nachbereitung

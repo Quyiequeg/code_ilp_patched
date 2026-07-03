@@ -634,7 +634,6 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             fused_edge_list,
             layout_expanded = layout_expanded,
         )
-        
         # ---------- Pipeline 3b ----------
         onelayer_twosided_optimization_3b(
             layout,
@@ -649,7 +648,6 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             isolated_nodes,
             layout_expanded = layout_expanded,
         )
-
     else:
         layout_expanded = False
         isolated_nodes = cm.remove_isolated_nodes(layout.graph, layout.node_groups)
