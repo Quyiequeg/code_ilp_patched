@@ -43,7 +43,7 @@ class HivePlotLayout:
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
     crossings_expanded: Optional[int] = None
-    fixed_3a_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
+    mix_nodes_by_axis_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
     strict_intra_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
     def __str__(self):
         """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
