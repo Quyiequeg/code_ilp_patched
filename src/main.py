@@ -295,7 +295,7 @@ def main():
         "paper_like": True,
         # "paper_like": False,
         "partitions": 3,
-        "threshold": 0,
+        "threshold": 1,
         "save": False,
         # "save": True,
         "debug": False,

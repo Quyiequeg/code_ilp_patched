@@ -43,7 +43,7 @@ class HivePlotLayout:
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
     crossings_expanded: Optional[int] = None
-    mix_nodes_by_axis_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
+    mix_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
     strict_intra_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
     def __str__(self):
         """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
@@ -574,7 +574,7 @@ class HivePlotLayout:
     def classify_nodes_for_3b(self) -> None:
         """Klassifiziert die Knoten für den zweiten Optimierungsschritt (3b).
 
-        fixed_3a_nodes_by_axis:
+        mixed_nodes_by_axis:
             Alle Knoten, deren relative Ordnung bereits in 3a bestimmt wurde
             (mixed + inter-axis).
 
@@ -583,12 +583,12 @@ class HivePlotLayout:
             optimiert werden soll.
         """
 
-        self.fixed_3a_nodes_by_axis = {}
+        self.mixed_nodes_by_axis = {}
         self.strict_intra_nodes_by_axis = {}
 
         for axis in self.node_groups:
 
-            self.fixed_3a_nodes_by_axis[axis] = []
+            self.mixed_nodes_by_axis[axis] = []
             self.strict_intra_nodes_by_axis[axis] = []
 
             for node in self.node_groups[axis]:
@@ -596,7 +596,7 @@ class HivePlotLayout:
                 if node in self.intra_axis_nodes.get(axis, []):
                     self.strict_intra_nodes_by_axis[axis].append(node)
                 else:
-                    self.fixed_3a_nodes_by_axis[axis].append(node)
+                    self.mixed_nodes_by_axis[axis].append(node)
     
     def freeze_inter_axis_delta(self):
         from ip_model import delta_mapping
@@ -620,8 +620,8 @@ class HivePlotLayout:
             u_is_fixed = False
             v_is_fixed = False
 
-            if axis in self.fixed_3a_nodes_by_axis:
-                for fixed_node in self.fixed_3a_nodes_by_axis[axis]:
+            if axis in self.mixed_nodes_by_axis:
+                for fixed_node in self.mixed_nodes_by_axis[axis]:
                     if u == fixed_node:
                         u_is_fixed = True
                     if v == fixed_node:
