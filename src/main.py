@@ -200,7 +200,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
+            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_geordnet_P({partitions})", hiveplot, DEBUG_DIR, paper_like) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
             # log(logger, "Schritt 6/6 erfolgreich: Speichern - Barycenter - abgeschlossen.")
             # elapsed = time.time() - start
@@ -227,7 +227,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
         if paper_like: # originalframework
             # pipeline 3a/b + nachbereitung
             start = time.time()
-            ip_model_pipeline(hiveplot, logger, threshold)
+            ip_model_pipeline(hiveplot, logger, threshold, paper_like)
             collected_data["ip_model_pipeline t"] = time.time() - start
 
             start = time.time()
@@ -238,7 +238,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             # log(logger, "Schritt 4/6 erfolgreich: Pipelineschritt 3 - ILP - abgeschlossen.")
             # zwischenspeichern + rendern
             save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, expanded = True) # optionale parameter möglich
+            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, paper_like) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
             # achsenexpansion vorbereitung + durchführung + nachbereitung
             _, node_axis_map = node_to_axis_maps(hiveplot, hiveplot.node_groups)
