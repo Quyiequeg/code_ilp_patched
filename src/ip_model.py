@@ -424,8 +424,18 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             for i in range(len(pi_var)): 
                 for j in range(i+1, len(pi_var)):
                     u, v = pi_var[i], pi_var[j]
+                    dups = [x for x in pi_var if pi_var.count(x) > 1]
+                    if dups:
+                        print("duplicates", axis, sorted(set(dups), key=str)[:20])
+                        raise RuntimeError("duplicate pi_var")
                     uv = get_delta_value(delta_static, fixed_delta, u, v, axis)
                     vu = get_delta_value(delta_static, fixed_delta, v, u, axis)
+                    if isinstance(uv, (int, float)) and isinstance(vu, (int, float)) and uv + vu != 1:
+                        print("bad totalorder", axis, u, v, uv, vu)
+                        print("u axis", node_axis_map.get(u), "v axis", node_axis_map.get(v))
+                        print("fixed uv", fixed_delta.get((u, v, axis)))
+                        print("fixed vu", fixed_delta.get((v, u, axis)))
+                        raise RuntimeError("bad totalorder")
                     prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
             
             for i in range(len(pi_var)):
@@ -440,7 +450,12 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
-            prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
+            # prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
+            # prob.solve(pp.PULP_CBC_CMD(msg = True, timeLimit=30))
+            prob.solve(pp.PULP_CBC_CMD(msg = False))#
+            if threshold_break == threshold - 1:
+                print("solver status", pp.LpStatus[prob.status])
+                print("objective", pp.value(prob.objective))
             # schreibe problem um nach delta
             # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
             for key in delta:
@@ -533,7 +548,12 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
-            prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
+            # prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
+            # prob.solve(pp.PULP_CBC_CMD(msg = False, timeLimit=30))
+            prob.solve(pp.PULP_CBC_CMD(msg = False))
+            if threshold_break == threshold - 1:
+                print("solver status", pp.LpStatus[prob.status])
+                print("objective", pp.value(prob.objective))
 
             # schreibe problem um nach delta
             for key in delta:
@@ -633,7 +653,7 @@ def ip_model_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold:
             fused_edge_list,
             layout_expanded,
         )
-                # ---------- Pipeline 3a ----------
+        # ---------- Pipeline 3a ----------
         onelayer_twosided_optimization(
             layout,
             neighborhood_map,

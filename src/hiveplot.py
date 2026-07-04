@@ -397,12 +397,18 @@ class HivePlotLayout:
                         dummy_edges.append((node, new_dummy))
         self.axis_order = list(node_groups_expanded.keys()) # hpl update phi
         self.num_axes = len(self.axis_order) 
-        for axis, dummies in self.node_groups_dummies.items():
-            node_groups_expanded.setdefault(axis, [])
+        
+        node_groups_for_axis_map = {}
+        for axis, nodes in node_groups_expanded.items():
+            node_groups_for_axis_map[axis] = list(nodes)
+        for axis, dummies in self.node_groups_dummies.items(): # dummies nur temporär auslesen 
+            node_groups_for_axis_map.setdefault(axis, [])
             for dummy in dummies:
-                if dummy not in node_groups_expanded[axis]:
-                    node_groups_expanded[axis].append(dummy)
-        _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_expanded) # snapshot nach expansion zusätzlich mit negativen knoten
+                if dummy not in node_groups_for_axis_map[axis]:
+                    node_groups_for_axis_map[axis].append(dummy)
+        _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_for_axis_map) # snapshot nach expansion zusätzlich mit negativen knoten
+        
+        # _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_expanded) 
         edge_axis_map = {edge: (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) for edge in self.edges()} # enthält nur achsen mit positiven ids
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # id: position
@@ -444,13 +450,6 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_v, []).append(new_dummy)
                                 dummy_edges.append((edge[1], new_dummy)) # erzeugt eine kante zwischen dummyknoten auf einer zuvor expandierten achse
                             new_inter_edges.append((edge[0], new_dummy)) # erzeugt eine kante von u zu v, wobei v auf dem rechten teil einer expandierten achse liegt
-                            if edge[1] == new_dummy:
-                                print("created loop", edge)
-                                print("edge0 parsed", parse_dummy_name(edge[0]))
-                                print("edge1 parsed", parse_dummy_name(edge[1]))
-                                print("new_dummy", new_dummy)
-                            if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
                         if edge in self.dummy_edge_segments:
                             self.dummy_edge_segments.remove(edge)
                             # self.graph.remove_edge(*edge)
@@ -471,11 +470,6 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_u, []).append(new_dummy) # änderung: -axis_v
                                 dummy_edges.append((edge[0], new_dummy)) # änderung: edge[1]
                             new_inter_edges.append((edge[1], new_dummy))# änderung: edge[0]
-                            if edge[1] == new_dummy:
-                                print("created loop", edge)
-                                print("edge0 parsed", parse_dummy_name(edge[0]))
-                                print("edge1 parsed", parse_dummy_name(edge[1]))
-                                print("new_dummy", new_dummy)
                         if edge in self.dummy_edge_segments:
                             self.dummy_edge_segments.remove(edge)
                             # self.graph.remove_edge(*edge)
@@ -501,11 +495,6 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_u, []).append(new_dummy) #! -axis_v
                                 dummy_edges.append((edge[0], new_dummy)) #! edge[1] 
                             new_inter_edges.append((edge[1], new_dummy)) #! edge[0]
-                            if edge[1] == new_dummy:
-                                print("created loop", edge)
-                                print("edge0 parsed", parse_dummy_name(edge[0]))
-                                print("edge1 parsed", parse_dummy_name(edge[1]))
-                                print("new_dummy", new_dummy)
                             if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
                                 print("created loop", edge, "->", new_inter_edges[-1])
                         if edge in self.dummy_edge_segments:
@@ -524,8 +513,6 @@ class HivePlotLayout:
                     else: # v liegt auf expandiertem teil
                         if isinstance(edge[1], int):
                             new_inter_edges.append((edge[0], -edge[1]))
-                            if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
                         else:
                             new_dummy = get_expanded_dummy(edge[1], node_groups_expanded)
                             # all_expanded = [n for nodes in node_groups_expanded.values() for n in nodes]
@@ -537,11 +524,6 @@ class HivePlotLayout:
                                 node_groups_expanded.setdefault(-axis_v, []).append(new_dummy)
                                 dummy_edges.append((edge[1], new_dummy)) # kante auf der achse von v zwischen dummies einfügen
                             new_inter_edges.append((edge[0], new_dummy))
-                            if edge[1] == new_dummy:
-                                print("created loop", edge)
-                                print("edge0 parsed", parse_dummy_name(edge[0]))
-                                print("edge1 parsed", parse_dummy_name(edge[1]))
-                                print("new_dummy", new_dummy)
                         before = len(self.dummy_edge_segments)
                         if edge in self.dummy_edge_segments:
                             self.dummy_edge_segments.remove(edge)

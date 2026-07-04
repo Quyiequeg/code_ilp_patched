@@ -447,14 +447,16 @@ def edge_node_cleanup(layout: HivePlotLayout, intra: bool = False):
     """
     from ordering import node_to_axis_maps
 
-    fused_edges = layout.fuse_edges_with_edge_dummies()
+    fused_edges = [edge for edge in layout.fuse_edges_with_edge_dummies() if edge[0] != edge[1]]
+    layout.graph.add_edges_from(fused_edges)
     layout.graph.add_edges_from(fused_edges)
     layout.graph.remove_edges_from(layout.long_edges)
     _, node_axis_map = node_to_axis_maps(layout, layout.fuse_node_groups_with_dummies())
-    if intra:
-        for edge in fused_edges:
-            if node_axis_map[edge[0]] == node_axis_map[edge[1]] and edge not in layout.intra_axis_edges:
-                layout.intra_axis_edges.append(edge)
+    # intra in der signatur entfernen
+    # if intra:
+    #     for edge in fused_edges:
+    #         if node_axis_map[edge[0]] == node_axis_map[edge[1]] and edge not in layout.intra_axis_edges:
+    #             layout.intra_axis_edges.append(edge)
 
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold: float = float("inf"), paper_like: bool = True) -> None:
     """Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).
@@ -508,8 +510,6 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
         fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
         layout.post_processing_expansion(node_axis_map)
-        loops = [e for e in layout.graph.edges() if e[0] == e[1]]
-        print("loops after post expansion", len(loops), loops[:20])
         layout_expanded = True
 
         fused_edge_list = layout.fuse_edges_with_edge_dummies()
