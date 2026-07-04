@@ -201,6 +201,15 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
 
             print("bad long/jump edges", len(bad_edges))
             print(bad_edges[:30])
+            for axis in hiveplot.node_groups_expanded:
+                nodes = hiveplot.node_groups_expanded[axis]
+                if len(nodes) != len(set(nodes)):
+                    print("Duplikate in expanded:", axis)
+
+            for axis in hiveplot.node_groups_dummies:
+                nodes = hiveplot.node_groups_dummies[axis]
+                if len(nodes) != len(set(nodes)):
+                    print("Duplikate in dummies:", axis)
             save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
@@ -227,7 +236,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             ip_model_pipeline(hiveplot, logger, threshold, paper_like)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             print(hiveplot.crossings_expanded)
-            # edge_node_cleanup(hiveplot)
+            edge_node_cleanup(hiveplot)
 
             axis_map = node_to_axis_maps(hiveplot, hiveplot.fuse_node_groups_with_dummies(layout_expanded=True))[1]
             bad_edges = []
@@ -259,10 +268,10 @@ def main():
         "year": 2017,
         "output_name": "",
         "logger": None,
-        # "variant": "Barycenterheuristik",
-        "variant": "1L2S-ILP",
-        "paper_like": True,
-        # "paper_like": False,
+        "variant": "Barycenterheuristik",
+        # "variant": "1L2S-ILP",
+        # "paper_like": True,
+        "paper_like": False,
         "partitions": 8,
         "threshold": 10,
         "save": False,

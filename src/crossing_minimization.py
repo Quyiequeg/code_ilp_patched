@@ -20,7 +20,7 @@
 # 3. gap handling
 # 5. Pipeline gesamt (nur diese wird ausgeführt und bündelt die einzelnen Bestandteile)
 # -> Parameter intuitiv: def barycenter_crossing_min(G, alpha, phi, pi, g=1, threshold=None) | RETURN: PI
-
+from hiveplot import HivePlotLayout
 from src import graphs
 from cost import node_or_axes_span
 import networkx as nx
@@ -452,11 +452,16 @@ def edge_node_cleanup(layout: HivePlotLayout, intra: bool = False):
     layout.graph.add_edges_from(fused_edges)
     layout.graph.remove_edges_from(layout.long_edges)
     _, node_axis_map = node_to_axis_maps(layout, layout.fuse_node_groups_with_dummies())
-    # intra in der signatur entfernen
-    # if intra:
-    #     for edge in fused_edges:
-    #         if node_axis_map[edge[0]] == node_axis_map[edge[1]] and edge not in layout.intra_axis_edges:
-    #             layout.intra_axis_edges.append(edge)
+    active_nodes = set()
+    for u, v in layout.edges():
+        active_nodes.add(u)
+        active_nodes.add(v)
+
+    for axis in list(layout.node_groups_dummies):
+        layout.node_groups_dummies[axis] = [
+            n for n in layout.node_groups_dummies[axis]
+            if n in active_nodes
+        ]
 
 def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger, threshold: float = float("inf"), paper_like: bool = True) -> None:
     """Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).
@@ -485,51 +490,138 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
     from ordering import node_to_axis_maps
     if paper_like:
         layout_expanded = False
+
         isolated_nodes = remove_isolated_nodes(layout.graph, layout.node_groups)
 
+        # ---------- Vorverarbeitung ----------
         node_position_map, node_axis_map = node_to_axis_maps(layout, layout.node_groups)
         neighborhood_map = layout.get_proper_neighborhood_map(layout.edges())
-        subdivide_long_edges(layout, node_position_map, node_axis_map, neighborhood_map)
+
+        subdivide_long_edges(
+            layout,
+            node_position_map,
+            node_axis_map,
+            neighborhood_map,
+        )
+
         fused_edge_list = layout.fuse_edges_with_edge_dummies()
-        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded = layout_expanded)
+        fused_node_list = layout.fuse_node_groups_with_dummies(
+            layout_expanded=layout_expanded,
+        )
+
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
         neighborhood_map = layout.get_proper_neighborhood_map(
             fused_edge_list,
-            layout_expanded,
+            layout_expanded=layout_expanded,
         )
+
         # ---------- Pipeline 3a ----------
-        ## barycenter_heuristic real = True
-        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, layout_expanded = layout_expanded) # nur real
-        ## barycenter_heuristic real = False
-        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, layout_expanded = layout_expanded)
-        
-        
-        # ---------- Vorbereitung Pipeline 3b ----------
-        layout.classify_nodes_for_3b()
-        layout.freeze_barycenter_positions()
-        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
-        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
-        layout.post_processing_expansion(node_axis_map)
-        layout_expanded = True
-
-        fused_edge_list = layout.fuse_edges_with_edge_dummies()
-        fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
-
-        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
-        neighborhood_map = layout.get_proper_neighborhood_map(
-            fused_edge_list,
-            layout_expanded = layout_expanded,
+        barycenter_heuristic(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            real=True,
+            layout_expanded=layout_expanded,
         )
-        # ---------- Pipeline 3b ----------
-        ## barycenter_heuristic real = True
-        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=True, layout_expanded = layout_expanded, use_fixed_positions=True) # nur real
-        ## barycenter_heuristic real = False
-        barycenter_heuristic(layout, neighborhood_map, node_axis_map, threshold=threshold, real=False, layout_expanded = layout_expanded, use_fixed_positions=False)
+
+        barycenter_heuristic(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            real=False,
+            layout_expanded=layout_expanded,
+        )
+
         finish_structured_axis_orders(
             layout,
             isolated_nodes,
-            layout_expanded = layout_expanded,
+            layout_expanded=layout_expanded,
         )
+
+        # ---------- Vorbereitung Pipeline 3b ----------
+        layout.classify_nodes_for_3b()
+        layout.freeze_barycenter_positions(layout_expanded=False)
+
+        fused_node_list = layout.fuse_node_groups_with_dummies(
+            layout_expanded=layout_expanded,
+        )
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+
+        layout.post_processing_expansion(node_axis_map)
+        layout_expanded = True
+
+        # WICHTIG: nach Expansion alle konkreten Achsenordnungen fixieren
+        layout.freeze_barycenter_positions(layout_expanded=True)
+
+        fused_edge_list = layout.fuse_edges_with_edge_dummies()
+        fused_node_list = layout.fuse_node_groups_with_dummies(
+            layout_expanded=layout_expanded,
+        )
+
+        node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
+        neighborhood_map = layout.get_proper_neighborhood_map(
+            fused_edge_list,
+            layout_expanded=layout_expanded,
+        )
+
+        # ---------- Pipeline 3b ----------
+        barycenter_heuristic(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            real=True,
+            layout_expanded=layout_expanded,
+            use_fixed_positions=True,
+        )
+
+        barycenter_heuristic(
+            layout,
+            neighborhood_map,
+            node_axis_map,
+            threshold=threshold,
+            real=False,
+            layout_expanded=layout_expanded,
+            use_fixed_positions=True,
+        )
+
+        finish_structured_axis_orders(
+            layout,
+            isolated_nodes,
+            layout_expanded=layout_expanded,
+        )
+        print("\n===== AXIS SUMMARY =====")
+
+        node_groups = (
+            layout.node_groups_expanded
+            if layout_expanded
+            else layout.node_groups
+        )
+
+        for axis in sorted(node_groups.keys(), key=lambda a: (abs(a), a < 0)):
+            real = sum(isinstance(n, int) for n in node_groups[axis])
+            dummy = sum(isinstance(n, str) for n in node_groups[axis])
+
+            print(
+                f"Axis {axis:>3}: "
+                f"{len(node_groups[axis]):>3} nodes "
+                f"(real={real}, dummy={dummy})"
+            )
+
+        print("\n===== DUMMY GROUPS =====")
+
+        for axis in sorted(layout.node_groups_dummies.keys(), key=lambda a: (abs(a), a < 0)):
+            print(
+                f"Axis {axis:>3}: "
+                f"{len(layout.node_groups_dummies[axis]):>3} dummies"
+            )
+        fused = layout.fuse_node_groups_with_dummies(layout_expanded=True)
+
+        print("\n===== FUSED =====")
+        for axis in sorted(fused.keys(), key=lambda a: (abs(a), a < 0)):
+            print(axis, len(fused[axis]))
     else:
         # 1. Originalzustand
         layout_expanded = False

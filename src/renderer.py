@@ -5,7 +5,7 @@ import generator as gr
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
 import statistics
-
+from hiveplot import HivePlotLayout
 WIDTH = 1000
 HEIGHT = 1000
 CENTER_X = WIDTH / 2   # Koordinatenursprung horizontal
@@ -198,6 +198,8 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree
         node_groups = layout.node_groups_expanded
     else:
         node_groups = layout.node_groups
+    for axis in node_groups: # check: duplikate entfernen, falls vorhanden
+        node_groups[axis] = list(dict.fromkeys(node_groups[axis]))
     elements = ["<rect width='100%' height='100%' fill='white'/>"] # weißer hintergrund
     # elements = [] # kein hintergrund
     if intra:
