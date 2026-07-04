@@ -9,6 +9,7 @@ from logger_setup import log
 from hiveplot import HivePlotLayout
 
 def get_delta_value(delta, fixed_delta, u, v, axis):
+    """X"""
     key = (u, v, axis)
 
     if key in fixed_delta:
@@ -104,6 +105,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
         return new_node_groups, new_dummy_groups
 
     def safe_name(*parts):
+        # ><
         return "_".join(str(p).replace("-", "m") for p in parts)
     
     fused_groups =  layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
@@ -204,8 +206,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
             prob.solve(pp.PULP_CBC_CMD(msg=False))
-            if threshold_break == threshold - 1:
-                layout.crossings = pp.value(prob.objective)
+
             # schreibe problem um nach delta
             for key in delta:
                 if key[2] == axis and isinstance(delta_static[key], pp.LpVariable):
@@ -347,12 +348,12 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
         return new_node_groups, new_dummy_groups
     
     def mirror_node(node):
+        """?"""
         if isinstance(node, int):
             return -node
         u, v, seq = cm.parse_dummy_name(node)
         return f"d_{u}_{v}_{-seq}"
     
-    # node_groups = layout.node_groups
     fused_groups =  layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
     phi = layout.axis_order
     reversed_phi = list(reversed(phi))
@@ -367,7 +368,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
         fixed_delta = {}
     while threshold_break < threshold:
         threshold_break += 1
-        for axis in phi:
+        for axis in phi: # expandierte achsen nicht behandeln = paper_like = gleiche ordnung
             if paper_like and axis < 0:
                 continue
             # probleminstanz
@@ -407,7 +408,6 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                 mirror_axis,
                 mirror_axis,
             )
-            # prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             prob += induced_crossings(
                 prob,
                 delta_static,
@@ -418,24 +418,12 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                 pi_var,
             ), "1L2S-Kreuzungsminimierung"
             
-            # print(f"Zielfunktion: {prob.objective}")
-            # print(f"Nachbarn Beispiel: {sorted_neighbors}")
             # nebenbedingungen
             for i in range(len(pi_var)): 
                 for j in range(i+1, len(pi_var)):
                     u, v = pi_var[i], pi_var[j]
-                    dups = [x for x in pi_var if pi_var.count(x) > 1]
-                    if dups:
-                        print("duplicates", axis, sorted(set(dups), key=str)[:20])
-                        raise RuntimeError("duplicate pi_var")
                     uv = get_delta_value(delta_static, fixed_delta, u, v, axis)
                     vu = get_delta_value(delta_static, fixed_delta, v, u, axis)
-                    if isinstance(uv, (int, float)) and isinstance(vu, (int, float)) and uv + vu != 1:
-                        print("bad totalorder", axis, u, v, uv, vu)
-                        print("u axis", node_axis_map.get(u), "v axis", node_axis_map.get(v))
-                        print("fixed uv", fixed_delta.get((u, v, axis)))
-                        print("fixed vu", fixed_delta.get((v, u, axis)))
-                        raise RuntimeError("bad totalorder")
                     prob += uv + vu == 1 # vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v
             
             for i in range(len(pi_var)):
@@ -450,14 +438,9 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
-            # prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
-            # prob.solve(pp.PULP_CBC_CMD(msg = True, timeLimit=30))
-            prob.solve(pp.PULP_CBC_CMD(msg = False))#
-            if threshold_break == threshold - 1:
-                print("solver status", pp.LpStatus[prob.status])
-                print("objective", pp.value(prob.objective))
+            prob.solve(pp.PULP_CBC_CMD(msg = False))
+
             # schreibe problem um nach delta
-            # print(f"Achse {axis}: pi_var={pi_var}, variables={[k for k in delta_static if isinstance(delta_static[k], pp.LpVariable)]}")
             for key in delta:
                 if key[2] != axis:
                     continue
@@ -481,7 +464,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     if val is not None:
                         delta[key] = int(val)
         for axis in reversed_phi:
-            for axis in phi:
+            for axis in phi: # expandierte achsen nicht behandeln = paper_like = gleiche ordnung
                 if paper_like and axis < 0:
                     continue
 
@@ -510,7 +493,6 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                 continue
             mirror_axis = -axis
             
-            # sorted_neighbors = sorted_neighbor_map(neighborhood_map, node_axis_map, pi_var, pi_plus_axis, pi_minus_axis)
             sorted_neighbors = sorted_neighbor_map_3b(
                 neighborhood_map,
                 node_axis_map,
@@ -518,7 +500,6 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                 mirror_axis,
                 mirror_axis,
             )
-            # prob += (induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_minus_axis, axis, pi_var) + induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_plus_axis, axis, pi_var)), "1L2S-Kreuzungsminimierung"
             prob += induced_crossings(
                 prob,
                 delta_static,
@@ -548,12 +529,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
             
             # lösen
             # prob.solve(pp.PULP_CBC_CMD(msg=True))
-            # prob.solve(pp.PULP_CBC_CMD(msg=False, timeLimit=30))
-            # prob.solve(pp.PULP_CBC_CMD(msg = False, timeLimit=30))
             prob.solve(pp.PULP_CBC_CMD(msg = False))
-            if threshold_break == threshold - 1:
-                print("solver status", pp.LpStatus[prob.status])
-                print("objective", pp.value(prob.objective))
 
             # schreibe problem um nach delta
             for key in delta:
@@ -594,6 +570,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
         fused_groups = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded) # variable achse muss auf geupdatetem stand ermittelt werden
 
 def induced_crossings(prob, delta_static, fixed_delta, sorted_neighbors, pi_fix, pi_var_id, pi_var):
+    """X"""
     terms = []
     for i in range(len(pi_var)):
         for j in range(i + 1, len(pi_var)):

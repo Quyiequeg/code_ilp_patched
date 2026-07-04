@@ -49,27 +49,8 @@ def cost_function_whole(ordering: list[int], node_grps: dict, edges: list) -> in
     cost = 0
     for i in range(k):
         for j in range(i + 1, k):
-            # print(f"{ordering[i]} -> {ordering[j]}") # debuggingdd
-            # print(f"{edges_between_axes(node_grps, edges, ordering[i], ordering[j])* node_or_axes_span(i, j, k)}") # debugging
             cost += (edges_between_axes(node_grps, edges, ordering[i], ordering[j]) * node_or_axes_span(i, j, k))
     return cost
 
 if __name__ == "__main__":
-    # Aufbau der Testdaten
-    from graphs import sample_graph_multipartite
-    from ordering import native_order, node_groups
-    G = sample_graph_multipartite()
-    nodes = list(G.nodes(data="subset"))
-    edges = list(G.edges())
-    phi_default = native_order(nodes)
-    phi_reordered = [2, 0, 1, 4]
-    node_grps = node_groups(nodes)
-    print("##########################################")
-    print("node_grps:", node_grps)
-    print("##########################################")
-    print("phi generisch:", phi_default)
-    print("Cost (default):", cost_function_whole(phi_default, node_grps, edges))
-    print("##########################################")
-    print("phi umsortiert:", phi_reordered)
-    print("Cost (reordered):", cost_function_whole(phi_reordered, node_grps, edges))
-    print("##########################################")
+ pass

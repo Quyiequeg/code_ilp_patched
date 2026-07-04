@@ -216,6 +216,6 @@ if __name__ == "__main__":
     data = DataCollector()
     # data.delete("Laufzeiten und Kreuzungszahlen für tau = 4")
     # print(data.get_data_set("Laufzeiten und Kreuzungszahlen für tau = 8, GD2000"))
-    data.get_data_set("Laufzeitenvergleich Bary/ILP")
+    print(data.data_keys())
     # data.delete("Laufzeitenvergleich Bary/ILP")
     # data.get_data_set("GDJahre_gesamt_knoten_kanten_native")

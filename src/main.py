@@ -98,6 +98,7 @@ def init_original(year: int, own_pkl: str | None = None) -> nx.Graph:
             return graphs[year] # eintrag
 
 def init_graph(original: nx.Graph, name_to_id: dict[str, int]): # transformieren
+    """?"""
     output_graph = nx.Graph()
     original_edges = original.edges()
     edges = []
@@ -107,33 +108,27 @@ def init_graph(original: nx.Graph, name_to_id: dict[str, int]): # transformieren
     return output_graph
 
 def init_hiveplot(year, own_pkl, partitions, logger) -> HivePlotLayout:
-    start = time.time()
+    """?"""
     original = init_original(year=year, own_pkl=own_pkl)
     hpl_basis = {}
     hpl_basis["id_to_name"], hpl_basis["name_to_id"] = build_node_identity_maps(original.nodes())
     hpl_basis["graph"] = init_graph(original, hpl_basis["name_to_id"])
     hpl_basis["node_groups"] = clauset_newman_moore_communities(hpl_basis["graph"], partitions)
-    elapsed = time.time() - start
-    # log(logger, f"Schritt 1/6 erfolgreich: Pipelineschritt 1 - Partitionierung - abgeschlossen nach {elapsed:.10f}s.")
     hpl_basis["axis_order"] = list(hpl_basis["node_groups"].keys())
     hpl_basis["num_axes"] = len(hpl_basis["axis_order"])
     hiveplot = HivePlotLayout(**hpl_basis)
-    # log(logger, "Schritt 2/6 erfolgreich: HivePlotLayout zum Start der Pipeline erstellt.")
     return hiveplot
 
 def step_ordering(hiveplot: HivePlotLayout, logger: logging.Logger | None ) -> None:
     hiveplot.axis_order = ip_ordering(hiveplot)
     hiveplot.node_groups = reordered_node_groups(hiveplot.node_groups, hiveplot.axis_order)
-    # log(logger, "Schritt 3/6 erfolgreich: Pipelineschritt 2 - Optimierung der Achsenordnung - abgeschlossen.")
 
-def save_pkl(hiveplot: HivePlotLayout, name: str, save: bool ,logger: logging.Logger | None) -> None:
+def save_pkl(hiveplot: HivePlotLayout, name: str, save: bool , logger: logging.Logger | None) -> None:
     if save:
         path = SAVE_DIR / (name + ".pkl")
         with open(path, "wb") as file:
             pickle.dump(hiveplot, file) # dict
         log(logger, f"Hiveplotlayout gespeichert: {path}")
-    # else:
-    #     log(logger, "Speichern deaktiviert!")
 
 def save_rendered_hiveplot(svg_path: Path, year: int, logger: logging.Logger) -> None:
         year_dir = GRAPH_DIR / str(year)
@@ -141,16 +136,14 @@ def save_rendered_hiveplot(svg_path: Path, year: int, logger: logging.Logger) ->
         drawing = svg2rlg(svg_path)
         pdf_path = year_dir / svg_path.with_suffix(".pdf").name # verzeichnis ändern
         renderPDF.drawToFile(drawing, str(pdf_path))
-        # log(logger, f"PDF erfolgreich gespeichert: {pdf_path}")
 
 def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | None, variant: str, paper_like: bool, partitions: int = 8, threshold: int = 5, save: bool = False, debug: bool = False, batch: bool = False, own_pkl: str | None = None, gui: bool = False):
+    """X"""
     print("Berechnung Start.")
     collector = DataCollector()
     collected_data = {}
     start_begin = time.time()
     # graph erzeugen und partitionieren
-    # log(logger, f"Starte Berechnung für {variant} für das Jahr {year}. Ordnung nach Original: {paper_like}.")
-    
     hiveplot = init_hiveplot(year, own_pkl, partitions, logger)
     if variant == "Barycenterheuristik":
         collected_data["init_hiveplot Bary t"] = time.time() - start_begin
@@ -171,65 +164,19 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
         if paper_like: # originalframework
             barycenter_crossmin_pipeline(hiveplot, logger, paper_like)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
-            print("loops before cleanup", len([e for e in hiveplot.edges() if e[0] == e[1]]))
             edge_node_cleanup(hiveplot)
-            print("loops after cleanup", len([e for e in hiveplot.edges() if e[0] == e[1]]))
             print(hiveplot.crossings_expanded)
-            loops = [e for e in hiveplot.edges() if e[0] == e[1]]
-
-            dummy_loops = [
-                e for e in hiveplot.edges()
-                if e[0] == e[1] and isinstance(e[0], str)
-            ]
-
-            missing_dummy_edges = [
-                e for e in hiveplot.dummy_edge_segments
-                if not hiveplot.graph.has_edge(*e)
-            ]
-
-            print("loops", len(loops), loops[:20])
-            print("dummy loops", len(dummy_loops), dummy_loops[:20])
-            print("missing dummy edges", len(missing_dummy_edges), missing_dummy_edges[:20])
             axis_map = node_to_axis_maps(hiveplot, hiveplot.fuse_node_groups_with_dummies(layout_expanded=True))[1]
-
-            bad_edges = []
-            for u, v in hiveplot.edges():
-                au, av = axis_map.get(u), axis_map.get(v)
-                if au is not None and av is not None:
-                    if abs(hiveplot.axis_order.index(au) - hiveplot.axis_order.index(av)) > 1:
-                        bad_edges.append((u, v, au, av))
-
-            print("bad long/jump edges", len(bad_edges))
-            print(bad_edges[:30])
-            for axis in hiveplot.node_groups_expanded:
-                nodes = hiveplot.node_groups_expanded[axis]
-                if len(nodes) != len(set(nodes)):
-                    print("Duplikate in expanded:", axis)
-
-            for axis in hiveplot.node_groups_dummies:
-                nodes = hiveplot.node_groups_dummies[axis]
-                if len(nodes) != len(set(nodes)):
-                    print("Duplikate in dummies:", axis)
-            save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
+            save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+            svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
         else:
             barycenter_crossmin_pipeline(hiveplot, logger, paper_like=False)
             edge_node_cleanup(hiveplot)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
-            # axis_map = node_to_axis_maps(hiveplot, hiveplot.fuse_node_groups_with_dummies(layout_expanded=True))[1]
-
-            # bad_edges = []
-            # for u, v in hiveplot.edges():
-            #     au, av = axis_map.get(u), axis_map.get(v)
-            #     if au is not None and av is not None:
-            #         if abs(hiveplot.axis_order.index(au) - hiveplot.axis_order.index(av)) > 1:
-            #             bad_edges.append((u, v, au, av))
-
-            # print("bad long/jump edges", len(bad_edges))
-            # print(bad_edges[:30])
-            save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_ungeordnet_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_ungeordnet_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
+            print(hiveplot.crossings_expanded)
+            save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+            svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
     else:
         if paper_like: # originalframework
@@ -237,28 +184,16 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             print(hiveplot.crossings_expanded)
             edge_node_cleanup(hiveplot)
-
-            axis_map = node_to_axis_maps(hiveplot, hiveplot.fuse_node_groups_with_dummies(layout_expanded=True))[1]
-            bad_edges = []
-            for u, v in hiveplot.edges():
-                au, av = axis_map.get(u), axis_map.get(v)
-                if au is not None and av is not None:
-                    if abs(hiveplot.axis_order.index(au) - hiveplot.axis_order.index(av)) > 1:
-                        bad_edges.append((u, v, au, av))
-
-            print("bad long/jump edges", len(bad_edges))
-            for e in bad_edges[:30]:
-                u, v, au, av = e
-                print(e, type(u), type(v))
-            save_pkl(hiveplot, f"{variant}_{year}_vor_expansion_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_vor_expansion_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
+            save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+            svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
         else:
             ip_model_pipeline(hiveplot, logger, threshold, paper_like=False)
             edge_node_cleanup(hiveplot)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
-            save_pkl(hiveplot, f"{variant}_{year}_nach_expansion_ungeordnet_P({partitions})", save, logger) # snapshot
-            svg_path = hiveplot_renderer(f"{variant}_{year}_nach_expansion_ungeordnet_P({partitions})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
+            print(hiveplot.crossings_expanded)
+            save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+            svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
     print("Berechnung Ende.")
 

@@ -101,11 +101,9 @@ def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> t
     optimal_perm = None # init
     for perm in permutations_ordering:
         cost = cost_function_whole(perm, node_grps, edges)
-        # print(f"Permutation: {perm}, Kosten: {cost}") # debugging
         if cost < minimized_cost:
             minimized_cost = cost
             optimal_perm = perm
-    # print(f"Optimale Permutation: {optimal_perm}, Minimierte Kosten: {minimized_cost}") # debugging
     return optimal_perm
 
 def reordered_node_groups(node_grps: dict[int, list[int]], new_order: tuple[int, ...]) -> dict[int, list[int]]: # ermöglicht schnelles umordnen nach optimierung der achsenordnung
@@ -185,46 +183,4 @@ def ip_ordering(layout: HivePlotLayout) -> list[int]:
         new_axis_order.append(assignment[j])
     return new_axis_order
 if __name__ == "__main__":
-    # Aufbau der Testdaten
-    from graphs import sample_graph_multipartite, sample_graph_caveman, sample_graph_selfconstructed
-    from partitioning import clauset_newman_moore_communities, louvain_community_detection
-    G = sample_graph_multipartite()
-    CG = sample_graph_caveman(4, 10)
-    SC = sample_graph_selfconstructed()
-    pipeline_test = 1
-    if pipeline_test == 1:
-        edges = list(SC.edges())
-        nodes = list(SC.nodes(data="subset"))
-        axes = native_order(nodes)
-        grps = node_groups(nodes)
-        phi = brute_force_ordering(axes, grps, edges)
-        node_grps = reordered_node_groups(grps, phi)
-        print("##########################################")
-        print(">>>> Pipeline Test")
-        print("nodes:", nodes)
-        print("phi:", phi)
-        print("node_grps:", node_grps)
-        print("##########################################")
-        print(brute_force_ordering(phi, node_grps, edges))
-        print("##########################################")        
-        # edges = list(SC.edges())
-        # comm_graph_cnm = clauset_newman_moore_communities(SC)
-        # first_phi = []
-        # for i in range(len(comm_graph_cnm)):
-        #     first_phi.append(i)
-        # print(first_phi)
-        # # comm_graph_louvain = louvain_community_detection(CG)
-        # print(brute_force_ordering(first_phi, comm_graph_cnm, edges))
-        # # print("Communities (Louvain):", comm_graph_louvain)     
-        # print("##########################################")
-
-    else:
-        nodes = list(G.nodes(data="subset"))
-        edges = list(G.edges())
-        phi = native_order(nodes)
-        node_grps = node_groups(nodes)
-        print("##########################################")
-        print("nodes:", nodes)
-        print("phi:", phi)
-        print("node_grps:", node_grps)
-        print("##########################################")
+    pass

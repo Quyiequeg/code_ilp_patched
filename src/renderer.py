@@ -22,7 +22,7 @@ def translate_polar_to_carthesian(radius: float, angle: float, center_x: float =
     return x, y
 
 def draw_basis(layout, node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], degree: bool = False, id_to_label_map: dict[int, str] | None = None, unordered: bool = False, intra_edges: list[tuple[int | str, int | str]] | None = None, axes_labels: bool = True) -> tuple[list[str], list[str], list[str], list[str]]:
-
+    """X/?"""
     def shorten_label(name: str) -> str:
         import re
         name = re.sub(r'\s*\d+', '', name).strip()

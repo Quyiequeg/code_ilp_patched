@@ -188,12 +188,10 @@ class HivePlotLayout:
         inter_expandables = {}
         node_groups_expanded = self.node_groups_expanded
         node_groups = self.node_groups
-        # print(f"edge axis:{edge_axis_map}")
         for edge in edge_axis_map: # key = knotenpaar, filter nach intra axis kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
                  intra_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
-        # print(f"Expandable axes:{intra_expandables}")
         for edge in edge_axis_map: # erst möglich nach dem filtern der einen intra kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
@@ -202,20 +200,17 @@ class HivePlotLayout:
                 inter_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
             elif edge_positions[1] in intra_expandables:
                 inter_expandables.setdefault(edge_positions[1], []).append(edge) # check ob key vorhandenen + append
-        # print(f"Inter-expandables:{inter_expandables}")
         for key in node_groups:
             if key not in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy()
             elif key in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy() # pi^- links
                 node_groups_expanded[-key] = [-node for node in node_groups[key]] # pi^- rechts
-        # print(f"node_groups_expanded:{node_groups_expanded}")
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
             axis_position_map[axis] = i
-        # print(f"axis_position_map:{axis_position_map}")
         # die mit expandierten achsen verbundenen kanten aus dem hiveplotlayout entfernen und in korrektem format wieder hineinschreiben
         for axis in intra_expandables:
             self.graph.remove_edges_from(intra_expandables[axis])
@@ -238,30 +233,18 @@ class HivePlotLayout:
                 if axis_u in intra_expandables and axis_v in intra_expandables: # ziel- und startachse expandiert
                     if dist_left_u_v <= dist_left_v_u: # v -> u + bei gleichstand immer links
                         new_inter_edges.append((edge[0], -edge[1]))
-                        if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
                     elif dist_left_v_u < dist_left_u_v: # u auf expandierter achse und u -> v
                         new_inter_edges.append((-edge[0], edge[1]))
-                        if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
                 elif axis_u == axis:
                     if dist_left_u_v <= dist_left_v_u: # u auf expandierter achse und v -> u + bei gleichstand immer links
                         new_inter_edges.append((edge[0], edge[1]))
-                        if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
                     elif dist_left_v_u < dist_left_u_v: # u auf expandierter achse und u -> v
                         new_inter_edges.append((-edge[0], edge[1]))
-                        if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
                 elif axis_v == axis:
                     if dist_left_v_u <= dist_left_u_v: # v auf expandierter achse und u -> v
                         new_inter_edges.append((edge[0], edge[1]))
-                        if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
                     elif dist_left_u_v < dist_left_v_u: # v auf expandierter achse und v -> u
                         new_inter_edges.append((edge[0], -edge[1]))
-                        if new_inter_edges and new_inter_edges[-1][0] == new_inter_edges[-1][1]:
-                                print("created loop", edge, "->", new_inter_edges[-1])
             self.graph.add_edges_from(new_inter_edges)
         # self.graph neue knoten auf expandierten achsen wieder einem neuen subset zuordnen
         for axis, nodes in self.node_groups_expanded.items():
@@ -406,7 +389,7 @@ class HivePlotLayout:
             if mirrored not in self.graph:
                 self.graph.add_node(mirrored)
 
-            # WICHTIG: interne Verbindung zwischen Dummy und Dummy-Kopie
+            # interne verbindung zwischen dummy und dummy spiegel
             if not self.graph.has_edge(node, mirrored):
                 self.graph.add_edge(node, mirrored)
 
@@ -486,299 +469,11 @@ class HivePlotLayout:
                 if node not in self.graph.nodes:
                     self.graph.add_node(node)
                 self.graph.nodes[node]["subset"] = axis
-        # from crossing_minimization import parse_dummy_name
-        # from ordering import node_to_axis_maps
-        
-        # def next_dummy_sequence(u, v, node_groups):
-        #     """Zählt die Dummysegmente und gibt Anzahl+1 zurück."""
-        #     max_sequence = 0
-        #     for nodes in node_groups.values():
-        #         for node in nodes:
-        #             if isinstance(node, str):
-        #                 parts = node.split('_')
-        #                 if len(parts) == 4 and parts[1] == str(u) and parts[2] == str(v):
-        #                     seq = int(parts[3])
-        #                     if seq > 0: 
-        #                         max_sequence = max(max_sequence, seq)
-        #     return max_sequence + 1
-        
-        # def get_expanded_dummy(dummy, node_groups_expanded):
-        #     dummy_parsed = parse_dummy_name(dummy)
-        #     u, v = dummy_parsed[0], dummy_parsed[1]
-            
-        #     # Zuerst prüfen ob Spiegel (-1) bereits existiert
-        #     mirror_name = f"d_{u}_{v}_{-dummy_parsed[2]}"
-        #     all_expanded = [n for nodes in node_groups_expanded.values() for n in nodes]
-        #     if mirror_name in all_expanded:
-        #         return mirror_name  # ← NEU: Spiegel zurückgeben statt neuen erzeugen
-            
-        #     # Fallback: neuen Dummy mit nächster Sequenz erzeugen (alter Code)
-        #     # for nodes in node_groups_expanded.values():
-        #     #     for node in nodes:
-        #     #         if isinstance(node, str):
-        #     #             parts = node.split('_')
-        #     #             if len(parts) == 4 and parts[1] == str(u) and parts[2] == str(v) and int(parts[3]) == dummy_parsed[2] + 1:
-        #     #                 return node
-        #     new_sequence = next_dummy_sequence(u, v, node_groups_expanded)
-        #     return f"d_{u}_{v}_{new_sequence}"
-    
-        # def get_edge_axes(edge):
-        #     """Funktion gibt robust die Achsen für die Kante zurück, kann also auf neuen und alten Kanten aufgerufen werden."""
-        #     if edge in edge_axis_map:
-        #         return edge_axis_map[edge] # nur positive knoten, war vor expansion im hiveplot 
-        #     else:
-        #         return (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) # falls neue kante
-
-
-        # if dummy_copy is None:
-        #     dummy_edges = self.dummy_edge_segments
-        # else:
-        #     dummy_edges = dummy_copy
-        # edge_axis_map = {edge: (node_axis_map[edge[0]], node_axis_map[edge[1]]) for edge in self.edges()}
-        # intra_expandables = {}
-        # inter_expandables = {}
-        # node_groups_expanded = self.node_groups_expanded
-        # node_groups = self.node_groups
-        # # nach inter/intra filtern
-        # for edge in edge_axis_map: # zu expandierende intra kanten filtern
-        #     edge_positions = edge_axis_map[edge]
-        #     if edge_positions[0] == edge_positions[1]:
-        #         intra_expandables.setdefault(edge_positions[0], []).append(edge) # originale achsen ids
-        # for edge in self.intra_axis_edges:
-        #     axis_u = node_axis_map[edge[0]]
-        #     axis_v = node_axis_map[edge[1]]
-        #     if axis_u == axis_v:
-        #         intra_expandables.setdefault(axis_u, []).append(edge)
-        # for edge in edge_axis_map: # zu expandierende inter kanten filtern
-        #     edge_positions = edge_axis_map[edge]
-        #     if edge_positions[0] == edge_positions[1]: # intra
-        #         pass
-        #     elif edge_positions[0] in intra_expandables: # knoten u intra v benachbart
-        #         inter_expandables.setdefault(edge_positions[0], []).append(edge)
-        #     elif edge_positions[1] in intra_expandables: # knoten v intra w benachbart
-        #         inter_expandables.setdefault(edge_positions[1], []).append(edge)
-        # # intra achsen expandieren
-        # for axis in node_groups:
-        #     if axis not in intra_expandables: # achse muss nicht expandiert werden da 0 intra kante
-        #         node_groups_expanded[axis] = node_groups[axis].copy()
-        #     else: # kante muss expandiert werden da >= 1 intra kante
-        #         node_groups_expanded[axis] = node_groups[axis].copy()
-        #         node_groups_expanded[-axis] = []
-        #         for node in node_groups[axis]:
-        #             if isinstance(node, int): # real -> negativ kopieren
-        #                 node_groups_expanded[-axis].append(-node)
-        #             elif isinstance(node, str):
-        #                 dummy_node = parse_dummy_name(node)
-        #                 u, v = dummy_node[0], dummy_node[1]
-        #                 new_dummy = f"d_{u}_{v}_{-dummy_node[2]}" # sequenznummer spiegeln
-        #                 if new_dummy not in self.graph:     
-        #                     self.graph.add_node(new_dummy)
-        #                 node_groups_expanded[-axis].append(new_dummy) # indent ->
-        #                 self.graph.add_edge(node, new_dummy)
-        #                 dummy_edges.append((node, new_dummy))
-        # self.axis_order = list(node_groups_expanded.keys()) # hpl update phi
-        # self.num_axes = len(self.axis_order) 
-        
-        # node_groups_for_axis_map = {}
-        # for axis, nodes in node_groups_expanded.items():
-        #     node_groups_for_axis_map[axis] = list(nodes)
-        # for axis, dummies in self.node_groups_dummies.items(): # dummies nur temporär auslesen 
-        #     node_groups_for_axis_map.setdefault(axis, [])
-        #     for dummy in dummies:
-        #         if dummy not in node_groups_for_axis_map[axis]:
-        #             node_groups_for_axis_map[axis].append(dummy)
-        
-        # _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_for_axis_map) # snapshot nach expansion zusätzlich mit negativen knoten
-        # def mirror_endpoint(node):
-        #     if isinstance(node, int):
-        #         return -node
-
-        #     u, v, seq = parse_dummy_name(node)
-        #     mirrored = f"d_{u}_{v}_{-seq}"
-
-        #     axis = node_to_axis_map_updated[node]
-        #     mirror_axis = -axis
-
-        #     self.node_groups_dummies.setdefault(mirror_axis, [])
-        #     if mirrored not in self.node_groups_dummies[mirror_axis]:
-        #         self.node_groups_dummies[mirror_axis].append(mirrored)
-
-        #     node_to_axis_map_updated[mirrored] = mirror_axis
-        #     node_groups_for_axis_map.setdefault(mirror_axis, [])
-        #     if mirrored not in node_groups_for_axis_map[mirror_axis]:
-        #         node_groups_for_axis_map[mirror_axis].append(mirrored)
-
-        #     return mirrored
-        
-        # # _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_expanded) 
-        # edge_axis_map = {edge: (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) for edge in self.edges()} # enthält nur achsen mit positiven ids
-        # axis_position_map = {}
-        # for i, axis in enumerate(self.axis_order): # id: position
-        #     axis_position_map[axis] = i
-        # for axis in intra_expandables:# intra kanten erzeugen
-        #     self.graph.remove_edges_from(intra_expandables[axis])
-        #     new_intra_edges = []
-        #     for edge in intra_expandables[axis]: # symmetrische kanten erzeugen
-        #         new_intra_edges.append((-edge[0], edge[1]))
-        #         new_intra_edges.append((edge[0], -edge[1]))
-        #     self.graph.add_edges_from(new_intra_edges)
-        # for axis in inter_expandables: # fallprüfung und entfernen/einpflegen der zu expandierenden kanten (vorher/nachher)
-        #     self.graph.remove_edges_from(inter_expandables[axis]) # zu expandierende real inter knoten aus hpl.graph löschen, die expandiert werden müssen
-        #     new_inter_edges = []
-        #     for edge in inter_expandables[axis]:
-        #         if edge in self.dummy_edge_segments:
-        #             self.dummy_edge_segments.remove(edge) # veraltete dummykanten löschen, die expandiert werden müssen
-        #     for edge in inter_expandables[axis]:
-        #         axis_u, axis_v = get_edge_axes(edge)
-        #         if edge in {
-        #             ("d_1_9_1", -9),
-        #             ("d_2_9_1", -9),
-        #             ("d_3_9_1", -9),
-        #             ("d_9_6_1", -9),
-        #             ("d_9_6_1", "d_9_6_2"),
-        #         } or (edge[1], edge[0]) in {
-        #             ("d_1_9_1", -9),
-        #             ("d_2_9_1", -9),
-        #             ("d_3_9_1", -9),
-        #             ("d_9_6_1", -9),
-        #             ("d_9_6_1", "d_9_6_2"),
-        #         }:
-        #             print("DEBUG EDGE", edge)
-        #             print("axis", axis, "axis_u/v", axis_u, axis_v)
-        #             print("pos_u/v", axis_position_map[axis_u], axis_position_map[axis_v])
-        #             print("dist u->v / v->u", (axis_position_map[axis_u] - axis_position_map[axis_v]) % self.num_axes, (axis_position_map[axis_v] - axis_position_map[axis_u]) % self.num_axes)
-        #         pos_u = axis_position_map[axis_u] # achsenposion u
-        #         pos_v = axis_position_map[axis_v] # achsenposion v
-        #         k = self.num_axes
-        #         dist_left_u_v = (pos_u - pos_v) % k
-        #         dist_left_v_u = (pos_v - pos_u) % k
-        #         if axis_u in intra_expandables and axis_v in intra_expandables: # sonderfall u und v auf expandierten achsen
-        #             if dist_left_u_v <= dist_left_v_u: # u auf linkem teil einer expandierten achse, v auf rechtem teil einer expandierten achse -> v muss aktualisiert werden
-        #                 if isinstance(edge[1], int):
-        #                     new_inter_edges.append((mirror_endpoint(edge[0]), mirror_endpoint(edge[1])))
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 else:
-        #                     new_dummy = get_expanded_dummy(edge[1], node_groups_expanded) # gespiegelten dummy von v auf rechter achsenkopie ermitteln
-        #                     # all_expanded = [node for nodes in node_groups_expanded.values() for node in nodes]
-        #                     all_expanded = []
-        #                     for node_group in node_groups_expanded.values(): # pi_i
-        #                         for node in node_group:
-        #                             all_expanded.append(node)
-        #                     if new_dummy not in all_expanded: # falls dummy noch nicht vorhanden
-        #                         node_groups_expanded.setdefault(-axis_v, []).append(new_dummy)
-        #                         dummy_edges.append((edge[1], new_dummy)) # erzeugt eine kante zwischen dummyknoten auf einer zuvor expandierten achse
-        #                     new_inter_edges.append((edge[0], new_dummy)) # erzeugt eine kante von u zu v, wobei v auf dem rechten teil einer expandierten achse liegt
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 if edge in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove(edge)
-        #                     # self.graph.remove_edge(*edge)
-        #                 elif (edge[1], edge[0]) in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove((edge[1], edge[0]))
-        #                     # self.graph.remove_edge(*edge)
-        #             else: # v auf linkem teil einer expandierten achse, u auf rechtem teil einer expandierten achse 
-        #                 if isinstance(edge[0], int):
-        #                     new_inter_edges.append((mirror_endpoint(edge[0]), mirror_endpoint(edge[1])))
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 else:
-        #                     new_dummy = get_expanded_dummy(edge[0], node_groups_expanded) # änderung: edge[1]
-        #                     # all_expanded = [n for nodes in node_groups_expanded.values() for n in nodes]
-        #                     all_expanded = []
-        #                     for node_group in node_groups_expanded.values(): # pi_i
-        #                         for node in node_group:
-        #                             all_expanded.append(node)
-        #                     if new_dummy not in all_expanded:
-        #                         node_groups_expanded.setdefault(-axis_u, []).append(new_dummy) # änderung: -axis_v
-        #                         dummy_edges.append((edge[0], new_dummy)) # änderung: edge[1]
-        #                     new_inter_edges.append((edge[1], new_dummy))# änderung: edge[0]
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 if edge in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove(edge)
-        #                     # self.graph.remove_edge(*edge)
-        #                 elif (edge[1], edge[0]) in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove((edge[1], edge[0]))
-        #                     # self.graph.remove_edge(*edge)
-        #         elif axis_u == axis: # u ist auf einer expandierten achse -> prüfen ob u auf linkem oder rechten teil liegt -> v auf nicht expandierter achse
-        #             if dist_left_u_v <= dist_left_v_u: # u liegt auf linkem teil einer expandierten achse
-        #                 new_inter_edges.append(edge)
-        #                 if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #             else: # u liegt auf rechtem teil einer expandierten achse
-        #                 if isinstance(edge[0], int):
-        #                     new_inter_edges.append((mirror_endpoint(edge[0]), edge[1]))
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 else:
-        #                     new_dummy = get_expanded_dummy(edge[0], node_groups_expanded) #! edge[1]?
-        #                     # all_expanded = [n for nodes in node_groups_expanded.values() for n in nodes]
-        #                     all_expanded =[]
-        #                     for node_group in node_groups_expanded.values(): # pi_i
-        #                         for node in node_group:
-        #                             all_expanded.append(node)
-        #                     if new_dummy not in all_expanded:
-        #                         node_groups_expanded.setdefault(-axis_u, []).append(new_dummy) #! -axis_v
-        #                         dummy_edges.append((edge[0], new_dummy)) #! edge[1] 
-        #                     new_inter_edges.append((edge[1], new_dummy)) #! edge[0]
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 if edge in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove(edge)
-        #                     # self.graph.remove_edge(*edge)
-        #                     after = len(self.dummy_edge_segments)
-        #                 elif (edge[1], edge[0]) in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove((edge[1], edge[0]))
-        #                     # self.graph.remove_edge(*edge)
-        #                     after = len(self.dummy_edge_segments)
-        #                 if before == after:
-        #                         print(f"WARNUNG: Kante {edge} nicht in dummy_edge_segments gefunden!")
-        #         elif axis_v == axis: # v ist auf einer expandierten achse -> prüfen ob v auf linkem oder rechten teil liegt -> u auf nicht expandierter achse
-        #             if dist_left_v_u <= dist_left_u_v: # v liegt auf nicht-expandiertem teil
-        #                 new_inter_edges.append(edge)
-        #                 if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #             else: # v liegt auf expandiertem teil
-        #                 if isinstance(edge[1], int):
-        #                     new_inter_edges.append((edge[0], mirror_endpoint(edge[1])))
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 else:
-        #                     new_dummy = get_expanded_dummy(edge[1], node_groups_expanded)
-        #                     # all_expanded = [n for nodes in node_groups_expanded.values() for n in nodes]
-        #                     all_expanded =[]
-        #                     for node_group in node_groups_expanded.values(): # pi_i
-        #                         for node in node_group:
-        #                             all_expanded.append(node)
-        #                     if new_dummy not in all_expanded:
-        #                         node_groups_expanded.setdefault(-axis_v, []).append(new_dummy)
-        #                         dummy_edges.append((edge[1], new_dummy)) # kante auf der achse von v zwischen dummies einfügen
-        #                     new_inter_edges.append((edge[0], new_dummy))
-        #                     if edge[0] == "d_1_9_1" or edge[1] == "d_1_9_1":
-        #                         print("APPENDED", new_inter_edges[-1])
-        #                 before = len(self.dummy_edge_segments)
-        #                 if edge in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove(edge)
-        #                     # self.graph.remove_edge(*edge)
-        #                     after = len(self.dummy_edge_segments)
-        #                 elif (edge[1], edge[0]) in self.dummy_edge_segments:
-        #                     self.dummy_edge_segments.remove((edge[1], edge[0]))
-        #                     # self.graph.remove_edge(*edge)
-        #                     after = len(self.dummy_edge_segments)
-        #                 if before == after:
-        #                     print(f"WARNUNG: Kante {edge} nicht in dummy_edge_segments gefunden!")
-        #     self.graph.add_edges_from(new_inter_edges)
-        # for axis, nodes in self.node_groups_expanded.items(): # sanitycheck für networkx funktionen
-        #     for node in nodes:
-        #         if node not in self.graph.nodes:
-        #             self.graph.add_node(node)
-        #         self.graph.nodes[node]['subset'] = axis
-
     def prepare_for_rendering(self) -> None:
         """Funktion entfernt alle intra-axis Kanten aus self.edges() und schreibt sie nach self.intra_axis_edges. Notwendig, weil die Rendererlogik sonst falsche 
         Kanten zeichnet. Wird für das zeichnen im nicht expandierten Fall benötigt, da sonst intra-axis Kanten eingezeichnet werden, was zu Fehlern in der Darstellung führt. 
         """
+        # ><
         node_axis_map = {}
         groups = self.node_groups_expanded if self.node_groups_expanded else self.fuse_node_groups_with_dummies()
         for axis, nodes in groups.items():
@@ -796,6 +491,7 @@ class HivePlotLayout:
                 self.intra_axis_edges.append(edge)
         
     def count_crossings(self: HivePlotLayout,  layout_expanded:bool = False) -> int:
+        """X"""
         if layout_expanded:
             node_groups = self.node_groups_expanded
         else:
@@ -858,6 +554,7 @@ class HivePlotLayout:
                     self.mixed_nodes_by_axis[axis].append(node)
     
     def freeze_inter_axis_delta(self):
+        """X"""
         from ip_model import delta_mapping
 
         groups_copy = {}
@@ -892,6 +589,7 @@ class HivePlotLayout:
         self.fixed_inter_axis_delta = partial_delta
 
     def freeze_barycenter_positions(self, layout_expanded=False):
+        """X"""
         self.fixed_positions_by_axis = {}
 
         if layout_expanded:
