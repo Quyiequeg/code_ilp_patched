@@ -10,6 +10,220 @@ _BASE = Path(__file__).parent.parent  # src/ -> repo root
 _DEFAULT_PATH = _BASE / "output/experiments/"
 _DEFAULT_PATH.mkdir(parents=True, exist_ok=True)
 
+def lineplot_h2_kreuzungen(data_set: dict, axes):
+    years = data_set["x"]
+
+    configs = [
+        (
+            axes[0],
+            "Barycenterheuristik",
+            "Kreuzungen Barycenterheuristik paper_like = True",
+            "Kreuzungen Barycenterheuristik paper_like = False",
+        ),
+        (
+            axes[1],
+            "1L2S-ILP",
+            "Kreuzungen 1L2S-ILP paper_like = True",
+            "Kreuzungen 1L2S-ILP paper_like = False",
+        ),
+    ]
+
+    for ax, title, key_true, key_false in configs:
+        values_true = data_set[key_true]
+        values_false = data_set[key_false]
+
+        ax.plot(
+            years,
+            values_true,
+            marker="o",
+            linewidth=2.0,
+            markersize=4,
+            label="paper_like = True",
+        )
+
+        ax.plot(
+            years,
+            values_false,
+            marker="o",
+            linewidth=2.0,
+            markersize=4,
+            label="paper_like = False",
+        )
+
+        ax.set_title(f"Kreuzungszahlvergleich - {title}")
+        ax.set_xlabel("Jahr")
+        ax.set_ylabel("Kreuzungszahl")
+
+        ax.set_xticks(years[::2])
+        ax.tick_params(axis="x", rotation=45)
+
+        ax.grid(axis="y", alpha=0.3)
+        ax.legend()
+
+def lineplot_h1_laufzeit(data_set: dict, axes):
+    years = data_set["x"]
+
+    configs = [
+        (
+            axes[0],
+            "Barycenterheuristik",
+            "Laufzeit Barycenterheuristik paper_like = True",
+            "Laufzeit Barycenterheuristik paper_like = False",
+        ),
+        (
+            axes[1],
+            "1L2S-ILP",
+            "Laufzeit 1L2S-ILP paper_like = True",
+            "Laufzeit 1L2S-ILP paper_like = False",
+        ),
+    ]
+
+    for ax, title, key_true, key_false in configs:
+        values_true = data_set[key_true]
+        values_false = data_set[key_false]
+
+        ax.plot(
+            years,
+            values_true,
+            marker="o",
+            linewidth=2.0,
+            markersize=4,
+            label="paper_like = True",
+        )
+
+        ax.plot(
+            years,
+            values_false,
+            marker="o",
+            linewidth=2.0,
+            markersize=4,
+            label="paper_like = False",
+        )
+
+        ax.set_title(f"Laufzeitvergleich - {title}")
+        ax.set_xlabel("Jahr")
+        ax.set_ylabel("Laufzeit (s)")
+
+        ax.set_xticks(years[::2])
+        ax.tick_params(axis="x", rotation=45)
+
+        ax.grid(axis="y", alpha=0.3)
+        ax.legend()
+
+def lineplot_parameter_kreuzungen(data_set: dict, axes):
+    taus = [4, 6, 8]
+    years = data_set["x"]
+
+    if len(years) != len(axes):
+        raise ValueError("Anzahl der Jahre muss zur Anzahl der Subplots passen.")
+
+    for ax, year_index in zip(axes, range(len(years))):
+        year = years[year_index]
+
+        values = [
+            data_set[f"Kreuzungen {tau}"][year_index]
+            for tau in taus
+        ]
+
+        ax.plot(
+            taus,
+            values,
+            marker="o",
+            linewidth=2.5,
+            markersize=7,
+        )
+
+        ymin, ymax = ax.get_ylim()
+        ax.set_ylim(ymin, ymax * 1.10)
+
+        for tau, value in zip(taus, values):
+
+            if tau == 6:
+                offset = (0, 14)
+            else:
+                offset = (0, 8)
+
+            ax.annotate(
+                f"{value:,}",
+                xy=(tau, value),
+                xytext=offset,
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
+        ax.set_title(rf"Kreuzungszahlen in Abhängigkeit zu $\tau$ - GD{year}")
+        ax.set_xlabel(r"Schwellwert $\tau$")
+        ax.set_ylabel("Kreuzungszahl")
+
+        ax.set_xticks(taus)
+        ax.set_xticklabels(
+            [
+                r"$\tau = 4$",
+                r"$\tau = 6$",
+                r"$\tau = 8$",
+            ]
+        )
+
+        ax.grid(axis="y", alpha=0.3)
+
+def lineplot_parameter_laufzeit(data_set: dict, axes):
+    taus = [4, 6, 8]
+    years = data_set["x"]
+
+    if len(years) != len(axes):
+        raise ValueError("Anzahl der Jahre muss zur Anzahl der Subplots passen.")
+
+    for ax, year_index in zip(axes, range(len(years))):
+        year = years[year_index]
+
+        values = [
+            data_set[f"Laufzeit {tau}"][year_index]
+            for tau in taus
+        ]
+
+        ax.plot(
+            taus,
+            values,
+            marker="o",
+            linewidth=2.5,
+            markersize=7,
+        )
+
+        for tau, value in zip(taus, values):
+
+            if tau == 6:
+                offset = (0, 14)   # etwas höher
+            else:
+                offset = (0, 8)
+
+            ax.annotate(
+                f"{value:.2f}s",
+                xy=(tau, value),
+                xytext=offset,
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+        ymin, ymax = ax.get_ylim()
+        ax.set_ylim(ymin, ymax * 1.10)
+        ax.set_title(rf"Laufzeiten in Abhängigkeit zu $\tau$ - GD{year}")
+        ax.set_xlabel(r"Schwellwert $\tau$")
+        ax.set_ylabel("Laufzeit (s)")
+
+        ax.set_xticks(taus)
+        ax.set_xticklabels(
+            [
+                r"$\tau = 4$",
+                r"$\tau = 6$",
+                r"$\tau = 8$",
+            ]
+        )
+
+        ax.grid(axis="y", alpha=0.3)
+
 def bar_chart_gesamt_absolute_inter_intra(title: str, data_set: dict, axes: plt.Axes):
     COLOR_INTRA  = "#7CB5F1DD"   # hellblau  – intra-axis Kanten
     COLOR_INTER  = "#0C3158"     # dunkelblau – inter-axis Kanten
@@ -279,15 +493,10 @@ def plotter(title: str, file_name: str, data_set: str = None, mode: int = 0):
         fig, ax = plt.subplots(figsize=(14, 4))
         dset = collector.data_sets[data_set]
         bar_chart_gesamt_absolute_inter_intra(title, dset, ax)
-    elif mode == 1:
+    elif mode == 1: # parameterstudie 1
         fig, axes = plt.subplots(1, 3, figsize=(14, 4))
-        for axes, year in zip(ax, ["GD2000", "GD2016", "GD2024"]):
-            dsets = [
-                collector.data_sets[f"Laufzeiten und Kreuzungszahlen für tau = 4, {year}"]["Laufzeit ex"],
-                collector.data_sets[f"Laufzeiten und Kreuzungszahlen für tau = 6, {year}"]["Laufzeit ex"],
-                collector.data_sets[f"Laufzeiten und Kreuzungszahlen für tau = 8, {year}"]["Laufzeit ex"],
-            ]
-            lineplot_h_one(f"Laufzeiten in Abhängigkeit zu $\\tau$ - {year}", dsets, axes)
+        dset = collector.data_sets[data_set]
+        lineplot_parameter_laufzeit(dset, axes)
     elif mode == 2:
         fig, ax = plt.subplots(figsize=(10, 5))
         stacked_bar_partition_plot_h_one(title, collector, fig, ax)
@@ -299,8 +508,18 @@ def plotter(title: str, file_name: str, data_set: str = None, mode: int = 0):
         fig, ax = plt.subplots(figsize=(18, 6))
         dset = collector.data_sets[data_set]
         bar_chart_runtime_bary_ilp(title, dset, ax)
-    
-
+    elif mode == 5: # parameterstudie 2
+        fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+        dset = collector.data_sets[data_set]
+        lineplot_parameter_kreuzungen(dset, axes)
+    elif mode == 6:
+        fig, axes = plt.subplots(1, 2, figsize=(14, 4))
+        dset = collector.data_sets[data_set]
+        lineplot_h1_laufzeit(dset, axes)
+    elif mode == 7:
+        fig, axes = plt.subplots(1, 2, figsize=(14, 4))
+        dset = collector.data_sets[data_set]
+        lineplot_h2_kreuzungen(dset, axes)
     plt.tight_layout()
     fig.savefig(_DEFAULT_PATH / (file_name + ".pdf"), bbox_inches="tight")
     plt.close(fig)
@@ -310,4 +529,8 @@ if __name__ == "__main__":
     # plotter(r" ", "k5_lineplot_laufzeit_zu_tau", mode = 1)
     # plotter(r"Kreuzungszahlen in Abhängigkeit zu $\tau$ - GD2000/2016/2024", "k5_balken_kreuzungen_zu_tau", mode = 2)
     # plotter(r"Native Communities und größte/kleinste Community Vergleich über alle Jahre $\tau = 0$", "k5_balken_nativ", "Gesamtkanten und -anteile tau = 8", mode = 3)
-    plotter(r"Laufzeitvergleich Barycenter vs.\ 1L2S-ILP (GD 2000 bis 2024, $\tau = 8$)", data_set = "Laufzeitenvergleich Bary/ILP", file_name = "k5_gesamt_laufzeit_bary_ilp", mode = 4)
+    # plotter(r"Laufzeitvergleich Barycenter vs.\ 1L2S-ILP (GD 2000 bis 2024, $\tau = 8$)", data_set = "Laufzeitenvergleich Bary/ILP", file_name = "k5_gesamt_laufzeit_bary_ilp", mode = 4)
+    # plotter(r"Parameterstudie $\tau$ - Laufzeit", "k5_lineplot_laufzeit_zu_tau", data_set="Parameterstudie", mode=1)
+    # plotter(r"Parameterstudie $\tau$ - Laufzeit", "k5_lineplot_kreuzungen_zu_tau", data_set="Parameterstudie", mode=5)
+    # plotter(r"Parameterstudie $\tau$ - Laufzeit", "k5_h1_1", data_set="H1", mode=6)
+    plotter(r"H2 - Kreuzungszahlen", "k5_lineplot_h2_kreuzungen", data_set="H2", mode=7)

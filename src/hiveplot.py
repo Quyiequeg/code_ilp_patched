@@ -42,7 +42,7 @@ class HivePlotLayout:
     # ergebnisse zu evaluationszwecken !prüfen
     crossings: Optional[int] = None
     crossings_expanded: Optional[int] = None
-    mix_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
+    mix_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict) # entfernen
     strict_intra_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
     fixed_inter_axis_delta: dict | None = None
     fixed_positions_by_axis: dict | None = None

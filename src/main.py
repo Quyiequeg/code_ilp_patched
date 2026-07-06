@@ -141,57 +141,73 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
     """X"""
     print("Berechnung Start.")
     collector = DataCollector()
-    collected_data = {}
-    start_begin = time.time()
+    collected_data_time = {}
+    collected_data_crossings = {}
+    start_time = time.time()
     # graph erzeugen und partitionieren
     hiveplot = init_hiveplot(year, own_pkl, partitions, logger)
-    if variant == "Barycenterheuristik":
-        collected_data["init_hiveplot Bary t"] = time.time() - start_begin
-    else:    
-        collected_data["init_hiveplot ILP t"] = time.time() - start_begin
-
-    # phi berechnen
-    start = time.time()
     step_ordering(hiveplot, logger)
-    if variant == "Barycenterheuristik":
-        collected_data["step_ordering Bary t"] = time.time() - start
-    else:    
-        collected_data["step_ordering ILP t"] = time.time() - start
-
     # zwischenspeichern als debugging-tool
     save_pkl(hiveplot, f"{variant}_{year}_basis_nach_ordering", save, logger)
     if variant == "Barycenterheuristik":
         if paper_like: # originalframework
-            barycenter_crossmin_pipeline(hiveplot, logger, paper_like)
+            barycenter_crossmin_pipeline(hiveplot, logger, threshold, paper_like)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             edge_node_cleanup(hiveplot)
             print(hiveplot.crossings_expanded)
-            axis_map = node_to_axis_maps(hiveplot, hiveplot.fuse_node_groups_with_dummies(layout_expanded=True))[1]
+
+            elapsed = time.time() - start_time
+            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
+            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
+            collector.update("Parameterstudie", partitions, **collected_data_time)
+            collector.update("Parameterstudie", partitions, **collected_data_crossings)
+
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
-        else:
-            barycenter_crossmin_pipeline(hiveplot, logger, paper_like=False)
+        else: # erweitert
+            barycenter_crossmin_pipeline(hiveplot, logger, threshold, paper_like=False)
             edge_node_cleanup(hiveplot)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
+
             print(hiveplot.crossings_expanded)
+            elapsed = time.time() - start_time
+            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
+            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
+            collector.update("Parameterstudie", partitions, **collected_data_time)
+            collector.update("Parameterstudie", partitions, **collected_data_crossings)
+
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
-    else:
+    else: # ilp
         if paper_like: # originalframework
             ip_model_pipeline(hiveplot, logger, threshold, paper_like)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             print(hiveplot.crossings_expanded)
             edge_node_cleanup(hiveplot)
+
+            elapsed = time.time() - start_time
+            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
+            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
+            collector.update("Parameterstudie", year, **collected_data_time)
+            collector.update("Parameterstudie", year, **collected_data_crossings)
+
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
-        else:
+        else: # erweitert
             ip_model_pipeline(hiveplot, logger, threshold, paper_like=False)
             edge_node_cleanup(hiveplot)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             print(hiveplot.crossings_expanded)
+
+            elapsed = time.time() - start_time
+            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
+            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
+            collector.update("Parameterstudie", year, **collected_data_time)
+            collector.update("Parameterstudie", year, **collected_data_crossings)
+
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
@@ -203,10 +219,10 @@ def main():
         "year": 2017,
         "output_name": "",
         "logger": None,
-        "variant": "Barycenterheuristik",
-        # "variant": "1L2S-ILP",
-        # "paper_like": True,
-        "paper_like": False,
+        # "variant": "Barycenterheuristik",
+        "variant": "1L2S-ILP",
+        "paper_like": True,
+        # "paper_like": False,
         "partitions": 8,
         "threshold": 10,
         "save": False,
@@ -228,12 +244,19 @@ def main():
     
 
     # für einzeln
-    pipeline(run = 0, **config)
+    # pipeline(run = 0, **config)
     # für batch
     # for i in range(1, 101):
-    # for year in range(2000, 2025):
-        # print(i)
-        # pipeline(run = i, **config)
+    years = [2000, 2008, 2016]
+    tau = [4, 6, 8]
+    for year in years:
+        for part in tau:
+            config["year"] = year
+            config["partitions"] = part
+
+            print(f"year {year} - variant {config['variant']}")
+            pipeline(run=0, **config)
+
 
 
     ############################ H1 ##################################

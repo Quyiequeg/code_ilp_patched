@@ -38,22 +38,23 @@ class DataCollector:
             return "\n".join(lines)
 
     def update(self, data_set: str, x_val: str | int | float = None, **kwargs: int | float | None) -> None:
-        if data_set not in self.data_sets: # muss neu angelegt werden
-            self.data_sets[data_set] = {}
-            dset = self.data_sets[data_set]
-            dset.setdefault("x", []).append(x_val)
-            for arg in kwargs:
-                dset.setdefault(arg, []).append(kwargs[arg])
-        else: # update
-            dset = self.data_sets[data_set]
-            if x_val in dset["x"]: # falls x vorhanden, ersetze kwargs für index x
-                index = dset["x"].index(x_val)
-                for arg in kwargs: # vorhandenen key updaten, neuen key anlegen
-                    dset.setdefault(arg, [None] * len(dset["x"]))[index] = kwargs[arg]
-            else: # falls x nicht vorhanden, setze x und ordne kwarg einträge zu
-                dset["x"].append(x_val)
-                for arg in kwargs:
-                    dset[arg].append(kwargs[arg])
+        if data_set not in self.data_sets:
+            self.data_sets[data_set] = {"x": []}
+
+        dset = self.data_sets[data_set]
+
+        if x_val in dset["x"]:
+            index = dset["x"].index(x_val)
+        else:
+            dset["x"].append(x_val)
+            index = len(dset["x"]) - 1
+
+        for arg, value in kwargs.items():
+            dset.setdefault(arg, [])
+            while len(dset[arg]) < len(dset["x"]):
+                dset[arg].append(None)
+            dset[arg][index] = value
+
         self.save()
 
     def save(self) -> None:
@@ -216,6 +217,10 @@ if __name__ == "__main__":
     data = DataCollector()
     # data.delete("Laufzeiten und Kreuzungszahlen für tau = 4")
     # print(data.get_data_set("Laufzeiten und Kreuzungszahlen für tau = 8, GD2000"))
-    print(data.data_keys())
+    # print(data.data_keys())
+    print(data.data_sets["H2"])
+    # data.delete("Parameterstudie")
+    # data.delete("H1")
+    # data.delete("H2")
     # data.delete("Laufzeitenvergleich Bary/ILP")
     # data.get_data_set("GDJahre_gesamt_knoten_kanten_native")
