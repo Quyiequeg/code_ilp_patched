@@ -1,17 +1,13 @@
 # stdlib pakete
-import os
 import sys
 from pathlib import Path
 import time
 from datetime import datetime
 import logging
 import pickle
-import threading
 
 # pakete
 import networkx as nx
-import tkinter as tk
-from tkinter import ttk, scrolledtext, filedialog, messagebox
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
 from experiments import DataCollector
@@ -52,11 +48,7 @@ from dblp_parser import (
     build_node_identity_maps,
 )
 from ordering import (
-    native_order,
-    node_groups,
-    brute_force_ordering,
     reordered_node_groups,
-    node_to_axis_maps,
     ip_ordering
 )
 from crossing_minimization import (
@@ -66,15 +58,8 @@ from crossing_minimization import (
 from ip_model import (
     ip_model_pipeline
 )
-from experiments import hypothesis_one
-# hilfsfunktionen
-
-
-## für pipeline
-def start_pipeline(config: dict[str, int | str | bool]): # falls gui = true
-    thread = threading.Thread(target=pipeline, kwargs=config)
-    thread.start()
-
+from experiments import DataCollector
+## hilfsfunktionen für pipeline
 def init_logger(per_session):
     setup_logger(LOG_DIR, per_session)
     return logging.getLogger(__name__)
@@ -98,7 +83,6 @@ def init_original(year: int, own_pkl: str | None = None) -> nx.Graph:
             return graphs[year] # eintrag
 
 def init_graph(original: nx.Graph, name_to_id: dict[str, int]): # transformieren
-    """?"""
     output_graph = nx.Graph()
     original_edges = original.edges()
     edges = []
@@ -108,7 +92,6 @@ def init_graph(original: nx.Graph, name_to_id: dict[str, int]): # transformieren
     return output_graph
 
 def init_hiveplot(year, own_pkl, partitions, logger) -> HivePlotLayout:
-    """?"""
     original = init_original(year=year, own_pkl=own_pkl)
     hpl_basis = {}
     hpl_basis["id_to_name"], hpl_basis["name_to_id"] = build_node_identity_maps(original.nodes())
@@ -137,92 +120,110 @@ def save_rendered_hiveplot(svg_path: Path, year: int, logger: logging.Logger) ->
         pdf_path = year_dir / svg_path.with_suffix(".pdf").name # verzeichnis ändern
         renderPDF.drawToFile(drawing, str(pdf_path))
 
+## pipeline
 def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | None, variant: str, paper_like: bool, partitions: int = 8, threshold: int = 5, save: bool = False, debug: bool = False, batch: bool = False, own_pkl: str | None = None, gui: bool = False):
-    """X"""
+
+    # für versuchsdaten, siehe unten
     print("Berechnung Start.")
     collector = DataCollector()
     collected_data_time = {}
     collected_data_crossings = {}
     start_time = time.time()
+
     # graph erzeugen und partitionieren
     hiveplot = init_hiveplot(year, own_pkl, partitions, logger)
+
+    # achsenordnung optimieren
     step_ordering(hiveplot, logger)
-    # zwischenspeichern als debugging-tool
+
+    # zwischenspeichern für effizientes debugging
     save_pkl(hiveplot, f"{variant}_{year}_basis_nach_ordering", save, logger)
+
     if variant == "Barycenterheuristik":
         if paper_like: # originalframework
+            # subpipeline
             barycenter_crossmin_pipeline(hiveplot, logger, threshold, paper_like)
+
+            # kreuzungszahlen und konsistenz
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             edge_node_cleanup(hiveplot)
             print(hiveplot.crossings_expanded)
 
-            elapsed = time.time() - start_time
-            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
-            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
-            collector.update("Parameterstudie", partitions, **collected_data_time)
-            collector.update("Parameterstudie", partitions, **collected_data_crossings)
+            # Beispiel: Messdaten speichern
+            # elapsed = time.time() - start_time
+            # collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
+            # collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
+            # collector.update("Parameterstudie", partitions, **collected_data_time)
+            # collector.update("Parameterstudie", partitions, **collected_data_crossings)
 
+            # speichern des fertigen HPL
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+
+            # rendern und als pdf speichern
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
+
         else: # erweitert
+            # subpipeline
             barycenter_crossmin_pipeline(hiveplot, logger, threshold, paper_like=False)
+
+            # kreuzungszahlen und konsistenz
             edge_node_cleanup(hiveplot)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
-
             print(hiveplot.crossings_expanded)
-            elapsed = time.time() - start_time
-            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
-            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
-            collector.update("Parameterstudie", partitions, **collected_data_time)
-            collector.update("Parameterstudie", partitions, **collected_data_crossings)
 
+            # speichern des fertigen HPL
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+            
+            # rendern und als pdf speichern
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
+
     else: # ilp
         if paper_like: # originalframework
+            # subpipeline
             ip_model_pipeline(hiveplot, logger, threshold, paper_like)
+
+            # kreuzungszahlen und konsistenz
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             print(hiveplot.crossings_expanded)
             edge_node_cleanup(hiveplot)
 
-            elapsed = time.time() - start_time
-            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
-            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
-            collector.update("Parameterstudie", year, **collected_data_time)
-            collector.update("Parameterstudie", year, **collected_data_crossings)
-
+            # speichern des fertigen HPL
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+            
+            # rendern und als pdf speichern
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded=True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
+
         else: # erweitert
+            # subpipeline
             ip_model_pipeline(hiveplot, logger, threshold, paper_like=False)
+
+            # kreuzungszahlen und konsistenz
             edge_node_cleanup(hiveplot)
             hiveplot.crossings_expanded = hiveplot.count_crossings(True)
             print(hiveplot.crossings_expanded)
 
-            elapsed = time.time() - start_time
-            collected_data_time[f"Laufzeit {partitions}"] = round(elapsed, 5)
-            collected_data_crossings[f"Kreuzungen {partitions}"] = hiveplot.crossings_expanded
-            collector.update("Parameterstudie", year, **collected_data_time)
-            collector.update("Parameterstudie", year, **collected_data_crossings)
-
+            # speichern des fertigen HPL
             save_pkl(hiveplot, f"{variant}_{year}_P({partitions})_paperlike({paper_like})", save, logger) # snapshot
+
+            # rendern und als pdf speichern
             svg_path = hiveplot_renderer(f"{variant}_{year}_P({partitions})_paperlike({paper_like})", hiveplot, DEBUG_DIR, layout_expanded = True, unordered = True) # optionale parameter möglich
             save_rendered_hiveplot(svg_path, year, logger)
+
     print("Berechnung Ende.")
 
-
 def main():
+    # parameter für die pipeline
     config = {
         "year": 2017,
         "output_name": "",
         "logger": None,
         # "variant": "Barycenterheuristik",
         "variant": "1L2S-ILP",
-        "paper_like": True,
-        # "paper_like": False,
+        # "paper_like": True,
+        "paper_like": False,
         "partitions": 8,
         "threshold": 10,
         "save": False,
@@ -234,6 +235,8 @@ def main():
         "own_pkl": None,
         "gui": False,
     }
+
+    #logger init
     if config["output_name"]: # ausgabe für experimente
             logger = setup_logger(EXPERIMENT_DATA, per_session = not config["batch"], file_name = config["output_name"])
             config["logger"] = logger
@@ -243,66 +246,13 @@ def main():
             config["logger"] = logger
     
 
-    # für einzeln
-    # pipeline(run = 0, **config)
-    # für batch
+    # einzeldurchlauf
+    pipeline(run = 0, **config)
+
+    # für batchläufe
     # for i in range(1, 101):
-    years = [2000, 2008, 2016]
-    tau = [4, 6, 8]
-    for year in years:
-        for part in tau:
-            config["year"] = year
-            config["partitions"] = part
-
-            print(f"year {year} - variant {config['variant']}")
-            pipeline(run=0, **config)
-
-
-
-    ############################ H1 ##################################
-    # E1: auswahl an graphen ermitteln, vergleich der knoten möglich
-    # get_values_overall(EXPERIMENT_DATA, "Kanten_Knoten_komplett", 1)
-
-    # E2.1: einzellaufzeiten ermitteln -> 1. versuch tau = 4, 8, nativ = 0 -> abbruch laufzeit zu lang
-    # E2.3: threshold von nativ auf 12 -> 2. versuch tau = 4, 8, 12 -> abbruch und test mit 10
-    # E2.4: threshold von 12 auf 10
-    # free_range = [2000, 2008, 2024] # testgruppe
-    # partitions = [4, 8, 10] # threshold tau
-    # for year in free_range:
-    #     for partition in partitions:
-    #         config["year"] = year
-    #         config["partitions"] = partition
-    #         pipeline(**config)
-    #         print(f"Jahr: {year}, TAU: {partition} - abgeschlossen")
-    
-    # E2.2 versuch 2: native communities bestimmen, daraus threshold ableiten
-    # hypothesis_one(EXPERIMENT_DATA, mode = 2, config=config)
-    # nach evaluation des ergebnisses dritten threshold auf tau = 12
-    
-    # E2.5 relative anzahl der intra-axis kanten an der gesamtzahl ermitteln, könnte ein guter indikator für die rechenzeit des ILP für Optimierung der Achsenordnung sein
-    # wir normieren über tau = 6 -> guter kompromiss zwischen optimierter ordnung und rechenzeit, wir erfassen zusätzlich die rechenzeit
-    # hypothesis_one(EXPERIMENT_DATA, mode = 3, config = config)
-    
-    # E2.6 vorherige daten sind noch nicht aussagekräftig, wir ermitteln nochmal für tau=8 und vergleichen die ergebnisse
-    # hypothesis_one(EXPERIMENT_DATA, 3, config)
-    # Feststellung: wir wählen tau 4, 6, 8 und G2004 0 inter für tau = 6 / G2016 (besonders interessant) anteil inter axis für tau = 6 6,71% und tau = 8 10,79%/G2024 für viele, stabile inter axis kanten
-
-    # E3 wir haben nun graph_range und partition_range bestimmt und führen die abschließende berechnungen durch, wonach wir die kreuzungszahlen vergleichen
-    # berechnung mit 1L2S, paper_like = True, Abbruchparameter für 1L2S = 10
-    # erst einzelner testlauf für einen durchgang
-    # graph_range = [2000, 2008, 2024] # testgruppe
-    # partitions = [4, 6, 8] # threshold tau
-    # log(logger, f"| {'Jahr':>5} | {'Rechenzeit':>5} | {'Schwellenwert':>5} | {'Kreuzungen':>5} |")
-    # log(logger, f"-----------------------------------------")
-    # for year in graph_range:
-    #     for partition in partitions:
-    #         print(f"Start, Graph: {year}, tau: {partition}")
-    #         config["year"] = year
-    #         config["partitions"] = partition
-    #         pipeline(**config)
-    #         print(f"Ende, Graph: {year}, tau: {partition}")
-    #         print("--------------------")
-    # log(logger, f"-----------------------------------------")
+    #         print(f"year {year} - variant {config['variant']}")
+    #         pipeline(run=0, **config)
 
 if __name__ == "__main__":
     main()

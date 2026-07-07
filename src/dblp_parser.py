@@ -47,9 +47,9 @@ def scan_booktitles(xml_path: str, dtd_path: str) -> set[str]:
 
     for _, elem in context: # iterationsloop
         count += 1
-        bt = elem.findtext("booktitle") or ""
-        if "gd" in bt.lower() or "graph drawing" in bt.lower():
-            found.add(bt)
+        booktitle = elem.findtext("booktitle") or ""
+        if "gd" in booktitle.lower() or "graph drawing" in booktitle.lower():
+            found.add(booktitle)
 
         elem.clear() # wichtig, speicher freigeben!
         while elem.getprevious() is not None:
@@ -72,8 +72,8 @@ def parse_gd_coauthor_networks(xml_path: str, cache_path: str = None) -> dict[in
     """
     if cache_path and Path(cache_path).exists():
         print("Cache gefunden, lade...")
-        with open(cache_path, "rb") as f:
-            return pickle.load(f)
+        with open(cache_path, "rb") as file:
+            return pickle.load(file)
 
     graphs: dict[int, nx.Graph] = {}
 
@@ -156,9 +156,7 @@ if __name__ == "__main__":
     # for year in sorted(graphs.keys()):
     #     G = graphs[year]
         # print(f"{year}: {G.number_of_nodes()} Autoren, {G.number_of_edges()} Co-Autorenschaft-Kanten")
-    with open(cache_path, "rb") as f:
-        graphs = pickle.load(f)
+    with open(cache_path, "rb") as file:
+        graphs = pickle.load(file)
     G = graphs[2000]
-    print(G.nodes())
-
-    
+    print(G.nodes())    

@@ -2,10 +2,21 @@ import logging
 from datetime import datetime
 
 def log(logger: logging.Logger, msg: str):
+    # log einträge können auch im code sein, owbohl nicht geloggt werden soll
     if logger:
         logger.info(msg)
 
-def setup_logger(log_dir, per_session=True, file_name: str | None = None):
+def setup_logger(log_dir: Path, per_session: bool = True, file_name: str | None = None) -> logging.Logger:
+    """Konfiguriert den Logger und initialisiert ihn. Kann für Batchläufe eine Datei schreiben und für Einzeldurchläufe mehrere. 
+
+    Args:
+        log_dir (Path): Ablagepfad
+        per_session (bool, optional): Batch- oder Einzelauswahl. Defaults to True.
+        file_name (str | None, optional): Dateiname. Defaults to None.
+
+    Returns:
+        Logger: der angelegte Log
+    """
     if not file_name:
         if per_session:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M")

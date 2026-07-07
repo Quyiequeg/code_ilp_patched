@@ -1,2 +1,0 @@
-\babel@toc {ngerman}{}\relax 
-\contentsline {chapter}{Python-Modulindex}{15}{section*.93}%

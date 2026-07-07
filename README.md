@@ -16,3 +16,41 @@ pytest -q
 - `requirements.txt` — test dependencies (pytest)
 - `src/sourdough/` — example package with `bread.py`
 - `tests/` — pytest tests for the example
+
+Beispiel
+
+Angenommen dein Projekt liegt hier:
+
+C:\Users\Max\Bachelorarbeit\code
+1. CMD öffnen
+
+Windows
+
+→ Win + R
+
+→ cmd
+
+→ Enter
+
+2. In den Projektordner wechseln
+cd C:\Users\Max\Bachelorarbeit\code
+
+Jetzt befindet sich die Konsole in deinem Projekt.
+
+3. Dokumentation erzeugen
+
+Später genügt beispielsweise
+
+sphinx-build -b latex docs docs\_build\latex
+
+Danach
+
+cd docs\_build\latex
+
+und
+
+make.bat
+
+Nun entsteht automatisch
+
+Projektname.pdf

@@ -1,6 +1,6 @@
 import networkx as nx
 
-def clauset_newman_moore_communities(graph, threshold: int = 0):
+def clauset_newman_moore_communities(graph, threshold: int = 0) -> dict[int, list[int]]:
     """Berechnet die Communities eines Graphen per Clauset-Newman-Moore Algorithmus und wandelt die frozenset Liste in ein dict um.
     Falls ein Threshold übergeben wird, so wird die Anzahl der Communities auf den Threshold gestaucht. So wird sichergestellt, dass man
     eine Anzahl Communities (Achsen) erhält, die noch einen übersichtlichen Hiveplot erzeugen lassen.
@@ -11,7 +11,7 @@ def clauset_newman_moore_communities(graph, threshold: int = 0):
     Returns:
         dict[int, list[int]]: Ein Dictionary mit den Communities als Werte und ihren IDs als Schlüssel.
     """
-    communities = nx.algorithms.community.greedy_modularity_communities(graph) # !prüfen: frozenset -> communities später nicht veränderbar, relevant?
+    communities = nx.algorithms.community.greedy_modularity_communities(graph)
     node_grps = {i: list(community) for i, community in enumerate(communities, start=1)}
     if threshold > 0:
         while  len(node_grps) > threshold:
@@ -25,17 +25,16 @@ def clauset_newman_moore_communities(graph, threshold: int = 0):
 
 def louvain_community_detection(graph):
     """Berechnet die Communities eines Graphen per Louvain Community Detection und wandelt die frozenset Liste in ein dict um.
-
+    ### LEGACY ###
     Args:
         graph (nx.Graph): Der Eingabegraph, für den die Communities berechnet werden sollen.
 
     Returns:
         dict[int, list[int]]: Ein Dictionary mit den Communities als Werte und ihren IDs als Schlüssel.
     """
-    communities = nx.algorithms.community.louvain_communities(graph) # !prüfen: frozenset -> communities später nicht veränderbar, relevant?
+    communities = nx.algorithms.community.louvain_communities(graph)
     node_grps = {i: list(community) for i, community in enumerate(communities)}
     return node_grps
 
 if __name__ == "__main__":
     pass
-        

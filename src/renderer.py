@@ -1,11 +1,8 @@
 import math
 from pathlib import Path
-import hiveplot
-import generator as gr
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPDF
 import statistics
 from hiveplot import HivePlotLayout
+
 WIDTH = 1000
 HEIGHT = 1000
 CENTER_X = WIDTH / 2   # Koordinatenursprung horizontal
@@ -22,7 +19,8 @@ def translate_polar_to_carthesian(radius: float, angle: float, center_x: float =
     return x, y
 
 def draw_basis(layout, node_groups: dict[int, list[str | int]], edges: list[tuple[int | str, int | str]], degree: bool = False, id_to_label_map: dict[int, str] | None = None, unordered: bool = False, intra_edges: list[tuple[int | str, int | str]] | None = None, axes_labels: bool = True) -> tuple[list[str], list[str], list[str], list[str]]:
-    """X/?"""
+    """Bündelt die Darstellung von Kanten, Knoten, Labels und Achsen.
+    """
     def shorten_label(name: str) -> str:
         import re
         name = re.sub(r'\s*\d+', '', name).strip()
@@ -190,8 +188,8 @@ def render_svg(filename: Path | str, width: int, height: int, elements: list[str
     with open(filename, "w", encoding="utf-8") as file:
         file.write("\n".join(svg))
 
-def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree: bool = True, layout_expanded: bool = False, intra: bool = False, mode: str = "debug", node_labels: bool =True, axes_labels: bool =True, unordered: bool = False, paper_like:bool = False) -> Path:
-    """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (.svg) realisiert.
+def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree: bool = True, layout_expanded: bool = False, intra: bool = False, node_labels: bool =True, axes_labels: bool =True, unordered: bool = False, paper_like:bool = False) -> Path:
+    """ Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (SVG) realisiert.
     """
     id_to_label_map = layout.id_to_name
     if layout_expanded:
@@ -219,8 +217,6 @@ def hiveplot_renderer(name: str, layout: HivePlotLayout, debug_dir: Path, degree
     filename = debug_dir / (name + ".svg")
     render_svg(filename, WIDTH, HEIGHT, elements)
     return filename
-
-    
 
 if __name__ == "__main__":
     pass

@@ -10,7 +10,7 @@ class HivePlotLayout:
     Attributes:
         graph (nx.Graph): ein Simple Graph den man nach der Verarbeitung der geparsten DBLP Daten erhält: V = Autoren, E = Coautorenschaft zu 
         num_axes (int): k = Anzahl Achsen
-        axis_order (list[int]): phi: siehe native_order Funktion in ordering.py
+        axis_order (list[int]): phi
         node_groups (dict[int, list[int]]): alpha: siehe node_groups Funktion in ordering.py
         node_groups_dummies (dict[int, list[int]]): Achsen mit Dummyknoten
         # dummy_edge_segments (dict[tuple[int,int], list[tuple[int, int]]]): key: Kantentupel (u,v) value: Liste von Kantensegmenten die u und v über Dummyknoten verbinden
@@ -18,34 +18,34 @@ class HivePlotLayout:
         crossings (Optional[int]): Kreuzungszahl Standardmodell
         crossings_extended (Optional[int]): Kreuzungszahl erweitertes Modell
     """
-    # ursprünglicher graph und notwendige erweiterungen für die pipeline
+    # eingabegraph
     graph: nx.Graph
+
+    # mathematisches modell
     num_axes: int
     axis_order: list[int]
     node_groups: dict[int, list[int | str]]
 
-    # notwendig für Pipeline Schritt 3: lange Kanten segmentieren
-    node_groups_dummies: dict[int, list[str]] = field(default_factory=dict)
-    dummy_edge_segments: list[tuple[int | str, int| str]] = field(default_factory=list)
+    # mathematisches modell erweitert
+    node_groups_expanded:  dict[int, list[int | str]] = field(default_factory=dict)
+    edges_expanded: list[tuple[int | str, int | str]] = field(default_factory=list)
+
+    # erweiterungen für implementierung
+    node_groups_dummies: dict[int, list[str]] = field(default_factory=dict) # virtuelle knoten
+    dummy_edge_segments: list[tuple[int | str, int| str]] = field(default_factory=list) # virtuelle kantensegmente
     long_edges: set[tuple[int, int]] = field(default_factory=set)
     intra_axis_nodes: dict[int, list[int]] = field(default_factory=dict)
     intra_axis_edges: list[tuple[int, int]] = field(default_factory=list)
 
-    # knotenordnung auf achsen, wobei pi_i = p_i^+ = p_i^-
-    # node_order: dict[int, list[int]] = field(default_factory=dict)
-
-    node_groups_expanded:  dict[int, list[int | str]] = field(default_factory=dict)
-    edges_expanded: list[tuple[int | str, int | str]] = field(default_factory=list)
-
+    # datenstrukturen für utility
     id_to_name: dict[int, str] = field(default_factory=dict)
     name_to_id: dict[str, int] = field(default_factory=dict)
-    # ergebnisse zu evaluationszwecken !prüfen
-    crossings: Optional[int] = None
     crossings_expanded: Optional[int] = None
-    mix_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict) # entfernen
-    strict_intra_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict)
+    mixed_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict) # klassifizierung für 3b
+    strict_intra_nodes_by_axis: dict[int, list[int | str]] = field(default_factory=dict) # klassifizierung für 3b
     fixed_inter_axis_delta: dict | None = None
     fixed_positions_by_axis: dict | None = None
+
     def __str__(self):
         """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
 
@@ -65,13 +65,11 @@ class HivePlotLayout:
             f"  Long Edges: {self.long_edges}",
             f"  node_groups_expanded: {self.node_groups_expanded}",
             f"  edges_expanded: {self.edges_expanded}",
-            f"  Crossings (standard): {self.crossings}",
-            f"  Crossings (erweitert): {self.crossings_expanded}"
-            f"  fixed_delta: {self.fixed_inter_axis_delta}"
+            f"  Kreuzungen: {self.crossings_expanded}"
         ]
         return "\n".join(lines)
     
-    def copy(self):
+    def copy(self) -> copy:
         "Gibt eine Deepcopy des Hiveplotlayouts zurück."
         return copy.deepcopy(self)
 
@@ -96,21 +94,6 @@ class HivePlotLayout:
             for node in fused_node_groups[key]:
                 updated_node_list.append(node)
         return updated_node_list
-
-    def nodes_on_axis(self, axis: int, include_dummies: bool = False) -> list[int]:
-        """Gibt die Knoten einer bestimmten Achse zurück.
-
-        Args:
-            axis (int): Die Achse, für die die Knoten zurückgegeben werden sollen
-            include_dummies (bool): false (default) Rückgabe ohne dummies, true mit dummies
-
-        Returns:
-            list[int]: Liste der Knoten auf der angegebenen Achse
-        """
-        if include_dummies:
-            return self.fuse_node_groups_with_dummies().get(axis, [])
-        else:
-            return self.node_groups.get(axis, [])
     
     def fuse_node_groups_with_dummies(self, layout_expanded:bool = False) -> dict[int, list[int | str]]:
         """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.
@@ -131,11 +114,11 @@ class HivePlotLayout:
                 fused_groups[axis] = list(original_nodes) + list(dummy_nodes)
         return fused_groups
 
-    def fuse_edges_with_edge_dummies(self,  layout_expanded:bool = False) -> list[tuple[int, int]]:
+    def fuse_edges_with_edge_dummies(self) -> list[tuple[int | str, int | str]]:
         """Erzeugt eine Liste die alle kurzen Kanten und Dummykanten vereinigt zurückgibt.
 
         Returns:
-            list[tuple[int, int]]: Vereinigung aus Kanten und Dummykanten
+            list[tuple[int | str, int | str]]: Vereinigung aus Kanten und Dummykanten
         """
         direct_edges = [edge for edge in self.edges() if edge not in self.long_edges]
         fused_edges = direct_edges + self.dummy_edge_segments
@@ -183,15 +166,20 @@ class HivePlotLayout:
         Args:
             node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID
         """
-        edge_axis_map = {edge: (node_axis_map[edge[0]], node_axis_map[edge[1]]) for edge in self.edges()} # initialisiere kanten zu achsen map
+        # initialisierung
+        edge_axis_map = {edge: (node_axis_map[edge[0]], node_axis_map[edge[1]]) for edge in self.edges()}
         intra_expandables = {}
         inter_expandables = {}
         node_groups_expanded = self.node_groups_expanded
         node_groups = self.node_groups
+
+        # intra kanten filtern
         for edge in edge_axis_map: # key = knotenpaar, filter nach intra axis kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
                  intra_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
+        
+        # inter kanten filtern
         for edge in edge_axis_map: # erst möglich nach dem filtern der einen intra kanten
             edge_positions = edge_axis_map[edge]
             if edge_positions[0] == edge_positions[1]:
@@ -200,25 +188,32 @@ class HivePlotLayout:
                 inter_expandables.setdefault(edge_positions[0], []).append(edge) # check ob key vorhandenen + append
             elif edge_positions[1] in intra_expandables:
                 inter_expandables.setdefault(edge_positions[1], []).append(edge) # check ob key vorhandenen + append
+
+        # expandierte node_groups initialisieren
         for key in node_groups:
             if key not in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy()
             elif key in intra_expandables:
                 node_groups_expanded[key] = node_groups[key].copy() # pi^- links
                 node_groups_expanded[-key] = [-node for node in node_groups[key]] # pi^- rechts
+
+        # datenstrukturen aktualisieren und vorbereiten
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
         axis_position_map = {}
         for i, axis in enumerate(self.axis_order): # achsenid: position in phi
             axis_position_map[axis] = i
-        # die mit expandierten achsen verbundenen kanten aus dem hiveplotlayout entfernen und in korrektem format wieder hineinschreiben
+
+        # intra kanten spiegeln
         for axis in intra_expandables:
             self.graph.remove_edges_from(intra_expandables[axis])
             new_intra_edges = []
-            for edge in intra_expandables[axis]: # expandierte achse und ihre intra knoten als
+            for edge in intra_expandables[axis]: # expandierte achse und ihre intra kanten spiegeln
                 new_intra_edges.append((-edge[0], edge[1]))
                 new_intra_edges.append((edge[0], -edge[1]))
             self.graph.add_edges_from(new_intra_edges)
+
+        # inter kanten spiegeln
         for axis in inter_expandables:
             self.graph.remove_edges_from(inter_expandables[axis])
             new_inter_edges = []
@@ -230,23 +225,31 @@ class HivePlotLayout:
                 pos_axis_v = axis_position_map.get(axis_v, axis_position_map.get((axis_v, 0)))
                 dist_left_u_v = (pos_axis_u - pos_axis_v) % k
                 dist_left_v_u = (pos_axis_v - pos_axis_u) % k
+
+                # FALL A
                 if axis_u in intra_expandables and axis_v in intra_expandables: # ziel- und startachse expandiert
                     if dist_left_u_v <= dist_left_v_u: # v -> u + bei gleichstand immer links
                         new_inter_edges.append((edge[0], -edge[1]))
                     elif dist_left_v_u < dist_left_u_v: # u auf expandierter achse und u -> v
                         new_inter_edges.append((-edge[0], edge[1]))
+                
+                # FALL B
                 elif axis_u == axis:
                     if dist_left_u_v <= dist_left_v_u: # u auf expandierter achse und v -> u + bei gleichstand immer links
                         new_inter_edges.append((edge[0], edge[1]))
                     elif dist_left_v_u < dist_left_u_v: # u auf expandierter achse und u -> v
                         new_inter_edges.append((-edge[0], edge[1]))
+
+                # FALL C
                 elif axis_v == axis:
                     if dist_left_v_u <= dist_left_u_v: # v auf expandierter achse und u -> v
                         new_inter_edges.append((edge[0], edge[1]))
                     elif dist_left_u_v < dist_left_v_u: # v auf expandierter achse und v -> u
                         new_inter_edges.append((edge[0], -edge[1]))
+            # neue kanten in HPL speichern
             self.graph.add_edges_from(new_inter_edges)
-        # self.graph neue knoten auf expandierten achsen wieder einem neuen subset zuordnen
+
+        # sanity check für knoten
         for axis, nodes in self.node_groups_expanded.items():
             for node in nodes:
                 if node not in self.graph.nodes: # negative knotenids auf expandierten achsen behandeln
@@ -289,35 +292,32 @@ class HivePlotLayout:
             node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID
             dummy_copy (list[tuple[int  |  str, int  |  str]], optional): eine Aktuelle Kopie der Dummysegmente, Default ist None
         """
+        # kreis vermeiden
         from crossing_minimization import parse_dummy_name
         from ordering import node_to_axis_maps
 
+        # initialisierung
         if dummy_copy is None:
             dummy_edges = self.dummy_edge_segments
         else:
             dummy_edges = dummy_copy
-
         node_groups_expanded = self.node_groups_expanded
         node_groups = self.node_groups
-
-        edge_axis_map = {
-            edge: (node_axis_map[edge[0]], node_axis_map[edge[1]])
-            for edge in self.edges()
-        }
-
+        edge_axis_map = {edge: (node_axis_map[edge[0]], node_axis_map[edge[1]]) for edge in self.edges()}
         intra_expandables = {}
         inter_expandables = {}
 
+        # intra kanten filtern
         for edge, (axis_u, axis_v) in edge_axis_map.items():
             if axis_u == axis_v:
                 intra_expandables.setdefault(axis_u, []).append(edge)
-
         for edge in self.intra_axis_edges:
             axis_u = node_axis_map[edge[0]]
             axis_v = node_axis_map[edge[1]]
-            if axis_u == axis_v:
+            if axis_u == axis_v: # fallback
                 intra_expandables.setdefault(axis_u, []).append(edge)
 
+        # inter kanten filtern
         for edge, (axis_u, axis_v) in edge_axis_map.items():
             if axis_u == axis_v:
                 continue
@@ -326,57 +326,48 @@ class HivePlotLayout:
             if axis_v in intra_expandables:
                 inter_expandables.setdefault(axis_v, []).append(edge)
 
+        # expandierte node_groups initialisieren
         for axis in node_groups:
             node_groups_expanded[axis] = node_groups[axis].copy()
-
             if axis in intra_expandables:
                 node_groups_expanded[-axis] = []
-
                 for node in node_groups[axis]:
-                    if isinstance(node, int):
+                    if isinstance(node, int): # realen knoten spiegeln
                         mirrored = -node
-                    else:
+                    else: # virtuelle knoten spiegeln
                         u, v, seq = parse_dummy_name(node)
                         mirrored = f"d_{u}_{v}_{-seq}"
-
                     if mirrored not in node_groups_expanded[-axis]:
                         node_groups_expanded[-axis].append(mirrored)
-
                     if mirrored not in self.graph:
                         self.graph.add_node(mirrored)
-
                     if isinstance(node, str):
                         self.graph.add_edge(node, mirrored)
                         if (node, mirrored) not in dummy_edges:
                             dummy_edges.append((node, mirrored))
 
+        # datenstrukturen aktualisieren und vorbereiten
         self.axis_order = list(node_groups_expanded.keys())
         self.num_axes = len(self.axis_order)
-
-        node_groups_for_axis_map = {
-            axis: list(nodes)
-            for axis, nodes in node_groups_expanded.items()
-        }
-
+        node_groups_for_axis_map = {axis: list(nodes) for axis, nodes in node_groups_expanded.items()}
         for axis, dummies in self.node_groups_dummies.items():
             node_groups_for_axis_map.setdefault(axis, [])
             for dummy in dummies:
                 if dummy not in node_groups_for_axis_map[axis]:
                     node_groups_for_axis_map[axis].append(dummy)
-
         _, node_to_axis_map_updated = node_to_axis_maps(self, node_groups_for_axis_map)
 
+        # korrekten spiegel ermitteln, notwendig für lange dummysegmente (vorher long kanten mit span > 2)
         def mirror_endpoint(node):
             if isinstance(node, int):
                 return -node
-
+            
             u, v, seq = parse_dummy_name(node)
             mirrored = f"d_{u}_{v}_{-seq}"
-
             axis = node_to_axis_map_updated[node]
             mirror_axis = -axis
-
             self.node_groups_dummies.setdefault(mirror_axis, [])
+
             if mirrored not in self.node_groups_dummies[mirror_axis]:
                 self.node_groups_dummies[mirror_axis].append(mirrored)
 
@@ -389,59 +380,54 @@ class HivePlotLayout:
             if mirrored not in self.graph:
                 self.graph.add_node(mirrored)
 
-            # interne verbindung zwischen dummy und dummy spiegel
+            # interne verbindung zwischen dummy und dummy spiegel in datenstruktur einfügen
             if not self.graph.has_edge(node, mirrored):
                 self.graph.add_edge(node, mirrored)
-
             if (node, mirrored) not in dummy_edges and (mirrored, node) not in dummy_edges:
                 dummy_edges.append((node, mirrored))
 
             return mirrored
 
-        edge_axis_map = {
-            edge: (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]])
-            for edge in self.edges()
-        }
+        # aktualisierung
+        edge_axis_map = {edge: (node_to_axis_map_updated[edge[0]], node_to_axis_map_updated[edge[1]]) for edge in self.edges()}
+        axis_position_map = {axis: i for i, axis in enumerate(self.axis_order)}
 
-        axis_position_map = {
-            axis: i
-            for i, axis in enumerate(self.axis_order)
-        }
-
+        # alte segmente nach spiegelnung entfernen
         def remove_dummy_segment(edge):
             if edge in self.dummy_edge_segments:
                 self.dummy_edge_segments.remove(edge)
             elif (edge[1], edge[0]) in self.dummy_edge_segments:
                 self.dummy_edge_segments.remove((edge[1], edge[0]))
 
+        # intra kanten spiegeln
         for axis, edges in intra_expandables.items():
             self.graph.remove_edges_from(edges)
-
             new_intra_edges = []
+
             for u, v in edges:
                 new_intra_edges.append((mirror_endpoint(u), v))
                 new_intra_edges.append((u, mirror_endpoint(v)))
-
             self.graph.add_edges_from(new_intra_edges)
 
+        # inter kanten spiegeln
         for axis, edges in inter_expandables.items():
             self.graph.remove_edges_from(edges)
-
             new_inter_edges = []
 
             for edge in edges:
+                # initialisierung
                 axis_u, axis_v = edge_axis_map[edge]
-
                 pos_u = axis_position_map[axis_u]
                 pos_v = axis_position_map[axis_v]
                 k = self.num_axes
-
+                # linksgerichtete distanz
                 dist_left_u_v = (pos_u - pos_v) % k
                 dist_left_v_u = (pos_v - pos_u) % k
 
                 u, v = edge
                 new_u, new_v = u, v
 
+                # Fall A
                 if axis_u in intra_expandables and axis_v in intra_expandables:
                     if dist_left_u_v <= dist_left_v_u:
                         # u bleibt auf Originalachse, v geht auf Kopie
@@ -450,10 +436,12 @@ class HivePlotLayout:
                         # v bleibt auf Originalachse, u geht auf Kopie
                         new_u = mirror_endpoint(u)
 
+                # Fall B
                 elif axis_u == axis:
                     if dist_left_u_v > dist_left_v_u:
                         new_u = mirror_endpoint(u)
 
+                # Fall C
                 elif axis_v == axis:
                     if dist_left_v_u > dist_left_u_v:
                         new_v = mirror_endpoint(v)
@@ -461,37 +449,20 @@ class HivePlotLayout:
                 new_edge = (new_u, new_v)
                 new_inter_edges.append(new_edge)
                 remove_dummy_segment(edge)
-
+            # kanten aktualisieren
             self.graph.add_edges_from(new_inter_edges)
 
+        # sanity check
         for axis, nodes in self.node_groups_expanded.items():
             for node in nodes:
                 if node not in self.graph.nodes:
                     self.graph.add_node(node)
                 self.graph.nodes[node]["subset"] = axis
-    def prepare_for_rendering(self) -> None:
-        """Funktion entfernt alle intra-axis Kanten aus self.edges() und schreibt sie nach self.intra_axis_edges. Notwendig, weil die Rendererlogik sonst falsche 
-        Kanten zeichnet. Wird für das zeichnen im nicht expandierten Fall benötigt, da sonst intra-axis Kanten eingezeichnet werden, was zu Fehlern in der Darstellung führt. 
-        """
-        # ><
-        node_axis_map = {}
-        groups = self.node_groups_expanded if self.node_groups_expanded else self.fuse_node_groups_with_dummies()
-        for axis, nodes in groups.items():
-            for node in nodes:
-                node_axis_map[node] = axis
-        
-        intra_edges = [edge for edge in self.edges()
-                if edge[0] in node_axis_map 
-                and edge[1] in node_axis_map
-                and node_axis_map[edge[0]] == node_axis_map[edge[1]]]
-        
-        self.graph.remove_edges_from(intra_edges)
-        for edge in intra_edges:
-            if edge not in self.intra_axis_edges:
-                self.intra_axis_edges.append(edge)
         
     def count_crossings(self: HivePlotLayout,  layout_expanded:bool = False) -> int:
-        """X"""
+        """Funktion zählt die induzierten Kanten des fertigen Hiveplotlayout.
+        """
+        # initialisieren
         if layout_expanded:
             node_groups = self.node_groups_expanded
         else:
@@ -500,7 +471,6 @@ class HivePlotLayout:
         for edge in self.intra_axis_edges:
             if edge in self.graph.edges() and not layout_expanded:
                 hpl_copy.graph.remove_edge(edge[0], edge[1])
-        
         if layout_expanded:
             neighbor_map = self.get_proper_neighborhood_map(self.edges(), layout_expanded)
         else:
@@ -512,6 +482,8 @@ class HivePlotLayout:
             for i, node in enumerate(node_groups[axis]):
                 node_positions_pi[node] = i
                 node_axis_map[node] = axis
+        
+        # zähllogik 
         crossings = 0
         k = len(self.axis_order)
         for step in range(k): # betrachte achsen paarweise
@@ -524,18 +496,11 @@ class HivePlotLayout:
                         for t in neighbor_map.get(v, []):
                             if (node_axis_map.get(s) == axis_j and node_axis_map.get(t) == axis_j and node_positions_pi[t] < node_positions_pi[s]):
                                 crossings += 1
+
         return crossings
     
     def classify_nodes_for_3b(self) -> None:
-        """Klassifiziert die Knoten für den zweiten Optimierungsschritt (3b).
-
-        mixed_nodes_by_axis:
-            Alle Knoten, deren relative Ordnung bereits in 3a bestimmt wurde
-            (mixed + inter-axis).
-
-        strict_intra_nodes_by_axis:
-            Alle reinen intra-axis Knoten, deren Reihenfolge erst in 3b
-            optimiert werden soll.
+        """Klassifiziert die Knoten für Pipelineschritt 3b.
         """
 
         self.mixed_nodes_by_axis = {}
@@ -553,15 +518,13 @@ class HivePlotLayout:
                 else:
                     self.mixed_nodes_by_axis[axis].append(node)
     
-    def freeze_inter_axis_delta(self):
-        """X"""
+    def freeze_inter_axis_delta(self) -> None:
+        """Legt die delta Map für den Pipelineschritt 3b der ILP-Pipeline fest. Wird für alle mixed Knoten ermittelt.
+        """
         from ip_model import delta_mapping
-
         groups_copy = {}
-
         for axis in self.node_groups:
             groups_copy[axis] = []
-
             for node in self.node_groups[axis]:
                 groups_copy[axis].append(node)
 
@@ -589,7 +552,7 @@ class HivePlotLayout:
         self.fixed_inter_axis_delta = partial_delta
 
     def freeze_barycenter_positions(self, layout_expanded=False):
-        """X"""
+        """Legt die fixierten Positionen für den Pipelineschritt 3b der Barycenterpipeline fest. Wird für alle mixed Knoten ermittelt."""
         self.fixed_positions_by_axis = {}
 
         if layout_expanded:
@@ -597,11 +560,7 @@ class HivePlotLayout:
         else:
             node_groups = self.node_groups
 
-        for axis, nodes in node_groups.items():
-            self.fixed_positions_by_axis[axis] = {
-                node : pos
-                for pos, node in enumerate(nodes)
-            }
+        for axis, nodes in node_groups.items(): self.fixed_positions_by_axis[axis] = {node : position for position, node in enumerate(nodes)}
 
 if __name__ == "__main__":
    pass
