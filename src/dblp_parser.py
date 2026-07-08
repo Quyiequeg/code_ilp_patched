@@ -148,15 +148,4 @@ def build_node_identity_maps(nodes: list[str]) -> tuple[dict[int, str], dict[str
     return id_to_name, name_to_id
 
 if __name__ == "__main__":
-    xml_path   = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\dblp-2025-05-02.xml"
-    cache_path = r"E:\Programming Workspace\Python\BA-Sauerteig\dblp_daten_gesamt\gd_graphs.pkl"
-
-    # graphs = parse_gd_coauthor_networks(xml_path, cache_path)
-
-    # for year in sorted(graphs.keys()):
-    #     G = graphs[year]
-        # print(f"{year}: {G.number_of_nodes()} Autoren, {G.number_of_edges()} Co-Autorenschaft-Kanten")
-    with open(cache_path, "rb") as file:
-        graphs = pickle.load(file)
-    G = graphs[2000]
-    print(G.nodes())    
+    pass   

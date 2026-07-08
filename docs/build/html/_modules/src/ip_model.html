@@ -1,0 +1,822 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.ip_model &mdash; BA-Sauerteig 1.0 Dokumentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8fdbe8ab"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=9bf55d28"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Stichwortverzeichnis" href="../../genindex.html" />
+    <link rel="search" title="Suche" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            BA-Sauerteig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" aria-label="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">BA-Sauerteig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modul-Quellcode</a></li>
+      <li class="breadcrumb-item active">src.ip_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Quellcode für src.ip_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">crossing_minimization</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ordering</span><span class="w"> </span><span class="kn">import</span> <span class="n">node_to_axis_maps</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pulp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logger_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hiveplot</span><span class="w"> </span><span class="kn">import</span> <span class="n">HivePlotLayout</span>
+
+<div class="viewcode-block" id="get_delta_value">
+<a class="viewcode-back" href="../../api.html#src.ip_model.get_delta_value">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_delta_value</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">fixed_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">u</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Die Funktion gibt das korrekte delta für fixierte oder nicht fixierte Ordnung zurück. Notwendig für 3b.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+
+    <span class="c1">#  3b</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fixed_delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="c1"># 3a</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="c1"># korrektes element ermitteln</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">mirrored_key</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">u</span><span class="p">,</span> <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">-</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">mirrored_key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fixed_delta</span><span class="p">[</span><span class="n">mirrored_key</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">mirrored_key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">delta</span><span class="p">[</span><span class="n">mirrored_key</span><span class="p">]</span>
+
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ilp_name">
+<a class="viewcode-back" href="../../api.html#src.ip_model.ilp_name">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ilp_name</span><span class="p">(</span><span class="o">*</span><span class="n">parts</span><span class="p">):</span>
+    <span class="c1"># ersetzt &quot;-&quot; durch &quot;m&quot; in den variablen, sonst wirft pulp warnungen</span>
+    <span class="k">return</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="onelayer_twosided_optimization">
+<a class="viewcode-back" href="../../api.html#src.ip_model.onelayer_twosided_optimization">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">onelayer_twosided_optimization</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">layout_expanded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">paper_like</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enthält die gesamte Logik, um das One Layer Two Sided Integer Linear Program (1L2S ILP) zu definieren und zu berechnen. Die Funktion verändert das HiveplotLayout in-place. Die Pipeline besteht aus Sweeps.</span>
+<span class="sd">    Ein Sweep umfasst eine clockwise und eine counterclockwise Berechnung über jede Achse des Hiveplots. Folgende Schritte werden in der Funktion durchgeführt:</span>
+<span class="sd">    1. Initialisierung der Ordnungsvariablen (delta^i_u,v) durch delta_mapping()</span>
+<span class="sd">    2. Initialisierung der Sweepschleife, Abbruch bei Erreichen eines Thresholds</span>
+<span class="sd">    3. Danach schließt sich ein Sweep an erst in clockwise dann counterclockwise Richtung, beide habe das gleiche Schema:</span>
+<span class="sd">        a. Erstellen einer Probleminstanz und einer Kopie für die aktuelle Achse</span>
+<span class="sd">        b. Initialisierung der Ordnungsvariablen für die aktuelle Achse (virtuelle und reale Knotenordnung werden in einem Schritt berechnet, aber die Achsenordnung real &lt; virtuell muss berücksichtigt werden, da Gaps nicht explizit behandelt werden)</span>
+<span class="sd">            I: Ordnungsvariablen getrennt für reale und virtuelle Achsenabschnitte</span>
+<span class="sd">            II: Ordnungsvariablen für real &lt; virtuell = konstant 1</span>
+<span class="sd">            III: Ordnungsvariablen für virtuell &lt; real = konstant 0</span>
+<span class="sd">        c. Erstellen der Zielfunktion speziell für die variable Achse</span>
+<span class="sd">        d. Erstellen der Nebenbedingungen für:</span>
+<span class="sd">            I: Antisymmetrie (im Paper implizit behandelt)</span>
+<span class="sd">            II: Transitivität</span>
+<span class="sd">        e. Lösen des ILP</span>
+<span class="sd">        f. Synchroniesieren der Lösung mit delta</span>
+<span class="sd">    4. Aktualisieren des Layouts durch Übersetzung von delta zurück in die Achsenordnung, da die variable Achse auf einem geupdateten Stand ermittelt werden muss, wird dies am Ende eines Sweeps durchgeführt</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout (HivePlotLayout): das zugrundeliegende HivePlotLayout</span>
+<span class="sd">        neighborhood_map (dict[str | int, list[int  |  str]]): KnotenID: Liste von proper Nachbarn</span>
+<span class="sd">        node_axis_map (dict[str  | int, int]): KnotenID: Achse</span>
+<span class="sd">        threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10</span>
+<span class="sd">        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sorted_neighbor_map_3a</span><span class="p">(</span><span class="n">neighborhood_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">],</span> <span class="n">pi_plus_axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pi_minus_axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Erzeugt ein dict, das für jeden Knoten in pi_var die Nachbarn auf der pi^+ und pi^- Achse enthält. Wird für die Zielfunktion benötigt, da hierdurch die Nachbarachsen von pi_var fixiert werden.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            neighborhood_map (dict[str  | int, list[int | str]]): KnotenID: Liste von proper Nachbarn</span>
+<span class="sd">            node_axis_map (dict[str  | int, int]): KnotenID: Achse</span>
+<span class="sd">            pi_var (list[int | str]): variable Achsenordnung pi_i</span>
+<span class="sd">            pi_plus_axis (int): fixierte Nachbarachse pi^+</span>
+<span class="sd">            pi_minus_axis (int): fixierte Nachbarachse pi^-</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[int, list[int | str]]: (pi^+/pi^- ID, node aus pi_i): Liste der Nachbarn von node auf der jeweiligen Achse</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sorted_neighbors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">pi_var</span><span class="p">:</span>
+            <span class="n">plus_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">minus_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">neighbors</span> <span class="o">=</span> <span class="n">neighborhood_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">neighbors</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">==</span> <span class="n">pi_minus_axis</span><span class="p">:</span>
+                    <span class="n">minus_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">==</span> <span class="n">pi_plus_axis</span><span class="p">:</span>
+                    <span class="n">plus_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+            <span class="n">sorted_neighbors</span><span class="p">[(</span><span class="n">pi_minus_axis</span><span class="p">,</span> <span class="n">node</span><span class="p">)]</span> <span class="o">=</span> <span class="n">minus_list</span>
+            <span class="n">sorted_neighbors</span><span class="p">[(</span><span class="n">pi_plus_axis</span><span class="p">,</span> <span class="n">node</span><span class="p">)]</span> <span class="o">=</span> <span class="n">plus_list</span>
+        <span class="k">return</span> <span class="n">sorted_neighbors</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">delta_to_order</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span> <span class="n">fused_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Übersetzt und schreibt am Ende des Sweeps delta wieder zurück in das Layout.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            delta (dict[tuple[int | str, int | str, int], int]): delta^i_u,v: 1 | 0</span>
+<span class="sd">            fused_groups (dict[int, list[int | str]]): AchsenID: Knotenliste</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[dict[int, list[int|str]], dict[int, list[int|str]]]: node_groups, node_groups_dummies </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_node_groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">new_dummy_groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">fused_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="p">{</span><span class="n">u</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">delta</span><span class="p">[(</span><span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="p">)]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">u</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">}</span> <span class="c1"># rang = anzahl knoten die vor u kommen</span>
+            <span class="n">sorted_nodes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">positions</span><span class="p">[</span><span class="n">u</span><span class="p">])</span>
+            <span class="n">new_node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>  <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sorted_nodes</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">int</span><span class="p">)]</span>
+            <span class="n">new_dummy_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sorted_nodes</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">str</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">new_node_groups</span><span class="p">,</span> <span class="n">new_dummy_groups</span>
+    
+    <span class="c1"># initialisierung</span>
+    <span class="n">fused_groups</span> <span class="o">=</span>  <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">axis_order</span>
+    <span class="n">reversed_phi</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
+    <span class="n">phi_index_map</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
+        <span class="n">phi_index_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">delta_mapping</span><span class="p">(</span><span class="n">fused_groups</span><span class="p">)</span>
+    <span class="n">threshold_break</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># abbruchkriterien</span>
+    <span class="k">while</span> <span class="n">threshold_break</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+        <span class="n">threshold_break</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># cw-sweep</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">phi</span><span class="p">:</span>
+            <span class="c1"># probleminstanz</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpProblem</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;1S2L_ILP_clockwise_run_</span><span class="si">{</span><span class="n">threshold_break</span><span class="si">}</span><span class="s2">_axis_</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpMinimize</span><span class="p">)</span>
+
+            <span class="c1"># variablen: in delta abgelegt</span>
+            <span class="n">delta_static</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># aktuelle ordnungsmap</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">axis</span><span class="p">:</span> <span class="c1"># nur zu optimierende Achse</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">)):</span> 
+                    <span class="n">var_name</span> <span class="o">=</span> <span class="n">ilp_name</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">(</span><span class="n">var_name</span><span class="p">,</span> <span class="n">cat</span><span class="o">=</span><span class="s2">&quot;Binary&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># real &lt; virtuell =  1</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># virtuell &lt; real = 0</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># zielfunktion</span>
+            <span class="n">pi_plus_idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_index_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="c1"># achsen index in phi</span>
+            <span class="n">pi_plus_axis</span> <span class="o">=</span> <span class="n">phi</span><span class="p">[</span><span class="n">pi_plus_idx</span><span class="p">]</span>
+            <span class="n">pi_minus_idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_index_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+            <span class="n">pi_minus_axis</span> <span class="o">=</span> <span class="n">phi</span><span class="p">[</span><span class="n">pi_minus_idx</span><span class="p">]</span>
+            <span class="n">pi_var</span> <span class="o">=</span> <span class="n">fused_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="c1"># knotenliste von pi</span>
+            <span class="n">sorted_neighbors</span> <span class="o">=</span> <span class="n">sorted_neighbor_map_3a</span><span class="p">(</span><span class="n">neighborhood_map</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">,</span> <span class="n">pi_plus_axis</span><span class="p">,</span> <span class="n">pi_minus_axis</span><span class="p">)</span>
+            <span class="n">prob</span> <span class="o">+=</span> <span class="p">(</span><span class="n">induced_crossings</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">delta_static</span><span class="p">,</span> <span class="p">{},</span> <span class="n">sorted_neighbors</span><span class="p">,</span> <span class="n">pi_minus_axis</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">)</span> <span class="o">+</span> <span class="n">induced_crossings</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">delta_static</span><span class="p">,</span> <span class="p">{},</span> <span class="n">sorted_neighbors</span><span class="p">,</span> <span class="n">pi_plus_axis</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">)),</span> <span class="s2">&quot;1L2S-Kreuzungsminimierung&quot;</span>
+            
+            <span class="c1"># nebenbedingungen</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span> 
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">uv</span> <span class="o">=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">)]</span>
+                    <span class="n">vu</span> <span class="o">=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uv</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vu</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">):</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vu</span> <span class="o">==</span> <span class="mi">1</span> <span class="c1"># vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span> <span class="c1"># transitivitätsbedingungen</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                        <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">v</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">+</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">v</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">-</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">v</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">+</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">v</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">-</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="c1"># prüfen: binärvariablen zwangsweise nicht negativ, ggf performanceleck</span>
+            
+            <span class="c1"># lösen</span>
+            <span class="c1"># prob.solve(pp.PULP_CBC_CMD(msg=True))</span>
+            <span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">PULP_CBC_CMD</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+            
+            <span class="c1"># schreibe problem um nach delta</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">axis</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        
+        <span class="c1"># ccw-sweep</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">reversed_phi</span><span class="p">:</span>
+            <span class="c1"># probleminstanz</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpProblem</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;1S2L_ILP_counter_clockwise_run_</span><span class="si">{</span><span class="n">threshold_break</span><span class="si">}</span><span class="s2">_axis_</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpMinimize</span><span class="p">)</span>
+            
+            <span class="c1"># variablen: in delta abgelegt</span>
+            <span class="n">delta_static</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># aktuelle ordnungsmap</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">axis</span><span class="p">:</span> <span class="c1"># nur zu optimierende Achse</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">)):</span> 
+                    <span class="n">var_name</span> <span class="o">=</span> <span class="n">ilp_name</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">(</span><span class="n">var_name</span><span class="p">,</span> <span class="n">cat</span><span class="o">=</span><span class="s2">&quot;Binary&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># real &lt; virtuell =  1</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># virtuell &lt; real = 0</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># zielfunktion</span>
+            <span class="n">pi_plus_idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_index_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="c1"># achsen index in phi</span>
+            <span class="n">pi_plus_axis</span> <span class="o">=</span> <span class="n">phi</span><span class="p">[</span><span class="n">pi_plus_idx</span><span class="p">]</span>
+            <span class="n">pi_minus_idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_index_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+            <span class="n">pi_minus_axis</span> <span class="o">=</span> <span class="n">phi</span><span class="p">[</span><span class="n">pi_minus_idx</span><span class="p">]</span>
+            <span class="n">pi_var</span> <span class="o">=</span> <span class="n">fused_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="c1"># knotenliste von pi</span>
+            <span class="n">sorted_neighbors</span> <span class="o">=</span> <span class="n">sorted_neighbor_map_3a</span><span class="p">(</span><span class="n">neighborhood_map</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">,</span> <span class="n">pi_plus_axis</span><span class="p">,</span> <span class="n">pi_minus_axis</span><span class="p">)</span>
+            <span class="n">prob</span> <span class="o">+=</span> <span class="p">(</span><span class="n">induced_crossings</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">delta_static</span><span class="p">,</span> <span class="p">{},</span> <span class="n">sorted_neighbors</span><span class="p">,</span> <span class="n">pi_minus_axis</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">)</span> <span class="o">+</span> <span class="n">induced_crossings</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">delta_static</span><span class="p">,</span> <span class="p">{},</span> <span class="n">sorted_neighbors</span><span class="p">,</span> <span class="n">pi_plus_axis</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">)),</span> <span class="s2">&quot;1L2S-Kreuzungsminimierung&quot;</span>
+            
+            <span class="c1"># nebenbedingungen</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span> <span class="c1"># antisymmetrie, im paper </span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">uv</span> <span class="o">=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">)]</span>
+                    <span class="n">vu</span> <span class="o">=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uv</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vu</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">):</span> 
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vu</span> <span class="o">==</span> <span class="mi">1</span> <span class="c1"># vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                        <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">v</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">+</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">v</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">-</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">v</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">+</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">v</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">-</span> <span class="n">delta_static</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">axis</span><span class="p">)]</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="c1"># prüfen: binärvariablen zwangsweise nicht negativ, ggf performanceleck</span>
+            
+            <span class="c1"># lösen</span>
+            <span class="c1"># prob.solve(pp.PULP_CBC_CMD(msg=True))</span>
+            <span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">PULP_CBC_CMD</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+            <span class="c1"># schreibe problem um nach delta</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">axis</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="c1"># datenstrukturen im HPL aktualisieren</span>
+        <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span> <span class="o">=</span> <span class="n">delta_to_order</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">fused_groups</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span> <span class="o">=</span> <span class="n">delta_to_order</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">fused_groups</span><span class="p">)</span>
+        <span class="n">fused_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span> <span class="c1"># variable achse muss auf geupdatetem stand ermittelt werden</span></div>
+
+
+<div class="viewcode-block" id="linearize_product">
+<a class="viewcode-back" href="../../api.html#src.ip_model.linearize_product">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">linearize_product</span><span class="p">(</span><span class="n">prob</span><span class="p">:</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpProblem</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Die Funktion kapselt die Linearisierung der quadratischen Terme in der Zielfunktion. Legt sowohl Variablen an als auch Nebenbedingungen fest.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">b</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">a</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">(</span><span class="n">ilp_name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">cat</span><span class="o">=</span><span class="s2">&quot;Binary&quot;</span><span class="p">)</span>
+    <span class="n">prob</span> <span class="o">+=</span> <span class="n">z</span> <span class="o">&lt;=</span> <span class="n">a</span>
+    <span class="n">prob</span> <span class="o">+=</span> <span class="n">z</span> <span class="o">&lt;=</span> <span class="n">b</span>
+    <span class="n">prob</span> <span class="o">+=</span> <span class="n">z</span> <span class="o">&gt;=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="c1"># z &gt;= 0 unnötig, da z binär</span>
+
+    <span class="k">return</span> <span class="n">z</span></div>
+
+
+<div class="viewcode-block" id="delta_mapping">
+<a class="viewcode-back" href="../../api.html#src.ip_model.delta_mapping">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">delta_mapping</span><span class="p">(</span><span class="n">fused_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dient der Initialisierung der Ordnungsvariablen (delta^i_u,v) für das 1L2S-ILP. Erzeugt aus der Vereinigung von virtuellen und realen Knoten das Mapping.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout (HivePlotLayout): das zugrundeliegende Hiveplotlayout</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict[tuple[int | str, ...], None]: key: (u, v, alpha(u,v)), value: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">fused_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)):</span>
+                <span class="n">delta</span><span class="p">[(</span><span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">nodes</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">axis</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">delta</span><span class="p">[(</span><span class="n">nodes</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">axis</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">delta</span></div>
+
+
+<div class="viewcode-block" id="onelayer_twosided_optimization_3b">
+<a class="viewcode-back" href="../../api.html#src.ip_model.onelayer_twosided_optimization_3b">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">onelayer_twosided_optimization_3b</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">layout_expanded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">paper_like</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span>  <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Die Funktion arbeitet analog zu onelayer_twosided_optimization(), berücksichtigt allerdings die zuvor fixierte globale Ordnung. Die Funktion wird explizit für Pipelineschritt 3b benötigt.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout (HivePlotLayout): das zugrundeliegende HivePlotLayout</span>
+<span class="sd">        neighborhood_map (dict[str | int, list[int  |  str]]): KnotenID: Liste von proper Nachbarn</span>
+<span class="sd">        node_axis_map (dict[str  | int, int]): KnotenID: Achse</span>
+<span class="sd">        threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10</span>
+<span class="sd">        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sorted_neighbor_map_3b</span><span class="p">(</span><span class="n">neighborhood_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">],</span> <span class="n">pi_plus_axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pi_minus_axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Erzeugt ein dict, das für jeden Knoten in pi_var die Nachbarn auf der pi^+ und pi^- Achse enthält. Wird für die Zielfunktion benötigt, da hierdurch die Nachbarachsen von pi_var fixiert werden.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            neighborhood_map (dict[str  | int, list[int | str]]): KnotenID: Liste von proper Nachbarn</span>
+<span class="sd">            node_axis_map (dict[str  | int, int]): KnotenID: Achse</span>
+<span class="sd">            pi_var (list[int | str]): variable Achsenordnung pi_i</span>
+<span class="sd">            pi_plus_axis (int): fixierte Nachbarachse pi^+</span>
+<span class="sd">            pi_minus_axis (int): fixierte Nachbarachse pi^-</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[int, list[int | str]]: (pi^+/pi^- ID, node aus pi_i): Liste der Nachbarn von node auf der jeweiligen Achse</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sorted_neighbors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">pi_var</span><span class="p">:</span>
+            <span class="n">plus_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">minus_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">neighbors</span> <span class="o">=</span> <span class="n">neighborhood_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">neighbors</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">==</span> <span class="n">pi_minus_axis</span><span class="p">:</span>
+                    <span class="n">minus_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">==</span> <span class="n">pi_plus_axis</span><span class="p">:</span>
+                    <span class="n">plus_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pi_minus_axis</span> <span class="o">==</span> <span class="n">pi_plus_axis</span><span class="p">:</span>
+                <span class="n">sorted_neighbors</span><span class="p">[(</span><span class="n">pi_minus_axis</span><span class="p">,</span> <span class="n">node</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">minus_list</span> <span class="o">+</span> <span class="n">plus_list</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sorted_neighbors</span><span class="p">[(</span><span class="n">pi_minus_axis</span><span class="p">,</span> <span class="n">node</span><span class="p">)]</span> <span class="o">=</span> <span class="n">minus_list</span>
+                <span class="n">sorted_neighbors</span><span class="p">[(</span><span class="n">pi_plus_axis</span><span class="p">,</span> <span class="n">node</span><span class="p">)]</span> <span class="o">=</span> <span class="n">plus_list</span>
+        <span class="k">return</span> <span class="n">sorted_neighbors</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">delta_to_order</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span> <span class="n">fused_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="o">|</span><span class="nb">str</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Übersetzt und schreibt am Ende des Sweeps delta wieder zurück in das Layout.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            delta (dict[tuple[int | str, int | str, int], int]): delta^i_u,v: 1 | 0</span>
+<span class="sd">            fused_groups (dict[int, list[int | str]]): AchsenID: Knotenliste</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[dict[int, list[int|str]], dict[int, list[int|str]]]: node_groups, node_groups_dummies </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">fixed_delta</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fixed_inter_axis_delta</span>
+        <span class="k">if</span> <span class="n">fixed_delta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fixed_delta</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">new_node_groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">new_dummy_groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">fused_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="n">position</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">u</span><span class="p">:</span>
+                        <span class="n">position</span> <span class="o">+=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+
+                <span class="n">positions</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span> <span class="c1"># rang = anzahl knoten die vor u kommen</span>
+            <span class="n">sorted_nodes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">positions</span><span class="p">[</span><span class="n">u</span><span class="p">])</span>
+            <span class="n">new_node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>  <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sorted_nodes</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">int</span><span class="p">)]</span>
+            <span class="n">new_dummy_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sorted_nodes</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">str</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">new_node_groups</span><span class="p">,</span> <span class="n">new_dummy_groups</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">mirror_node</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gibt den gespiegelten realen oder virtuellen Knoten zurück.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">node</span>
+        <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">parse_dummy_name</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;d_</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="o">-</span><span class="n">seq</span><span class="si">}</span><span class="s2">&quot;</span>
+    
+    <span class="c1"># initialisierung</span>
+    <span class="n">fused_groups</span> <span class="o">=</span>  <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">axis_order</span>
+    <span class="n">reversed_phi</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
+    <span class="n">phi_index_map</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
+        <span class="n">phi_index_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">delta_mapping</span><span class="p">(</span><span class="n">fused_groups</span><span class="p">)</span>
+    <span class="n">threshold_break</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">fixed_delta</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fixed_inter_axis_delta</span>
+    <span class="k">if</span> <span class="n">fixed_delta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fixed_delta</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="c1"># abbruchkriterien</span>
+    <span class="k">while</span> <span class="n">threshold_break</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+        <span class="n">threshold_break</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># cw-sweep</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">phi</span><span class="p">:</span> <span class="c1"># expandierte achsen nicht behandeln = paper_like = gleiche ordnung</span>
+            <span class="c1"># expandierte teile ignorieren</span>
+            <span class="k">if</span> <span class="n">paper_like</span> <span class="ow">and</span> <span class="n">axis</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># probleminstanz</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpProblem</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;1S2L_ILP_clockwise_run_</span><span class="si">{</span><span class="n">threshold_break</span><span class="si">}</span><span class="s2">_axis_</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpMinimize</span><span class="p">)</span>
+
+            <span class="c1"># variablen: in delta abgelegt</span>
+            <span class="n">delta_static</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># aktuelle ordnungsmap</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">axis</span><span class="p">:</span> <span class="c1"># nur zu optimierende Achse</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">int</span><span class="p">)):</span> 
+                    <span class="n">mirrored_key</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">mirrored_key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)):</span> 
+                    <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">(</span><span class="n">ilp_name</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">cat</span><span class="o">=</span><span class="s2">&quot;Binary&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># real &lt; virtuell =  1</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># virtuell &lt; real = 0</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="n">pi_var</span> <span class="o">=</span> <span class="n">fused_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="c1"># knotenliste von pi</span>
+            
+            <span class="c1"># fallback bei leeren achsen</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            
+            <span class="c1"># zielfunktion</span>
+            <span class="n">mirror_axis</span> <span class="o">=</span> <span class="o">-</span><span class="n">axis</span>
+            <span class="n">sorted_neighbors</span> <span class="o">=</span> <span class="n">sorted_neighbor_map_3b</span><span class="p">(</span><span class="n">neighborhood_map</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">,</span> <span class="n">mirror_axis</span><span class="p">,</span> <span class="n">mirror_axis</span><span class="p">)</span>
+            <span class="n">prob</span> <span class="o">+=</span> <span class="n">induced_crossings</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">sorted_neighbors</span><span class="p">,</span> <span class="n">mirror_axis</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span><span class="n">pi_var</span><span class="p">),</span> <span class="s2">&quot;1L2S-Kreuzungsminimierung&quot;</span>
+            
+            <span class="c1"># nebenbedingungen</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span> 
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">uv</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                    <span class="n">vu</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                    <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vu</span> <span class="o">==</span> <span class="mi">1</span> <span class="c1"># vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                        <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                        <span class="n">uv</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                        <span class="n">vw</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                        <span class="n">uw</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vw</span> <span class="o">-</span> <span class="n">uw</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vw</span> <span class="o">-</span> <span class="n">uw</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="c1"># prüfen: binärvariablen zwangsweise nicht negativ, ggf performanceleck</span>
+            
+            <span class="c1"># lösen</span>
+            <span class="c1"># prob.solve(pp.PULP_CBC_CMD(msg=True))</span>
+            <span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">PULP_CBC_CMD</span><span class="p">(</span><span class="n">msg</span> <span class="o">=</span> <span class="kc">False</span><span class="p">))</span>
+
+            <span class="c1"># schreibe problem um nach delta</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="c1"># fixierte ordnung ignorieren</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">axis</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">int</span><span class="p">)):</span>
+                    <span class="n">mirrored_key</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">mirrored_key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                
+                <span class="c1"># strict intra knoten wert zuweisen</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="c1"># ccw-sweep</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">reversed_phi</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">phi</span><span class="p">:</span> <span class="c1"># expandierte achsen nicht behandeln = paper_like = gleiche ordnung</span>
+                <span class="c1"># expandierte teile ignorieren</span>
+                <span class="k">if</span> <span class="n">paper_like</span> <span class="ow">and</span> <span class="n">axis</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+            <span class="c1"># probleminstanz</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpProblem</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;1S2L_ILP_counter_clockwise_run_</span><span class="si">{</span><span class="n">threshold_break</span><span class="si">}</span><span class="s2">_axis_</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpMinimize</span><span class="p">)</span>
+            
+            <span class="c1"># variablen: in delta abgelegt</span>
+            <span class="n">delta_static</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># aktuelle ordnungsmap</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">axis</span><span class="p">:</span> <span class="c1"># nur zu optimierende Achse</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)):</span> 
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">(</span><span class="n">ilp_name</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">cat</span><span class="o">=</span><span class="s2">&quot;Binary&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># real &lt; virtuell =  1</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># virtuell &lt; real = 0</span>
+                    <span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="n">pi_var</span> <span class="o">=</span> <span class="n">fused_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="c1"># knotenliste von pi</span>
+
+            <span class="c1"># fallback bei leeren achsen</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># zielfunktion</span>
+            <span class="n">mirror_axis</span> <span class="o">=</span> <span class="o">-</span><span class="n">axis</span>
+            <span class="n">sorted_neighbors</span> <span class="o">=</span> <span class="n">sorted_neighbor_map_3b</span><span class="p">(</span><span class="n">neighborhood_map</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">,</span> <span class="n">mirror_axis</span><span class="p">,</span> <span class="n">mirror_axis</span><span class="p">)</span>
+            <span class="n">prob</span> <span class="o">+=</span> <span class="n">induced_crossings</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">sorted_neighbors</span><span class="p">,</span> <span class="n">mirror_axis</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span><span class="n">pi_var</span><span class="p">),</span> <span class="s2">&quot;1L2S-Kreuzungsminimierung&quot;</span>
+            
+            <span class="c1"># nebenbedingungen</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span> <span class="c1"># antisymmetrie, im paper </span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">uv</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                    <span class="n">vu</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                    <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vu</span> <span class="o">==</span> <span class="mi">1</span> <span class="c1"># vollständigkeit der totalordnung sicherstellen, im paper implizit angenommen für delta^i_u, v</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+                        <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                        <span class="n">uv</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                        <span class="n">vw</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                        <span class="n">uw</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vw</span> <span class="o">-</span> <span class="n">uw</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+                        <span class="n">prob</span> <span class="o">+=</span> <span class="n">uv</span> <span class="o">+</span> <span class="n">vw</span> <span class="o">-</span> <span class="n">uw</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="c1"># prüfen: binärvariablen zwangsweise nicht negativ, ggf performanceleck</span>
+            
+            <span class="c1"># lösen</span>
+            <span class="c1"># prob.solve(pp.PULP_CBC_CMD(msg=True))</span>
+            <span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">PULP_CBC_CMD</span><span class="p">(</span><span class="n">msg</span> <span class="o">=</span> <span class="kc">False</span><span class="p">))</span>
+
+            <span class="c1"># schreibe problem um nach delta</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="c1"># fixierte ordnung ignorieren</span>
+                <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">axis</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">int</span><span class="p">)):</span>
+                    <span class="n">mirrored_key</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">mirrored_key</span> <span class="ow">in</span> <span class="n">fixed_delta</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                <span class="c1"># strict intra knoten wert zuweisen</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpVariable</span><span class="p">):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+                    <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="c1"># datenstrukturen aktualisieren</span>
+        <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span> <span class="o">=</span> <span class="n">delta_to_order</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">fused_groups</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">paper_like</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                    <span class="k">if</span> <span class="n">axis</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="o">-</span><span class="n">axis</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="p">:</span>
+                        <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="p">[</span><span class="o">-</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">mirror_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="p">[</span><span class="n">axis</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span> <span class="o">=</span> <span class="n">delta_to_order</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">fused_groups</span><span class="p">)</span>
+
+        <span class="n">fused_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span> <span class="c1"># variable achse muss auf geupdatetem stand ermittelt werden</span></div>
+
+
+<div class="viewcode-block" id="induced_crossings">
+<a class="viewcode-back" href="../../api.html#src.ip_model.induced_crossings">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">induced_crossings</span><span class="p">(</span><span class="n">prob</span><span class="p">:</span> <span class="n">pp</span><span class="o">.</span><span class="n">LpProblem</span><span class="p">,</span> <span class="n">delta_static</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">object</span><span class="p">],</span> <span class="n">fixed_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span> <span class="n">sorted_neighbors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">pi_fix</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pi_var_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pi_var</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ermittelt die Summanden der Zielfunktion für induzierte Kreuzungen. Für jedes Knotenpaar der variablen Achse werden alle Nachbarpaare auf</span>
+<span class="sd">    der festen Achse betrachtet. Kreuzungen werden durch die Linearisierung der Produkte der entsprechenden Ordnungsvariablen modelliert. Wir verwenden eine allgemeine </span>
+<span class="sd">    Linearisierung, da die Funktion get_delta_value sowohl feste Werte als auch PuLP-Variablen zurückgeben kann. Die Zielfunktion bleibt äquivalent zu Nöllenburg </span>
+<span class="sd">    und Wallinger, sie wird dadurch nur robust für den Solver.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        prob (pp.LpProblem): das zugrunde liegende ILP-Modell</span>
+<span class="sd">        delta_static (dict[tuple[int  |  str, int  |  str, int], object]): bereits bekannte Ordnungsvariablen</span>
+<span class="sd">        fixed_delta (dict[tuple[int  |  str, int  |  str, int], int]): fixierte delta-Werte</span>
+<span class="sd">        sorted_neighbors (dict[tuple[int, int  |  str], list[int  |  str]]): Nachbarschaftsmap</span>
+<span class="sd">        pi_fix (int): ID feste Achse</span>
+<span class="sd">        pi_var_id (int): ID variable Achse</span>
+<span class="sd">        pi_var (list[int  |  str]): Knoten der variablen Achse</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        object: lineare Zielfunktion zur Minimierung induzierter Kreuzungen</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">terms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># betrachte alle knotenpaare der variablen achse</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi_var</span><span class="p">)):</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">pi_var</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">del_uv</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">pi_var_id</span><span class="p">)</span>
+            <span class="n">del_vu</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">pi_var_id</span><span class="p">)</span>
+            <span class="n">neighbor_u</span> <span class="o">=</span> <span class="n">sorted_neighbors</span><span class="p">[(</span><span class="n">pi_fix</span><span class="p">,</span> <span class="n">u</span><span class="p">)]</span>
+            <span class="n">neighbor_v</span> <span class="o">=</span> <span class="n">sorted_neighbors</span><span class="p">[(</span><span class="n">pi_fix</span><span class="p">,</span> <span class="n">v</span><span class="p">)]</span>
+
+            <span class="c1"># prüfe alle kombinationen auf fester achsedddd</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">neighbor_u</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">neighbor_v</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">del_st</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">pi_fix</span><span class="p">)</span>
+                    <span class="n">del_ts</span> <span class="o">=</span> <span class="n">get_delta_value</span><span class="p">(</span><span class="n">delta_static</span><span class="p">,</span> <span class="n">fixed_delta</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">pi_fix</span><span class="p">)</span>
+                    <span class="c1"># linearisierung der produkte der ordnungsvariablen</span>
+                    <span class="n">z1</span> <span class="o">=</span> <span class="n">linearize_product</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">del_uv</span><span class="p">,</span> <span class="n">del_ts</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;z_</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">pi_var_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">pi_fix</span><span class="si">}</span><span class="s2">_1&quot;</span><span class="p">)</span>
+                    <span class="n">z2</span> <span class="o">=</span> <span class="n">linearize_product</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">del_vu</span><span class="p">,</span> <span class="n">del_st</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;z_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">pi_var_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">pi_fix</span><span class="si">}</span><span class="s2">_2&quot;</span><span class="p">)</span>
+                    <span class="n">terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z1</span> <span class="o">+</span> <span class="n">z2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pp</span><span class="o">.</span><span class="n">lpSum</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ip_model_pipeline">
+<a class="viewcode-back" href="../../api.html#src.ip_model.ip_model_pipeline">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ip_model_pipeline</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">paper_like</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Die Funktion führt die gesamte Pipeline zur Kreuzungsminimierung durch, inklusive der Berechnung des 1L2S-ILP. Alle Schritte werden in-place am HivePlotLayout durchgeführt.</span>
+<span class="sd">    Ablauf paper_like = false:</span>
+<span class="sd">    1. anfängliches Layout expandieren</span>
+<span class="sd">    2. isolierte Knoten entfernen</span>
+<span class="sd">    3. Segmentierung</span>
+<span class="sd">    4. 1L2S-ILP berechnen</span>
+<span class="sd">    5. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</span>
+
+<span class="sd">    Ablauf paper_like = true:</span>
+<span class="sd">    1. isolierte Knoten entfernen</span>
+<span class="sd">    2. Segmentierung</span>
+<span class="sd">    3. 1L2S-ILP berechnen 3a</span>
+<span class="sd">    4. 1L2S-ILP berechnen 3b</span>
+<span class="sd">    5. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout (HivePlotLayout): das zugrundeliegende Hiveplotlayout</span>
+<span class="sd">        threshold (int, optional): Anzahl der Sweeps bis zum Abbruch, Defaultwert ist 10.</span>
+<span class="sd">        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">        paper_like(bool): dient der Unterscheidung zwischen identischer und unterschiedlicher Knotenordnung</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">paper_like</span><span class="p">:</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">isolated_nodes</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">remove_isolated_nodes</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Vorverarbeitung ----------</span>
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">())</span>
+
+        <span class="c1"># ---------- Segmentierung ----------</span>
+        <span class="n">cm</span><span class="o">.</span><span class="n">subdivide_long_edges</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">)</span>
+        <span class="n">fused_edge_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_edges_with_edge_dummies</span><span class="p">()</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span> <span class="o">=</span> <span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">fused_edge_list</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Pipeline 3a ----------</span>
+        <span class="n">onelayer_twosided_optimization</span><span class="p">(</span>
+            <span class="n">layout</span><span class="p">,</span>
+            <span class="n">neighborhood_map</span><span class="p">,</span>
+            <span class="n">node_axis_map</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">layout_expanded</span> <span class="o">=</span> <span class="n">layout_expanded</span><span class="p">,</span>
+            <span class="n">paper_like</span><span class="o">=</span><span class="n">paper_like</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># ---------- Vorbereitung Pipeline 3b ----------</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">classify_nodes_for_3b</span><span class="p">()</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">freeze_inter_axis_delta</span><span class="p">()</span>
+
+        <span class="c1"># ---------- Expansion ----------</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">post_processing_expansion</span><span class="p">(</span><span class="n">node_axis_map</span><span class="p">)</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">True</span>
+    
+        <span class="n">fused_edge_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_edges_with_edge_dummies</span><span class="p">()</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">fused_edge_list</span><span class="p">,</span><span class="n">layout_expanded</span> <span class="o">=</span> <span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Pipeline 3b ----------</span>
+        <span class="n">onelayer_twosided_optimization_3b</span><span class="p">(</span>
+            <span class="n">layout</span><span class="p">,</span>
+            <span class="n">neighborhood_map</span><span class="p">,</span>
+            <span class="n">node_axis_map</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">layout_expanded</span> <span class="o">=</span> <span class="n">layout_expanded</span><span class="p">,</span>
+            <span class="n">paper_like</span><span class="o">=</span><span class="n">paper_like</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---------- Finish ----------</span>
+        <span class="n">cm</span><span class="o">.</span><span class="n">finish_structured_axis_orders</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">isolated_nodes</span><span class="p">,</span> <span class="n">layout_expanded</span> <span class="o">=</span> <span class="n">layout_expanded</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># ---------- Vorverarbeitung ----------</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">isolated_nodes</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">remove_isolated_nodes</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Expansion ----------</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">pre_processing_expansion</span><span class="p">(</span><span class="n">node_axis_map</span><span class="p">)</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># ---------- Zustandsupdate ----------</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Segmentierung ----------</span>
+        <span class="n">cm</span><span class="o">.</span><span class="n">subdivide_long_edges</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Zustandsupdate ----------</span>
+        <span class="n">fused_edge_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_edges_with_edge_dummies</span><span class="p">()</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">fused_edge_list</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Optimierung ----------</span>
+        <span class="n">onelayer_twosided_optimization</span><span class="p">(</span>
+            <span class="n">layout</span><span class="p">,</span>
+            <span class="n">neighborhood_map</span><span class="p">,</span>
+            <span class="n">node_axis_map</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">,</span>
+            <span class="n">paper_like</span><span class="o">=</span><span class="n">paper_like</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---------- Finish ----------</span>
+        <span class="n">cm</span><span class="o">.</span><span class="n">finish_structured_axis_orders</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">isolated_nodes</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span></div>
+
+     
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

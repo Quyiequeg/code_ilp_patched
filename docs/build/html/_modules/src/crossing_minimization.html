@@ -1,0 +1,623 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.crossing_minimization &mdash; BA-Sauerteig 1.0 Dokumentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8fdbe8ab"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=9bf55d28"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Stichwortverzeichnis" href="../../genindex.html" />
+    <link rel="search" title="Suche" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            BA-Sauerteig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" aria-label="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">BA-Sauerteig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modul-Quellcode</a></li>
+      <li class="breadcrumb-item active">src.crossing_minimization</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Quellcode für src.crossing_minimization</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hiveplot</span><span class="w"> </span><span class="kn">import</span> <span class="n">HivePlotLayout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cost</span><span class="w"> </span><span class="kn">import</span> <span class="n">node_or_axes_span</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logger_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+
+<div class="viewcode-block" id="subdivide_long_edges">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.subdivide_long_edges">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">subdivide_long_edges</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">node_position_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">neighborhood_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Funktion dient dem Einfügen von Dummyknoten für lange Kanten (span &gt; 1) auf den Achsen zwischen Start- und Endknoten. Schema: d_[Startknoten]_[Endknoten]_[Sequenznummer]: z.B. d_5_10_2 ist der zweite Dummyknoten auf der zerlegten langen Kante von 5 nach 10. Die lange Kante kann dann folgendermaßen beschrieben werden:</span>
+<span class="sd">    Startknoten - d_5_10_1 - d_5_10_2 - ... - d_5_10_(span-1) - Endknoten. Außerdem werden die inter axis Knoten (Span = 0) ermittelt und gefiltert, um später die Achsenreihenfolge sauber zu ermitteln und die Pipelineschritte zu Initialisieren. Gefiltert bedeutet hier:</span>
+<span class="sd">    1. nur intra axis die nicht mixed sind (vgl. nested: is_mixed, werden in 3b behandelt)</span>
+<span class="sd">    2. mixed (inter + intra, werden nur in 3a nicht aber in 3b berücksichtigt)</span>
+<span class="sd">    Reine intra-axis Knoten werden aus den regulären node_groups entfernt und ihre Kanten vorübergehend aus dem Graphen gelöscht. Am Ende der Pipeline werden alle Informationen wieder konsistent zusammengesetzt.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout (HivePlotLayout): Das HivePlotLayout-Objekt, das die Informationen über den Graphen, die Achsen und die Knoten enthält.</span>
+<span class="sd">        node_position_map (dict[int | str, int]): Knoten-ID: Achsenindex in phi.</span>
+<span class="sd">        node_axis_map (dict[int | str, int]): Knoten-ID: Achse</span>
+<span class="sd">        neighborhood_map (neighborhood_map: dict[int | str, list[int | str]]): Knoten-ID: Nachbarknoten (:= proper = Span = 1)</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        None. Die Funktion arbeitet in-place auf dem übergebenen Layout</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_dummy_name</span><span class="p">(</span><span class="n">start_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">end_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sequence_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Konstruktor für die Bennenung von Dummyknoten.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            start_node (int): Startknoten ursprüngliche Kante</span>
+<span class="sd">            end_node (int): Endknoten ursprüngliche Kante</span>
+<span class="sd">            sequence_number (int): Wievielter Dummyknoten zwischen Start und Ende, beginnend bei 1</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Der Name des Dummyknotens</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;d_</span><span class="si">{</span><span class="n">start_node</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">end_node</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">sequence_number</span><span class="si">}</span><span class="s2">&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">clockwise_count</span><span class="p">(</span><span class="n">start_pos</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">start_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">end_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">span</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fügt Dummy-Knoten für eine Kante im Uhrzeigersinn ein. span: Wieviele Achsen die Kante zwischen Start und Endknoten überspannt. span-1 ist die Anzahl der Dummyknoten. Zusätzlich wird das Feld dummy_edge_segments im Hiveplotlayout mit den Dummy-Kanten gefüllt.&quot;&quot;&quot;</span>
+        <span class="n">dummyposition</span> <span class="o">=</span> <span class="p">(</span><span class="n">start_pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+        <span class="n">sequence_number</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">previous</span> <span class="o">=</span> <span class="n">start_node</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">span</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span> <span class="c1"># achsen zwischen start und ende</span>
+            <span class="n">current_dummy</span> <span class="o">=</span> <span class="n">make_dummy_name</span><span class="p">(</span><span class="n">start_node</span><span class="p">,</span> <span class="n">end_node</span><span class="p">,</span> <span class="n">sequence_number</span><span class="p">)</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">axis_order</span><span class="p">[</span><span class="n">dummyposition</span><span class="p">]</span> <span class="c1"># position -&gt; achse</span>
+            <span class="n">dummies</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_dummy</span><span class="p">)</span> <span class="c1"># name unikal pro achse, achsensegmente leicht rekonstruierbar</span>
+            <span class="n">dummy_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">previous</span><span class="p">,</span> <span class="n">current_dummy</span><span class="p">))</span> <span class="c1"># dummy edge von vorherigem knoten zum aktuellen dummy</span>
+            <span class="n">previous</span> <span class="o">=</span> <span class="n">current_dummy</span>
+            <span class="n">dummyposition</span> <span class="o">=</span> <span class="p">(</span><span class="n">dummyposition</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+            <span class="n">sequence_number</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">long_edges</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">start_node</span><span class="p">,</span> <span class="n">end_node</span><span class="p">))</span>
+        <span class="n">dummy_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">previous</span><span class="p">,</span> <span class="n">end_node</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">counter_clockwise_count</span><span class="p">(</span><span class="n">start_pos</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">start_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">end_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">span</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fügt Dummy-Knoten für eine Kante gegen den Uhrzeigersinn ein. span: Wieviele Achsen die Kante zwischen Start und Endknoten überspannt. span-1 ist die Anzahl der Dummyknoten. Zusätzlich wird das Feld dummy_edge_segments im Hiveplotlayout mit den Dummy-Kanten gefüllt.&quot;&quot;&quot;</span>
+        <span class="n">dummyposition</span> <span class="o">=</span> <span class="p">(</span><span class="n">start_pos</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+        <span class="n">sequence_number</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">previous</span> <span class="o">=</span> <span class="n">start_node</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">span</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span> <span class="c1"># achsen zwischen start und ende</span>
+            <span class="n">current_dummy</span> <span class="o">=</span> <span class="n">make_dummy_name</span><span class="p">(</span><span class="n">start_node</span><span class="p">,</span> <span class="n">end_node</span><span class="p">,</span> <span class="n">sequence_number</span><span class="p">)</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">axis_order</span><span class="p">[</span><span class="n">dummyposition</span><span class="p">]</span> <span class="c1"># position -&gt; achse</span>
+            <span class="n">dummies</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_dummy</span><span class="p">)</span> <span class="c1"># name unikal pro achse, achsensegmente leicht rekonstruierbar</span>
+            <span class="n">dummy_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">previous</span><span class="p">,</span> <span class="n">current_dummy</span><span class="p">))</span> <span class="c1"># dummy edge von vorherigem knoten zum aktuellen dummy</span>
+            <span class="n">previous</span> <span class="o">=</span> <span class="n">current_dummy</span>
+            <span class="n">dummyposition</span> <span class="o">=</span> <span class="p">(</span><span class="n">dummyposition</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+            <span class="n">sequence_number</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">long_edges</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">start_node</span><span class="p">,</span> <span class="n">end_node</span><span class="p">))</span>
+        <span class="n">dummy_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">previous</span><span class="p">,</span> <span class="n">end_node</span><span class="p">))</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_mixed</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_position_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">neighborhood_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prüft, ob ein Knoten sowohl intra- als auch inter-axis Nachbarn besitzt.</span>
+
+<span class="sd">        Ein Knoten ist „mixed“, wenn mindestens ein Nachbar auf einer anderen Achse</span>
+<span class="sd">        liegt als der Knoten selbst.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node: Zu prüfender Knoten.</span>
+<span class="sd">            node_position_map: Map von Knoten auf Achsenpositionen in phi.</span>
+<span class="sd">            neighborhood_map: Map von Knoten auf ihre Nachbarn (real bzw. virtuell).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True für mixed, False reiner intra axis Knoten</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">neighbors</span> <span class="o">=</span> <span class="n">neighborhood_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+        <span class="n">is_mixed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">neighbors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node_position_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">!=</span> <span class="n">node_position_map</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]:</span>
+                <span class="n">is_mixed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">is_mixed</span>
+    
+    <span class="c1"># initialisierung</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">intra_axis_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">}</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">num_axes</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span>
+    <span class="n">long_edges</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">long_edges</span>
+    <span class="n">dummy_edges</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">dummy_edge_segments</span>
+    <span class="n">dummies</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span>
+    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">axis_order</span><span class="p">:</span> <span class="c1"># initialisiere dummyliste, schreibt explizit in die HivePlotLayout Instanz</span>
+        <span class="n">dummies</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">intra_candidate_edge_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">intra_axis_edges</span> <span class="c1"># alle kandidaten aufnehmen und nach reinen intra axis filtern</span>
+    <span class="n">intra_candidate_node_list</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># alle kandidaten aufnehmen und nach reinen intra axis filtern</span>
+
+    <span class="c1"># filtern der knoten und bestimmung des spans</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">start_pos</span> <span class="o">=</span> <span class="n">node_position_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="c1"># startpositioon</span>
+        <span class="n">end_pos</span> <span class="o">=</span> <span class="n">node_position_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="c1"># endposition</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="n">node_or_axes_span</span><span class="p">(</span><span class="n">start_pos</span><span class="p">,</span> <span class="n">end_pos</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">span</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># direkte behandlung von langen kanten (dummy knoten erzeugen), proper ignorieren</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">start_pos</span> <span class="o">-</span> <span class="n">end_pos</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">end_pos</span> <span class="o">-</span> <span class="n">start_pos</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span><span class="p">:</span> <span class="c1"># richtung start -&gt; ende</span>
+                <span class="n">clockwise_count</span><span class="p">(</span><span class="n">start_pos</span><span class="p">,</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">span</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">start_pos</span> <span class="o">-</span> <span class="n">end_pos</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">end_pos</span> <span class="o">-</span> <span class="n">start_pos</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span><span class="p">:</span> <span class="c1"># richtung ende &lt;- start, counter cw</span>
+                <span class="n">counter_clockwise_count</span><span class="p">(</span><span class="n">start_pos</span><span class="p">,</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">span</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">span</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># intra axis candidaten sammeln und im anschluss nach komponenten ohne mixed knoten filtern</span>
+            <span class="n">intra_candidate_edge_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span> <span class="c1"># sammelt span 0 kanten</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">edge</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">intra_candidate_node_list</span><span class="p">:</span>
+                    <span class="n">intra_candidate_node_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="c1"># sammelt intra axis knoten</span>
+    
+    <span class="c1"># filterung nach strict-intra und mixed</span>
+    <span class="n">zero_span_subgraph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span> <span class="c1"># knoten aus intra axis knoten initialisieren</span>
+    <span class="n">zero_span_subgraph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">intra_candidate_edge_list</span><span class="p">)</span> <span class="c1"># kanten automatisch einfügen, kanten aus möglichen kandidaten für intra axis beziehen</span>
+    <span class="n">ignore_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> <span class="c1"># komponenten, die einen mixed knoten haben (sollen nicht angefasst werden)</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">intra_candidate_node_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_mixed</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignore_set</span><span class="p">:</span>
+                <span class="n">ignore_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">node_connected_component</span><span class="p">(</span><span class="n">zero_span_subgraph</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ignore_set</span><span class="p">:</span> <span class="c1"># listen nach reinen intra axis knoten filtern</span>
+        <span class="n">intra_candidate_node_list</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="c1"># mögliche fehlerquelle, falls elemente anderer achsen in komponenten rutschen, sollte aber ausgeschlossen sein, prüfen!</span>
+        <span class="n">edges_copy</span> <span class="o">=</span> <span class="n">intra_candidate_edge_list</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">edge_candidate</span> <span class="ow">in</span> <span class="n">edges_copy</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">edge_candidate</span><span class="p">:</span>
+                <span class="n">intra_candidate_edge_list</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge_candidate</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">intra_candidate_node_list</span><span class="p">:</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">intra_axis_nodes</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+ 
+    <span class="c1"># atkualisieren der datenstrukturen</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">intra_candidate_edge_list</span><span class="p">)</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">long_edges</span><span class="p">)</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">dummy_edges</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="parse_dummy_name">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.parse_dummy_name">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_dummy_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Zerlegt den Namen eines Dummyknotens in seine Bestandteile: Startknoten, Endknoten und Sequenznummer. (siehe make_dummy_name Funktion für Namensschema)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name (str): Der zu zerlegende Dummyknoten</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[int, int, int]: Tupel aus int-Werten: (Startknoten, Endknoten, Sequenznummer)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="remove_isolated_nodes">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.remove_isolated_nodes">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_isolated_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">,</span> <span class="n">node_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Die Funktion entfernt alle isolierten Knoten aus der persistenten node_group des HivePlotLayouts.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        graph (nx.Graph): Der zugrundeliegende Graph aus dem HivePlotLayout.</span>
+<span class="sd">        node_groups (dict[str, list[int]]): Die persistente Knotenlisten der Achsen.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict[str, list[int]]: Ein dict mit den isolierten Knoten pro Achse, key: Achse, value: Listen mit isolierten Knoten.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">isolated_node_groups</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">:</span>
+        <span class="n">non_isolated_node_groups</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">nx</span><span class="o">.</span><span class="n">is_isolate</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+                <span class="n">isolated_node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">non_isolated_node_groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">non_isolated_node_groups</span>
+    <span class="k">return</span> <span class="n">isolated_node_groups</span></div>
+
+
+<div class="viewcode-block" id="finish_structured_axis_orders">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.finish_structured_axis_orders">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">finish_structured_axis_orders</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">isolated_node_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">layout_expanded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aktualisiert die node_groups am Ende der Pipeline und fügt isolierte Knoten wieder ein.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_attach_isolated_nodes</span><span class="p">(</span><span class="n">node_groups</span><span class="p">,</span> <span class="n">isolated_node_groups</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">isolated_node_groups</span><span class="p">:</span>
+                <span class="n">node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">isolated_node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+        <span class="n">_attach_isolated_nodes</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="p">,</span> <span class="n">isolated_node_groups</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_attach_isolated_nodes</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">,</span> <span class="n">isolated_node_groups</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="barycenter_heuristic">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.barycenter_heuristic">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">barycenter_heuristic</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="n">real</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">use_fixed_positions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Führt wiederholte Barycenter-Sweeps im und gegen den Uhrzeigersinn über alle Achsen aus. Abhängig vom Parameter real werden entweder die realen Knoten (node_groups)</span>
+<span class="sd">    oder die Dummy-Knoten (node_groups_dummies) pro Achse entsprechend der Barycenterposition ihrer Nachbarn umsortiert. Der Sweep endet, wenn keine Änderung mehr auftritt oder der threshold an Iterationen erreicht ist. Es kann zu Osszilationen im Sweep kommen, wenn</span>
+<span class="sd">    z.B. wenn zwei Knoten die gleiche Barycenter Position haben oder in den Sweeps einfach nur ihre Positionen hin- und hertauschen. Dies führt dazu, dass die Schleife nie terminiert. In state_set werden dementsprechend alle erreichten Zustände gehasht und beim Wiederkehren eines zuvor errechneten Zustands kann die Schleife vor einem neuen Durchgang abbrechen.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout: Aktuelles HivePlotLayout mit Achsenzuordnung und Knotenlisten.</span>
+<span class="sd">        neighborhood_map: Map von Knoten (real und/oder Dummy, initialisierungsabhängig) auf deren Nachbarn.</span>
+<span class="sd">        node_axis_map: Map von Knoten auf Achsen in phi.</span>
+<span class="sd">        threshold: Maximale Anzahl Sweep-Durchläufe, bevor abgebrochen wird.</span>
+<span class="sd">        real: True, um reale Knoten zu sortieren; False, um Dummy-Knoten zu sortieren.</span>
+<span class="sd">        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">        use_fixed_positions(bool): wird für 3b benötigt, damit fixierte positionen verwendet werden</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># initialiserung von funktionsparameter</span>
+    <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># 1. abbruchbedingung: keine Änderung nach einem sweep-durchgang mehr festgestellt</span>
+    <span class="n">threshold_run</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># 2. abbruchbedingung: anzahl durchläufe erreicht</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">axis_order</span>
+    <span class="n">reversed_phi</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">layout_expanded</span> <span class="ow">and</span> <span class="n">real</span><span class="p">:</span>
+        <span class="n">node_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span>
+    <span class="k">elif</span> <span class="n">real</span><span class="p">:</span>
+        <span class="n">node_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">node_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">axis_order</span>
+    <span class="n">state_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">fixed_positions_by_axis</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fixed_positions_by_axis</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="c1"># abbruchbedingungen</span>
+    <span class="k">while</span> <span class="n">threshold_run</span> <span class="o">&lt;</span> <span class="n">threshold</span> <span class="ow">and</span> <span class="n">changed</span><span class="p">:</span>
+        <span class="c1"># stateauswertung und abbruchbedingung</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">node_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[]))</span> <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">phi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">state_set</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">state_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+
+        <span class="c1"># funktionsparameter setzen</span>
+        <span class="n">threshold_run</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># cw-weep</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">phi</span><span class="p">:</span>
+            <span class="c1"># initialisierung</span>
+            <span class="n">bary_axis_order</span> <span class="o">=</span> <span class="n">node_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="n">fixed_positions</span> <span class="o">=</span> <span class="n">fixed_positions_by_axis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">bary_positions_axis</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># berechnung der heuristik</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bary_axis_order</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">use_fixed_positions</span> <span class="ow">and</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">fixed_positions</span><span class="p">:</span>
+                    <span class="n">bary_positions_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fixed_positions</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">node_neighbors</span> <span class="o">=</span> <span class="n">neighborhood_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_neighbors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">bary_positions_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bary_axis_order</span><span class="p">)))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">bary_positions_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">calculate_barycenter_position</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_neighbors</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="p">))</span> <span class="c1"># barycenterpositionen bestimmen</span>
+                        
+            <span class="c1"># neue ordnung bestimmen und </span>
+            <span class="n">new_order</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">bary_axis_order</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span><span class="n">bary_positions_axis</span><span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]))]</span>
+            <span class="k">if</span> <span class="n">node_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span> <span class="o">!=</span> <span class="n">new_order</span><span class="p">:</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="c1"># optimierte achse zurückschreiben</span>
+            <span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_order</span>
+
+        <span class="c1"># ccw-sweep, kommentare analog zu cw-sweep</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">reversed_phi</span><span class="p">:</span>
+            <span class="n">bary_axis_order</span> <span class="o">=</span> <span class="n">node_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="n">fixed_positions</span> <span class="o">=</span> <span class="n">fixed_positions_by_axis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">bary_positions_axis</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bary_axis_order</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">use_fixed_positions</span> <span class="ow">and</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">fixed_positions</span><span class="p">:</span>
+                    <span class="n">bary_positions_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fixed_positions</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">node_neighbors</span> <span class="o">=</span> <span class="n">neighborhood_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_neighbors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">bary_positions_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bary_axis_order</span><span class="p">)))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">bary_positions_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">calculate_barycenter_position</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_neighbors</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="p">))</span>
+
+            <span class="n">new_order</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">bary_axis_order</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span><span class="n">bary_positions_axis</span><span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]))]</span>
+            <span class="k">if</span> <span class="n">node_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span> <span class="o">!=</span> <span class="n">new_order</span><span class="p">:</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_order</span></div>
+
+
+<div class="viewcode-block" id="calculate_barycenter_position">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.calculate_barycenter_position">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_barycenter_position</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">neighbor_group</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout (HivePlotLayout): das zu berechnende HivePlotLayout</span>
+<span class="sd">        neighbor_group (list[int]): Liste der Nachbarknoten</span>
+<span class="sd">        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Barycenterposition</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># funktionsparameter initialisieren</span>
+    <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+        <span class="n">real_nodes</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">real_nodes</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span>
+    <span class="n">virtual_nodes</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span>
+
+    <span class="c1"># divide by zero fallback</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbor_group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="n">neighbor_sum</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">neighbor_group</span><span class="p">:</span>
+        <span class="c1"># initialisierung</span>
+        <span class="n">node_axis_name</span> <span class="o">=</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span>
+        <span class="n">real_axis</span> <span class="o">=</span> <span class="n">real_nodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_axis_name</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">virtual_axis</span> <span class="o">=</span> <span class="n">virtual_nodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_axis_name</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="c1"># nenner</span>
+        <span class="n">axis_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">real_axis</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">virtual_axis</span><span class="p">)</span>
+
+        <span class="c1"># fallback</span>
+        <span class="k">if</span> <span class="n">axis_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        
+        <span class="c1"># heuristikformel</span>
+        <span class="k">if</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">real_axis</span><span class="p">:</span>
+            <span class="n">neighbor_sum</span> <span class="o">+=</span> <span class="n">real_axis</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span> <span class="o">/</span> <span class="n">axis_len</span>
+        <span class="k">elif</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">virtual_axis</span><span class="p">:</span>
+            <span class="n">neighbor_sum</span> <span class="o">+=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_axis</span><span class="p">)</span> <span class="o">+</span> <span class="n">virtual_axis</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neighbor</span><span class="p">))</span> <span class="o">/</span> <span class="n">axis_len</span>
+
+    <span class="k">return</span> <span class="n">neighbor_sum</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbor_group</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="edge_node_cleanup">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.edge_node_cleanup">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">edge_node_cleanup</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Nachbereitung der Pipeline, dient als Absicherung, dass Kanten und intra Knoten im Layout korrekt gesetzt sind.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ordering</span><span class="w"> </span><span class="kn">import</span> <span class="n">node_to_axis_maps</span>
+
+    <span class="n">fused_edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_edges_with_edge_dummies</span><span class="p">()</span> <span class="k">if</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">fused_edges</span><span class="p">)</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">fused_edges</span><span class="p">)</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">long_edges</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">())</span>
+    <span class="n">active_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">():</span>
+        <span class="n">active_nodes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="n">active_nodes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="p">):</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">active_nodes</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="barycenter_crossmin_pipeline">
+<a class="viewcode-back" href="../../api.html#src.crossing_minimization.barycenter_crossmin_pipeline">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">barycenter_crossmin_pipeline</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="n">paper_like</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).</span>
+
+<span class="sd">    Die Pipeline umfasst im paper_like = false:</span>
+<span class="sd">    1. anfängliches Layout expandieren</span>
+<span class="sd">    2. Entfernen isolierter Knoten auf den Achsen.</span>
+<span class="sd">    3. Einfügen von Dummy-Knoten für lange Kanten (Span &gt; 1) und sortieren der inter axis Knoten (Span = 0).</span>
+<span class="sd">    4. Initialisierung des Sweeps und Updates der Datenstrukturen.</span>
+<span class="sd">    5. Mehrfache CW/CCW-Sweeps für reale und anschließend virtuelle Knoten, die die Barycenterpositionen ermitteln und die Achsen entsprechend sortieren.</span>
+<span class="sd">    6. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</span>
+
+<span class="sd">    Die Pipeline umfasst im nicht paper_like = true:</span>
+<span class="sd">    1. Entfernen isolierter Knoten auf den Achsen.</span>
+<span class="sd">    2. Einfügen von Dummy-Knoten für lange Kanten (Span &gt; 1) und sortieren der inter axis Knoten (Span = 0).</span>
+<span class="sd">    3. Initialisierung des Sweeps und Updates der Datenstrukturen.</span>
+<span class="sd">    4. Mehrfache CW/CCW-Sweeps für reale und anschließend virtuelle Knoten, die die Barycenterpositionen ermitteln und die Achsen entsprechend sortieren.</span>
+<span class="sd">    5. Barycenter 3b</span>
+<span class="sd">    6. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        layout (HivePlotLayout): Das zu optimierende HivePlotLayout.</span>
+<span class="sd">        threshold(int): Optionaler Abbruchschwellwert für die Anzahl der Sweep-Durchläufe.</span>
+<span class="sd">        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">        paper_like(bool): dient der Unterscheidung zwischen identischer und unterschiedlicher Knotenordnung</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ordering</span><span class="w"> </span><span class="kn">import</span> <span class="n">node_to_axis_maps</span>
+    <span class="k">if</span> <span class="n">paper_like</span><span class="p">:</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">isolated_nodes</span> <span class="o">=</span> <span class="n">remove_isolated_nodes</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Vorverarbeitung ----------</span>
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">())</span>
+
+        <span class="c1"># ---------- Segmentierung ----------</span>
+        <span class="n">subdivide_long_edges</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_position_map</span><span class="p">,</span><span class="n">node_axis_map</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">)</span>
+
+        <span class="n">fused_edge_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_edges_with_edge_dummies</span><span class="p">()</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">fused_edge_list</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Pipeline 3a ----------</span>
+        <span class="c1"># reale knoten optimieren</span>
+        <span class="n">barycenter_heuristic</span><span class="p">(</span>
+            <span class="n">layout</span><span class="p">,</span>
+            <span class="n">neighborhood_map</span><span class="p">,</span>
+            <span class="n">node_axis_map</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">real</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># virtuelle knoten optimieren</span>
+        <span class="n">barycenter_heuristic</span><span class="p">(</span>
+            <span class="n">layout</span><span class="p">,</span>
+            <span class="n">neighborhood_map</span><span class="p">,</span>
+            <span class="n">node_axis_map</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">real</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">finish_structured_axis_orders</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">isolated_nodes</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Vorbereitung Pipeline 3b ----------</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">classify_nodes_for_3b</span><span class="p">()</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">freeze_barycenter_positions</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Expansion ----------</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">post_processing_expansion</span><span class="p">(</span><span class="n">node_axis_map</span><span class="p">)</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># nach expansion alle konkreten achsenordnungen fixieren</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">freeze_barycenter_positions</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">fused_edge_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_edges_with_edge_dummies</span><span class="p">()</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">fused_edge_list</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Pipeline 3b ----------</span>
+        <span class="c1"># reale knoten optimieren</span>
+        <span class="n">barycenter_heuristic</span><span class="p">(</span>
+            <span class="n">layout</span><span class="p">,</span>
+            <span class="n">neighborhood_map</span><span class="p">,</span>
+            <span class="n">node_axis_map</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">real</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">,</span>
+            <span class="n">use_fixed_positions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="c1"># virtuelle knoten optimieren</span>
+        <span class="n">barycenter_heuristic</span><span class="p">(</span>
+            <span class="n">layout</span><span class="p">,</span>
+            <span class="n">neighborhood_map</span><span class="p">,</span>
+            <span class="n">node_axis_map</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">real</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">,</span>
+            <span class="n">use_fixed_positions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Finish ----------</span>
+        <span class="n">finish_structured_axis_orders</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span><span class="n">isolated_nodes</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># ---------- Vorverarbeitung ----------</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">isolated_nodes</span> <span class="o">=</span> <span class="n">remove_isolated_nodes</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Expansion ----------</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">pre_processing_expansion</span><span class="p">(</span><span class="n">node_axis_map</span><span class="p">)</span>
+        <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># ---------- Zustandsupdate ----------</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Segmentierung ----------</span>
+        <span class="n">subdivide_long_edges</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">,</span> <span class="n">neighborhood_map</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Zustandsupdate ----------</span>
+        <span class="n">fused_edge_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_edges_with_edge_dummies</span><span class="p">()</span>
+        <span class="n">fused_node_list</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="n">node_position_map</span><span class="p">,</span> <span class="n">node_axis_map</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">fused_node_list</span><span class="p">)</span>
+        <span class="n">neighborhood_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">fused_edge_list</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span>
+
+        <span class="c1"># ---------- Optimierung ----------</span>
+        <span class="c1"># reale knoten optimieren</span>
+        <span class="n">barycenter_heuristic</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> 
+            <span class="n">neighborhood_map</span><span class="p">,</span> 
+            <span class="n">node_axis_map</span><span class="p">,</span> 
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> 
+            <span class="n">real</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+            <span class="n">layout_expanded</span> <span class="o">=</span> <span class="n">layout_expanded</span><span class="p">)</span>
+        
+        <span class="c1"># virtuelle knoten optimieren</span>
+        <span class="n">barycenter_heuristic</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> 
+            <span class="n">neighborhood_map</span><span class="p">,</span> 
+            <span class="n">node_axis_map</span><span class="p">,</span> 
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> 
+            <span class="n">real</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+            <span class="n">layout_expanded</span> <span class="o">=</span> <span class="n">layout_expanded</span><span class="p">)</span>
+        
+        <span class="c1"># ---------- Finish ----------</span>
+        <span class="n">finish_structured_axis_orders</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">isolated_nodes</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="n">layout_expanded</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

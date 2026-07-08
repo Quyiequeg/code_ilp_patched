@@ -36,7 +36,7 @@ def edges_between_axes(node_grps: dict[int, list[int, str]], edges: list[tuple[i
 def cost_function_whole(ordering: list[int], node_grps: dict[int, list[int, str]], edges: list[tuple[int | str, int | str]]) -> int:
     """Die Kostenfunktion wird in Schritt zwei der Pipeline (Sec. 3.2) verwendet, um die kostengünstigste Achsenordnung zu ermitteln. 
     Kostengünstig bedeutet hier, dass möglichst viele Achsenpaare mit möglichst geringem Span einfließen sollen. 
-    ### LEGACY - nur für Brute Force relevant ###
+    Diese Funktion wird für Vergleichs- und Testzwecke weiterhin bereitgestellt.
     Args:
         ordering (list[int]): Ordnung der Achsen (phi)
         node_grps (dict): key: Achse, value: Knoten auf der Achse

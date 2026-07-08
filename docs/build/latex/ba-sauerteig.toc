@@ -1,0 +1,17 @@
+\babel@toc {ngerman}{}\relax 
+\contentsline {chapter}{\numberline {1}src package}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Submodules}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}src.cost module}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}src.crossing\_minimization module}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}src.dblp\_parser module}{4}{section.1.4}%
+\contentsline {section}{\numberline {1.5}src.experiments module}{5}{section.1.5}%
+\contentsline {section}{\numberline {1.6}src.hiveplot module}{6}{section.1.6}%
+\contentsline {section}{\numberline {1.7}src.ip\_model module}{10}{section.1.7}%
+\contentsline {section}{\numberline {1.8}src.logger\_setup module}{13}{section.1.8}%
+\contentsline {section}{\numberline {1.9}src.main module}{13}{section.1.9}%
+\contentsline {section}{\numberline {1.10}src.ordering module}{14}{section.1.10}%
+\contentsline {section}{\numberline {1.11}src.partitioning module}{15}{section.1.11}%
+\contentsline {section}{\numberline {1.12}src.renderer module}{15}{section.1.12}%
+\contentsline {section}{\numberline {1.13}Module contents}{16}{section.1.13}%
+\contentsline {chapter}{Python-Modulindex}{17}{section*.98}%
+\contentsline {chapter}{Stichwortverzeichnis}{18}{section*.99}%

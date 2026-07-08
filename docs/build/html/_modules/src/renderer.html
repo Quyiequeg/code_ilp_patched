@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.renderer &mdash; BA-Sauerteig 1.0 Dokumentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8fdbe8ab"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=9bf55d28"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Stichwortverzeichnis" href="../../genindex.html" />
+    <link rel="search" title="Suche" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            BA-Sauerteig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" aria-label="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">BA-Sauerteig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modul-Quellcode</a></li>
+      <li class="breadcrumb-item active">src.renderer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Quellcode für src.renderer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">statistics</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hiveplot</span><span class="w"> </span><span class="kn">import</span> <span class="n">HivePlotLayout</span>
+
+<span class="n">WIDTH</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">HEIGHT</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">CENTER_X</span> <span class="o">=</span> <span class="n">WIDTH</span> <span class="o">/</span> <span class="mi">2</span>   <span class="c1"># Koordinatenursprung horizontal</span>
+<span class="n">CENTER_Y</span> <span class="o">=</span> <span class="n">HEIGHT</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># Koordinatenursprung vertikal</span>
+<span class="n">AXIS_OFFSET</span> <span class="o">=</span> <span class="mi">50</span>       <span class="c1"># Mindestabstand der Achsen vom Zentrum (px)</span>
+<span class="n">MAX_RADIUS</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">75</span>  <span class="c1"># Maximale Achsenlänge (px)</span>
+
+<div class="viewcode-block" id="translate_polar_to_carthesian">
+<a class="viewcode-back" href="../../api.html#src.renderer.translate_polar_to_carthesian">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">translate_polar_to_carthesian</span><span class="p">(</span><span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">angle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">center_x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">center_y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">CENTER_Y</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Umrechnung der Polarkoordinate in ein karthesisches Tupel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">center_x</span> <span class="o">+</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">center_y</span> <span class="o">+</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="draw_basis">
+<a class="viewcode-back" href="../../api.html#src.renderer.draw_basis">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">draw_basis</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">id_to_label_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">unordered</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">intra_edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">axes_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bündelt die Darstellung von Kanten, Knoten, Labels und Achsen.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shorten_label</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\s*\d+&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">name</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">first_initial</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_initial</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">last</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="n">degree</span><span class="p">:</span> <span class="c1"># falls filter aktiv prioritätsliste erstellen</span>
+        <span class="n">degrees</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">degree</span><span class="p">())</span>
+        <span class="n">priority_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">:</span>
+            <span class="n">real_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">int</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">real_nodes</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">axis_degrees</span> <span class="o">=</span> <span class="p">[</span><span class="n">degrees</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">real_nodes</span><span class="p">]</span>
+            <span class="n">medi</span> <span class="o">=</span> <span class="n">statistics</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">axis_degrees</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">real_nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">degrees</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">medi</span><span class="p">:</span>
+                    <span class="n">priority_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">priority_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">priority_nodes</span><span class="p">)</span>
+    <span class="n">svg_axes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">svg_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">svg_edges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">svg_labels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rendered_node_positions</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node_groups</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">real_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">virtual_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="mi">270</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="mi">360</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_groups</span><span class="p">))</span> <span class="c1"># theta</span>
+        <span class="n">x_end</span><span class="p">,</span> <span class="n">y_end</span> <span class="o">=</span> <span class="n">translate_polar_to_carthesian</span><span class="p">(</span><span class="n">MAX_RADIUS</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">CENTER_Y</span><span class="p">)</span>
+        <span class="n">x_start</span><span class="p">,</span> <span class="n">y_start</span> <span class="o">=</span> <span class="n">translate_polar_to_carthesian</span><span class="p">(</span><span class="n">AXIS_OFFSET</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">CENTER_Y</span><span class="p">)</span>
+        <span class="n">x_label</span><span class="p">,</span> <span class="n">y_label</span> <span class="o">=</span> <span class="n">translate_polar_to_carthesian</span><span class="p">(</span><span class="n">AXIS_OFFSET</span> <span class="o">*</span> <span class="mf">0.85</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">CENTER_Y</span><span class="p">)</span>
+        <span class="n">svg_axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;line x1=&quot;</span><span class="si">{</span><span class="n">x_start</span><span class="si">}</span><span class="s1">&quot; y1=&quot;</span><span class="si">{</span><span class="n">y_start</span><span class="si">}</span><span class="s1">&quot; x2=&quot;</span><span class="si">{</span><span class="n">x_end</span><span class="si">}</span><span class="s1">&quot; y2=&quot;</span><span class="si">{</span><span class="n">y_end</span><span class="si">}</span><span class="s1">&quot; stroke=&quot;black&quot; stroke-width=&quot;1&quot;/&gt;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">axes_labels</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">axis</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># originale beschriften</span>
+                <span class="n">svg_axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;</span><span class="si">{</span><span class="n">x_label</span><span class="si">}</span><span class="s1">&quot; y=&quot;</span><span class="si">{</span><span class="n">y_label</span><span class="si">}</span><span class="s1">&quot; text-anchor=&quot;middle&quot; dominant-baseline=&quot;middle&quot; font-size=&quot;10&quot; fill=&quot;#4f4f4f&quot;&gt;&#39;</span><span class="sa">f</span><span class="s1">&#39;A&lt;tspan dy=&quot;3&quot; font-size=&quot;6&quot;&gt;</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s1">&lt;/tspan&gt;&#39;</span><span class="sa">f</span><span class="s1">&#39;&lt;/text&gt;&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># expandierte teile beschriften</span>
+                <span class="n">svg_axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;</span><span class="si">{</span><span class="n">x_label</span><span class="si">}</span><span class="s1">&quot; y=&quot;</span><span class="si">{</span><span class="n">y_label</span><span class="si">}</span><span class="s1">&quot; text-anchor=&quot;middle&quot; dominant-baseline=&quot;middle&quot; font-size=&quot;9&quot; fill=&quot;#7e7e7e&quot;&gt;&#39;</span><span class="sa">f</span><span class="s1">&#39;A&lt;tspan dy=&quot;3&quot; font-size=&quot;5&quot;&gt;</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s1">&lt;/tspan&gt;&#39;</span><span class="sa">f</span><span class="s1">&#39;&lt;/text&gt;&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">real_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">virtual_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">real</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">real_nodes</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="n">AXIS_OFFSET</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">MAX_RADIUS</span> <span class="o">-</span> <span class="n">AXIS_OFFSET</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">translate_polar_to_carthesian</span><span class="p">(</span><span class="n">radius</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">CENTER_Y</span><span class="p">)</span>
+            <span class="n">rendered_node_positions</span><span class="p">[</span><span class="n">real</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># koordinaten speichern</span>
+            <span class="k">if</span> <span class="n">degree</span> <span class="ow">and</span> <span class="n">real</span> <span class="ow">in</span> <span class="n">priority_set</span><span class="p">:</span> <span class="c1"># wenn prio und filteroption gesetzt</span>
+                <span class="n">svg_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;circle cx=&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&quot; cy=&quot;</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s1">&quot; r=&quot;4&quot; fill=&quot;#d77b7b&quot;/&gt;&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># alle knoten</span>
+                <span class="n">svg_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;circle cx=&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&quot; cy=&quot;</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s1">&quot; r=&quot;3&quot; fill=&quot;#d77b7b&quot;/&gt;&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">unordered</span> <span class="ow">or</span> <span class="n">real</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># auch expandierte achsen oder nur originale</span>
+                <span class="n">LABEL_OFFSET</span> <span class="o">=</span> <span class="mi">6</span>
+                <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">6</span>
+                <span class="k">if</span> <span class="n">id_to_label_map</span><span class="p">:</span> <span class="c1"># nur wenn übergeben, sonst knotenID</span>
+                    <span class="n">label_text</span> <span class="o">=</span> <span class="n">shorten_label</span><span class="p">(</span><span class="n">id_to_label_map</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">real</span><span class="p">)])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">label_text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">real</span><span class="p">)</span>
+                <span class="n">angle_radius</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="c1"># bogenmaß aus polar</span>
+                <span class="n">cos_angle</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_radius</span><span class="p">)</span> <span class="c1"># richtungsvektor der achse, x</span>
+                <span class="n">sin_angle</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_radius</span><span class="p">)</span> <span class="c1"># richtungsvektor der achse, y</span>
+                <span class="n">flipped</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># auf rechte seite der horizontalen setzen</span>
+                <span class="k">if</span> <span class="n">cos_angle</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">flipped</span> <span class="o">=</span> <span class="kc">True</span> 
+                <span class="k">if</span> <span class="n">real</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># </span>
+                    <span class="n">rotation</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mi">270</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">+</span> <span class="mi">240</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">rotation</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mi">270</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mf">67.5</span>
+                <span class="k">if</span> <span class="n">flipped</span><span class="p">:</span> <span class="c1"># auf linke seite der horizontalen spiegeln</span>
+                    <span class="n">rotation</span> <span class="o">+=</span> <span class="mi">180</span>
+                <span class="k">if</span> <span class="n">flipped</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">real</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># originale achse</span>
+                        <span class="n">lx</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">sin_angle</span>
+                        <span class="n">ly</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">cos_angle</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">lx</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">sin_angle</span>
+                        <span class="n">ly</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">cos_angle</span>
+                <span class="k">else</span><span class="p">:</span> <span class="c1"># expandierte achse</span>
+                    <span class="k">if</span> <span class="n">real</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">lx</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">sin_angle</span>
+                        <span class="n">ly</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">cos_angle</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">lx</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">sin_angle</span>
+                        <span class="n">ly</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">LABEL_OFFSET</span> <span class="o">*</span> <span class="n">cos_angle</span>
+
+                <span class="n">anchor</span> <span class="o">=</span> <span class="s2">&quot;end&quot;</span> <span class="k">if</span> <span class="n">cos_angle</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;start&quot;</span>
+
+                <span class="k">if</span> <span class="n">unordered</span> <span class="ow">and</span> <span class="n">degree</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">real</span> <span class="ow">in</span> <span class="n">priority_set</span><span class="p">:</span>
+                        <span class="n">svg_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;</span><span class="si">{</span><span class="n">lx</span><span class="si">}</span><span class="s1">&quot; y=&quot;</span><span class="si">{</span><span class="n">ly</span><span class="si">}</span><span class="s1">&quot; font-size=&quot;</span><span class="si">{</span><span class="n">fontsize</span><span class="si">}</span><span class="s1">&quot; &#39;</span><span class="sa">f</span><span class="s1">&#39;text-anchor=&quot;</span><span class="si">{</span><span class="n">anchor</span><span class="si">}</span><span class="s1">&quot; dominant-baseline=&quot;central&quot; &#39;</span><span class="sa">f</span><span class="s1">&#39;transform=&quot;rotate(</span><span class="si">{</span><span class="n">rotation</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">lx</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ly</span><span class="si">}</span><span class="s1">)&quot;&gt;</span><span class="si">{</span><span class="n">label_text</span><span class="si">}</span><span class="s1">&lt;/text&gt;&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">svg_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;</span><span class="si">{</span><span class="n">lx</span><span class="si">}</span><span class="s1">&quot; y=&quot;</span><span class="si">{</span><span class="n">ly</span><span class="si">}</span><span class="s1">&quot; font-size=&quot;</span><span class="si">{</span><span class="n">fontsize</span><span class="si">}</span><span class="s1">&quot; &#39;</span><span class="sa">f</span><span class="s1">&#39;text-anchor=&quot;</span><span class="si">{</span><span class="n">anchor</span><span class="si">}</span><span class="s1">&quot; dominant-baseline=&quot;central&quot; &#39;</span><span class="sa">f</span><span class="s1">&#39;transform=&quot;rotate(</span><span class="si">{</span><span class="n">rotation</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">lx</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ly</span><span class="si">}</span><span class="s1">)&quot;&gt;</span><span class="si">{</span><span class="n">label_text</span><span class="si">}</span><span class="s1">&lt;/text&gt;&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">virtual</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">virtual_nodes</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">virtual</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+            <span class="n">is_mirror</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">is_mirror</span><span class="p">:</span>
+                <span class="c1"># Spiegel-Dummy: gleiche Position wie der Original-Dummy auf dieser Achse</span>
+                <span class="n">original</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;d_</span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">ox</span><span class="p">,</span> <span class="n">oy</span> <span class="o">=</span> <span class="n">rendered_node_positions</span><span class="p">[</span><span class="n">original</span><span class="p">]</span>
+                <span class="n">orig_radius</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">ox</span> <span class="o">-</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">oy</span> <span class="o">-</span> <span class="n">CENTER_Y</span><span class="p">)</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">translate_polar_to_carthesian</span><span class="p">(</span><span class="n">orig_radius</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">CENTER_Y</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">radius</span> <span class="o">=</span> <span class="n">MAX_RADIUS</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="mi">50</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">virtual_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">translate_polar_to_carthesian</span><span class="p">(</span><span class="n">radius</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">CENTER_X</span><span class="p">,</span> <span class="n">CENTER_Y</span><span class="p">)</span>
+            <span class="n">rendered_node_positions</span><span class="p">[</span><span class="n">virtual</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+            <span class="n">svg_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;circle cx=&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&quot; cy=&quot;</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s1">&quot; r=&quot;0&quot; fill=&quot;#AED6F1&quot;/&gt;&#39;</span><span class="p">)</span>
+            
+            
+            
+            <span class="c1"># radius = MAX_RADIUS + j * 50 / (len(virtual_nodes) + 1)</span>
+            <span class="c1"># x, y = translate_polar_to_carthesian(radius, angle, CENTER_X, CENTER_Y)</span>
+            <span class="c1"># rendered_node_positions[virtual] = (x, y)</span>
+            <span class="c1"># svg_nodes.append(f&#39;&lt;circle cx=&quot;{x}&quot; cy=&quot;{y}&quot; r=&quot;0&quot; fill=&quot;#AED6F1&quot;/&gt;&#39;)</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">u_x</span><span class="p">,</span> <span class="n">u_y</span> <span class="o">=</span> <span class="n">rendered_node_positions</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">v_x</span><span class="p">,</span> <span class="n">v_y</span> <span class="o">=</span> <span class="n">rendered_node_positions</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">x_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">u_x</span> <span class="o">+</span> <span class="n">v_x</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">y_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">u_y</span> <span class="o">+</span> <span class="n">v_y</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">both_real</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">both_virtual</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span> <span class="c1">#intra/inter</span>
+            <span class="n">both_real</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># achsenverbindung original zu expandiert</span>
+            <span class="n">both_virtual</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">x_mid</span> <span class="o">-</span> <span class="n">CENTER_X</span> <span class="c1"># richtungsvektor ursprung zu mitte, x</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">y_mid</span> <span class="o">-</span> <span class="n">CENTER_Y</span> <span class="c1"># richtungsvektor ursprung zu mitte, y</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">both_real</span><span class="p">:</span>
+            <span class="n">pull</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">*</span> <span class="mf">0.15</span>
+        <span class="k">elif</span> <span class="n">both_virtual</span><span class="p">:</span>
+            <span class="n">pull</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">*</span> <span class="mf">0.1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pull</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">85</span><span class="p">,</span> <span class="n">dist</span> <span class="o">*</span> <span class="mf">0.3</span><span class="p">)</span>          
+        <span class="k">if</span> <span class="n">dist</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">x_fix</span> <span class="o">=</span> <span class="n">x_mid</span> <span class="o">+</span> <span class="p">(</span><span class="n">dx</span> <span class="o">/</span> <span class="n">dist</span><span class="p">)</span> <span class="o">*</span> <span class="n">pull</span>
+            <span class="n">y_fix</span> <span class="o">=</span> <span class="n">y_mid</span> <span class="o">+</span> <span class="p">(</span><span class="n">dy</span> <span class="o">/</span> <span class="n">dist</span><span class="p">)</span> <span class="o">*</span> <span class="n">pull</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># fall back gerade zeichnen</span>
+            <span class="n">x_fix</span><span class="p">,</span> <span class="n">y_fix</span> <span class="o">=</span> <span class="n">x_mid</span><span class="p">,</span> <span class="n">y_mid</span>
+        <span class="n">svg_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;path d=&quot;M </span><span class="si">{</span><span class="n">u_x</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">u_y</span><span class="si">}</span><span class="s1"> Q </span><span class="si">{</span><span class="n">x_fix</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">y_fix</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">v_x</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">v_y</span><span class="si">}</span><span class="s1">&quot; &#39;</span><span class="sa">f</span><span class="s1">&#39;fill=&quot;none&quot; stroke=&quot;gray&quot; stroke-width=&quot;1&quot; opacity=&quot;0.5&quot;/&gt;&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">intra_edges</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">intra_edges</span><span class="p">:</span>
+            <span class="n">u_x</span><span class="p">,</span> <span class="n">u_y</span> <span class="o">=</span> <span class="n">rendered_node_positions</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">v_x</span><span class="p">,</span> <span class="n">v_y</span> <span class="o">=</span> <span class="n">rendered_node_positions</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="n">v_x</span> <span class="o">-</span> <span class="n">u_x</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="n">v_y</span> <span class="o">-</span> <span class="n">u_y</span>
+            <span class="n">x_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">u_x</span> <span class="o">+</span> <span class="n">v_x</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">y_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">u_y</span> <span class="o">+</span> <span class="n">v_y</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span>
+            <span class="n">x_fix</span> <span class="o">=</span> <span class="n">x_mid</span> <span class="o">-</span> <span class="n">dy</span> <span class="o">*</span> <span class="n">alpha</span>
+            <span class="n">y_fix</span> <span class="o">=</span> <span class="n">y_mid</span> <span class="o">+</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">alpha</span>
+            <span class="n">svg_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;path d=&quot;M </span><span class="si">{</span><span class="n">u_x</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">u_y</span><span class="si">}</span><span class="s1"> Q </span><span class="si">{</span><span class="n">x_fix</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">y_fix</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">v_x</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">v_y</span><span class="si">}</span><span class="s1">&quot; fill=&quot;none&quot; stroke=&quot;gray&quot; stroke-width=&quot;1.2&quot; opacity=&quot;0.5&quot;/&gt;&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">svg_axes</span><span class="p">,</span> <span class="n">svg_nodes</span><span class="p">,</span> <span class="n">svg_edges</span><span class="p">,</span> <span class="n">svg_labels</span></div>
+
+
+<div class="viewcode-block" id="render_svg">
+<a class="viewcode-back" href="../../api.html#src.renderer.render_svg">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_svg</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">elements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Setzt den Header der .svg Datei und hängt die Graphenelemente an und setzt die Schlussklausel. Datei wird neu erstellt bzw. überschrieben, falls sie bereits existiert.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">svg</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s1">&quot; height=&quot;</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s1">&quot; viewBox=&quot;0 0 </span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s1">&quot;&gt;&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">elements</span><span class="p">,</span><span class="s1">&#39;&lt;/svg&gt;&#39;</span><span class="p">,]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">svg</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="hiveplot_renderer">
+<a class="viewcode-back" href="../../api.html#src.renderer.hiveplot_renderer">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hiveplot_renderer</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">layout</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">debug_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">intra</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">node_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axes_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unordered</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">paper_like</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (SVG) realisiert.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">id_to_label_map</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">id_to_name</span>
+    <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+        <span class="n">node_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups_expanded</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">node_groups</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">node_groups</span>
+    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">:</span> <span class="c1"># check: duplikate entfernen, falls vorhanden</span>
+        <span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]))</span>
+    <span class="n">elements</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;white&#39;/&gt;&quot;</span><span class="p">]</span> <span class="c1"># weißer hintergrund</span>
+    <span class="c1"># elements = [] # kein hintergrund</span>
+    <span class="k">if</span> <span class="n">intra</span><span class="p">:</span>
+        <span class="n">ax</span><span class="p">,</span> <span class="n">nod</span><span class="p">,</span> <span class="n">ed</span><span class="p">,</span> <span class="n">lab</span> <span class="o">=</span> <span class="n">draw_basis</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_groups</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">()),</span> <span class="n">id_to_label_map</span><span class="o">=</span><span class="n">id_to_label_map</span><span class="p">,</span> <span class="n">unordered</span><span class="o">=</span><span class="n">unordered</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">,</span> <span class="n">intra_edges</span><span class="o">=</span><span class="n">layout</span><span class="o">.</span><span class="n">intra_axis_edges</span><span class="p">,</span>
+                                    <span class="n">axes_labels</span><span class="o">=</span><span class="n">axes_labels</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span><span class="p">,</span> <span class="n">nod</span><span class="p">,</span> <span class="n">ed</span><span class="p">,</span> <span class="n">lab</span> <span class="o">=</span> <span class="n">draw_basis</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">node_groups</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">edges</span><span class="p">()),</span> <span class="n">id_to_label_map</span><span class="o">=</span><span class="n">id_to_label_map</span><span class="p">,</span> <span class="n">unordered</span> <span class="o">=</span> <span class="n">unordered</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">,</span>  <span class="n">axes_labels</span><span class="o">=</span><span class="n">axes_labels</span><span class="p">)</span>
+    <span class="n">elements</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">elements</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ed</span><span class="p">)</span>
+    <span class="n">elements</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">nod</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node_labels</span><span class="p">:</span>
+        <span class="n">elements</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">lab</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+        <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;12&quot; y=&quot;20&quot; font-size=&quot;24&quot; fill=&quot;#000000&quot;&gt;&#39;</span><span class="sa">f</span><span class="s1">&#39;Kreuzungen: </span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">crossings_expanded</span><span class="si">}</span><span class="s1">&#39;</span><span class="sa">f</span><span class="s1">&#39;&lt;/text&gt;&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;12&quot; y=&quot;20&quot; font-size=&quot;24&quot; fill=&quot;#000000&quot;&gt;&#39;</span><span class="sa">f</span><span class="s1">&#39;Kreuzungen: </span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">crossings</span><span class="si">}</span><span class="s1">&#39;</span><span class="sa">f</span><span class="s1">&#39;&lt;/text&gt;&#39;</span><span class="p">)</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">debug_dir</span> <span class="o">/</span> <span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.svg&quot;</span><span class="p">)</span>
+    <span class="n">render_svg</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">elements</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filename</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

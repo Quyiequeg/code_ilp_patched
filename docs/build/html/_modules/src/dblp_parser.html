@@ -1,0 +1,268 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.dblp_parser &mdash; BA-Sauerteig 1.0 Dokumentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8fdbe8ab"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=9bf55d28"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Stichwortverzeichnis" href="../../genindex.html" />
+    <link rel="search" title="Suche" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            BA-Sauerteig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" aria-label="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">BA-Sauerteig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modul-Quellcode</a></li>
+      <li class="breadcrumb-item active">src.dblp_parser</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Quellcode für src.dblp_parser</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+
+<span class="n">GD_TITLES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;GD&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GD (1)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GD (2)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Graph Drawing&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Graph Drawing with Applications to Bioinformatics and Social Sciences&quot;</span> <span class="c1"># große schnittmenge an autoren zu GD, deshalb mit aufgenommen</span>
+<span class="p">}</span> <span class="c1"># vorgefilterte Titel</span>
+
+<span class="n">YEAR_MIN</span> <span class="o">=</span> <span class="mi">2000</span>
+<span class="n">YEAR_MAX</span> <span class="o">=</span> <span class="mi">2024</span>
+
+<div class="viewcode-block" id="LocalDTDResolver">
+<a class="viewcode-back" href="../../api.html#src.dblp_parser.LocalDTDResolver">[Doku]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LocalDTDResolver</span><span class="p">(</span><span class="n">etree</span><span class="o">.</span><span class="n">Resolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Da es beim Parse trotz schneller Hardware zu Performanzproblemen kam mussten Einstellungen feingranular festgelegt werden. Unter anderem in dieser Klasse gebündelt die dtd-Datei zur Übersetzung von Umlauten und Sonderzeichen. Sie wird, falls vorhanden, von lokal bevorzugt.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtd_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtd_path</span> <span class="o">=</span> <span class="n">dtd_path</span>
+
+<div class="viewcode-block" id="LocalDTDResolver.resolve">
+<a class="viewcode-back" href="../../api.html#src.dblp_parser.LocalDTDResolver.resolve">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtd_path</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="scan_booktitles">
+<a class="viewcode-back" href="../../api.html#src.dblp_parser.scan_booktitles">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scan_booktitles</span><span class="p">(</span><span class="n">xml_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dtd_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vorverarbeitung der dblp-xml Datei um nach booktitles zu filtern, da die xml-Datei neben Konferenzbänden auch andere wissenschaftliche Erzeugnisse wie Dissertationen oder Buchpublikationen enthält, die nichts mit der GD-Konferenz zu tun haben.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">XMLParser</span><span class="p">(</span><span class="n">load_dtd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">resolve_entities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_network</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">resolvers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">LocalDTDResolver</span><span class="p">(</span><span class="n">dtd_path</span><span class="p">))</span>
+    <span class="n">etree</span><span class="o">.</span><span class="n">set_default_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+
+    <span class="n">context</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">iterparse</span><span class="p">(</span>
+        <span class="n">xml_path</span><span class="p">,</span>
+        <span class="n">events</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;end&quot;</span><span class="p">,),</span>
+        <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;inproceedings&quot;</span><span class="p">,</span>
+        <span class="n">load_dtd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">resolve_entities</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">recover</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span> <span class="c1"># iterationsloop</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">booktitle</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s2">&quot;booktitle&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;gd&quot;</span> <span class="ow">in</span> <span class="n">booktitle</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;graph drawing&quot;</span> <span class="ow">in</span> <span class="n">booktitle</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="n">found</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">booktitle</span><span class="p">)</span>
+
+        <span class="n">elem</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span> <span class="c1"># wichtig, speicher freigeben!</span>
+        <span class="k">while</span> <span class="n">elem</span><span class="o">.</span><span class="n">getprevious</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">elem</span><span class="o">.</span><span class="n">getparent</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">count</span> <span class="o">%</span> <span class="mi">500_000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># statusmeldung nach 0.5mio</span>
+            <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">count</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> Einträge verarbeitet – </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s vergangen&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;=</span> <span class="mi">4_000_000</span><span class="p">:</span> <span class="c1"># bei performance problemen kann hier debuggt werden</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Testlimit erreicht, breche ab.&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fertig. </span><span class="si">{</span><span class="n">count</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> Einträge in </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">found</span></div>
+
+
+<div class="viewcode-block" id="parse_gd_coauthor_networks">
+<a class="viewcode-back" href="../../api.html#src.dblp_parser.parse_gd_coauthor_networks">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_gd_coauthor_networks</span><span class="p">(</span><span class="n">xml_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parst dblp und gibt Co-Autoren-Graphen pro Jahr zurück. Ausgabe erfolgt als pickle, um die Daten wiederverwendbar zu halten, ohne den Parse wieder durchzuführen. Lädt aus Cache falls vorhanden. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">cache_path</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">cache_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cache gefunden, lade...&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+    <span class="n">graphs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">context</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">iterparse</span><span class="p">(</span>
+        <span class="n">xml_path</span><span class="p">,</span>
+        <span class="n">events</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;end&quot;</span><span class="p">,),</span>
+        <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;inproceedings&quot;</span><span class="p">,</span>
+        <span class="n">load_dtd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">resolve_entities</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">recover</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">gd_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span> <span class="c1"># loop und filter</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">booktitle</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s2">&quot;booktitle&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">booktitle</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">GD_TITLES</span><span class="p">:</span>
+            <span class="n">elem</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">elem</span><span class="o">.</span><span class="n">getprevious</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">elem</span><span class="o">.</span><span class="n">getparent</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">continue</span>
+
+        <span class="n">year_text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s2">&quot;year&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">year_text</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">YEAR_MIN</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">year_text</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">YEAR_MAX</span><span class="p">):</span>
+            <span class="n">elem</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">elem</span><span class="o">.</span><span class="n">getprevious</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">elem</span><span class="o">.</span><span class="n">getparent</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">continue</span>
+
+        <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">year_text</span><span class="p">)</span>
+        <span class="n">authors</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;author&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">text</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">year</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graphs</span><span class="p">:</span>
+            <span class="n">graphs</span><span class="p">[</span><span class="n">year</span><span class="p">]</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">authors</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">authors</span><span class="p">)):</span>
+                <span class="n">graphs</span><span class="p">[</span><span class="n">year</span><span class="p">]</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">authors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">authors</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+        <span class="n">gd_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">elem</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">elem</span><span class="o">.</span><span class="n">getprevious</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">elem</span><span class="o">.</span><span class="n">getparent</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">count</span> <span class="o">%</span> <span class="mi">500_000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">count</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> Einträge verarbeitet – </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s – </span><span class="si">{</span><span class="n">gd_count</span><span class="si">}</span><span class="s2"> GD-Paper gefunden&quot;</span><span class="p">)</span>
+
+    <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fertig. </span><span class="si">{</span><span class="n">count</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> Einträge in </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s – </span><span class="si">{</span><span class="n">gd_count</span><span class="si">}</span><span class="s2"> GD-Paper, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">graphs</span><span class="p">)</span><span class="si">}</span><span class="s2"> Jahre&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cache_path</span><span class="p">:</span> <span class="c1"># pickle speichern</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">graphs</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cache gespeichert: </span><span class="si">{</span><span class="n">cache_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">graphs</span></div>
+
+
+<div class="viewcode-block" id="build_node_identity_maps">
+<a class="viewcode-back" href="../../api.html#src.dblp_parser.build_node_identity_maps">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_node_identity_maps</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Funktion dient der Erstellung der Maps für die gleichnamigen Felder im Hiveplotlayout. Es werden KnotenIDs als Integer auf die Namen der Forschenden als Strings und vice versa gemappt. Dadurch wird es einerseits ermöglicht den Eingabegraphen in ein pipelinefreundliches Format zu übersetzen und</span>
+<span class="sd">    gleichzeitig aus diesem am Ende die Label für den Renderer abzuleiten.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">id_to_name</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">name_to_id</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span> <span class="c1"># knoten ids ab 1 beginnend</span>
+        <span class="n">id_to_name</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
+        <span class="n">name_to_id</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="k">return</span> <span class="n">id_to_name</span><span class="p">,</span> <span class="n">name_to_id</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">pass</span>   
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -52,16 +52,15 @@ def node_to_axis(node, node_grps, position = False):
         return list(node_grps.keys()).index(axis)
 
 def brute_force_ordering(ordering: list[int], node_grps: dict, edges: list) -> tuple[int]:
-    """Für kleine k und zum Entwickeln der Pipeline vermeide ich zuerst die Auseinandersetzung mit dem Solver.
-    Diese Funktion dient dem schnellen Berechnen von Pipelineschritt 2: günstigste Achsenanordnung finden. 
-    ### LEGACY ###
+    """Berechnet die optimale Knotenordnung nach der Kostenfunktion über alle Permutationen von k.
+    Diese Funktion wird für Vergleichs- und Testzwecke weiterhin bereitgestellt.
     Args:
         ordering (list[int]): aktuelle Achsenordnung (phi)
         node_grps (dict): key: Achse, value: Knoten
         edges (list): Knotenliste
 
     Returns:
-        tuple[int, ...]: _description_
+        tuple[int, ...]: Optimierte Achsenordnung
     """
     from cost import cost_function_whole
     permutations_ordering = list(permutations(ordering))

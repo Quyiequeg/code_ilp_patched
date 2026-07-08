@@ -47,7 +47,7 @@ class HivePlotLayout:
     fixed_positions_by_axis: dict | None = None
 
     def __str__(self):
-        """Besser lesbarere Darstellung der HivePlotLayout-Instanz bei Test und debugging.
+        """Besser lesbarere Darstellung der HivePlotLayout-Instanz.
 
         Returns:
             str: Zeilenweise Ausgabe der Parameter und Felder.
@@ -98,7 +98,7 @@ class HivePlotLayout:
     def fuse_node_groups_with_dummies(self, layout_expanded:bool = False) -> dict[int, list[int | str]]:
         """Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.
         Args:
-            expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+            layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
         Returns:
             dict[int, list[int]]: Vereinigung der Knoten und Dummyknoten pro Achse.
         """
@@ -129,7 +129,7 @@ class HivePlotLayout:
 
         Args:
             fused_edge_list: list[tuple[int | str, int | str]]: Liste der realen und virtuellen Kantentupel
-            expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+            layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
         Returns:
             dict[int | str: list[int | str]]: KnotenID: Nachbarliste
         """
@@ -459,7 +459,7 @@ class HivePlotLayout:
                     self.graph.add_node(node)
                 self.graph.nodes[node]["subset"] = axis
         
-    def count_crossings(self: HivePlotLayout,  layout_expanded:bool = False) -> int:
+    def count_crossings(self,  layout_expanded:bool = False) -> int:
         """Funktion zählt die induzierten Kanten des fertigen Hiveplotlayout.
         """
         # initialisieren

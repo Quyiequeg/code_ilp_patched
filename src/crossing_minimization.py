@@ -278,7 +278,7 @@ def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[i
     Args:
         layout (HivePlotLayout): das zu berechnende HivePlotLayout
         neighbor_group (list[int]): Liste der Nachbarknoten
-        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
     Returns:
         float: Barycenterposition
     """
@@ -358,7 +358,7 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
     Args:
         layout (HivePlotLayout): Das zu optimierende HivePlotLayout.
         threshold(int): Optionaler Abbruchschwellwert für die Anzahl der Sweep-Durchläufe.
-        expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+        layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
         paper_like(bool): dient der Unterscheidung zwischen identischer und unterschiedlicher Knotenordnung
     """
     from ordering import node_to_axis_maps

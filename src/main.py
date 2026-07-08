@@ -37,7 +37,7 @@ for d in [OUTPUT_DIR, DEBUG_DIR, GRAPH_DIR, SAVE_DIR, LOAD_DIR, LOG_DIR, EXPERIM
 
 # module
 from logger_setup import setup_logger
-from hiveplot import (HivePlotLayout, )
+from hiveplot import (HivePlotLayout)
 from renderer import hiveplot_renderer
 from logger_setup import setup_logger, log
 
@@ -136,7 +136,7 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
     # achsenordnung optimieren
     step_ordering(hiveplot, logger)
 
-    # zwischenspeichern für effizientes debugging
+    # zwischenspeichern der zwischenbasis
     save_pkl(hiveplot, f"{variant}_{year}_basis_nach_ordering", save, logger)
 
     if variant == "Barycenterheuristik":
@@ -250,8 +250,9 @@ def main():
     pipeline(run = 0, **config)
 
     # für batchläufe
-    # for i in range(1, 101):
-    #         print(f"year {year} - variant {config['variant']}")
+    # for i in range(2000, 2025): # run kann auch als run = 0 übergeben und die iteration angepasst werden
+    #         config["year"] = i
+    #         print(f"year {i} - variant {config['variant']}")
     #         pipeline(run=0, **config)
 
 if __name__ == "__main__":

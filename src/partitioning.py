@@ -25,7 +25,7 @@ def clauset_newman_moore_communities(graph, threshold: int = 0) -> dict[int, lis
 
 def louvain_community_detection(graph):
     """Berechnet die Communities eines Graphen per Louvain Community Detection und wandelt die frozenset Liste in ein dict um.
-    ### LEGACY ###
+    Diese Funktion wird für Vergleichs- und Testzwecke weiterhin bereitgestellt.
     Args:
         graph (nx.Graph): Der Eingabegraph, für den die Communities berechnet werden sollen.
 

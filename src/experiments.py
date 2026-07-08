@@ -9,11 +9,11 @@ class DataCollector:
     """Zentrale Datenstruktur für den Datensatz der Experimente.
     """
     data_sets: dict[str, dict[str, list]]
-    BASE = Path(__file__).parent.parent  # src/ -> repo root
-    path: Path = BASE / "output/experiments/results.pkl"
 
-    def __init__(self, path: Path = _DEFAULT_PATH):
+    def __init__(self, path: Path | None = None):
         # path exists -> path laden, falls nicht save()
+        if path is None:
+            path = _DEFAULT_PATH
         self.path = path
         if path.exists():
             with open(path, "rb") as file:
@@ -142,9 +142,5 @@ class DataCollector:
 
 if __name__ == "__main__":
     data = DataCollector()
+    # Beispielausgabe für den Datensatz 
     print(data.data_sets["H2"])
-    # data.delete("Parameterstudie")
-    # data.delete("H1")
-    # data.delete("H2")
-    # data.delete("Laufzeitenvergleich Bary/ILP")
-    # data.get_data_set("GDJahre_gesamt_knoten_kanten_native")

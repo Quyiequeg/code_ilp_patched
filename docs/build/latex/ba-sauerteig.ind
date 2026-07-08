@@ -1,0 +1,230 @@
+\begin{sphinxtheindex}
+\let\bigletter\sphinxstyleindexlettergroup
+\let\spxpagem \sphinxstyleindexpagemain
+\let\spxentry \sphinxstyleindexentry
+\let\spxextra \sphinxstyleindexextra
+
+  \bigletter A
+  \item \spxentry{axis\_order}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{6, 7}
+
+  \indexspace
+  \bigletter B
+  \item \spxentry{barycenter\_crossmin\_pipeline()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{2}
+  \item \spxentry{barycenter\_heuristic()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{2}
+  \item \spxentry{brute\_force\_ordering()}\spxextra{im Modul src.ordering}, \hyperpage{14}
+  \item \spxentry{build\_node\_identity\_maps()}\spxextra{im Modul src.dblp\_parser}, \hyperpage{4}
+
+  \indexspace
+  \bigletter C
+  \item \spxentry{calculate\_barycenter\_position()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{3}
+  \item \spxentry{classify\_nodes\_for\_3b()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{clauset\_newman\_moore\_communities()}\spxextra{im Modul src.partitioning}, 
+		\hyperpage{15}
+  \item \spxentry{copy()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, \hyperpage{7}
+  \item \spxentry{cost\_function\_whole()}\spxextra{im Modul src.cost}, \hyperpage{1}
+  \item \spxentry{count\_crossings()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{crossings}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{6}
+  \item \spxentry{crossings\_expanded}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{crossings\_extended}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+
+  \indexspace
+  \bigletter D
+  \item \spxentry{data\_keys()}\spxextra{Methode von src.experiments.DataCollector}, \hyperpage{5}
+  \item \spxentry{data\_sets}\spxextra{Attribut von src.experiments.DataCollector}, \hyperpage{5}
+  \item \spxentry{DataCollector}\spxextra{Klasse in src.experiments}, \hyperpage{5}
+  \item \spxentry{delete()}\spxextra{Methode von src.experiments.DataCollector}, \hyperpage{5}
+  \item \spxentry{delta\_mapping()}\spxextra{im Modul src.ip\_model}, \hyperpage{10}
+  \item \spxentry{draw\_basis()}\spxextra{im Modul src.renderer}, \hyperpage{15}
+  \item \spxentry{dummy\_edge\_segments}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+
+  \indexspace
+  \bigletter E
+  \item \spxentry{edge\_node\_cleanup()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{3}
+  \item \spxentry{edges()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, \hyperpage{7}
+  \item \spxentry{edges\_between\_axes()}\spxextra{im Modul src.cost}, \hyperpage{1}
+  \item \spxentry{edges\_expanded}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+
+  \indexspace
+  \bigletter F
+  \item \spxentry{finish\_structured\_axis\_orders()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{3}
+  \item \spxentry{fixed\_inter\_axis\_delta}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{fixed\_positions\_by\_axis}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{freeze\_barycenter\_positions()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{freeze\_inter\_axis\_delta()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{fuse\_edges\_with\_edge\_dummies()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{7}
+  \item \spxentry{fuse\_node\_groups\_with\_dummies()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{8}
+
+  \indexspace
+  \bigletter G
+  \item \spxentry{get\_data\_set()}\spxextra{Methode von src.experiments.DataCollector}, 
+		\hyperpage{5}
+  \item \spxentry{get\_delta\_value()}\spxextra{im Modul src.ip\_model}, \hyperpage{11}
+  \item \spxentry{get\_proper\_neighborhood\_map()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{8}
+  \item \spxentry{graph}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{6}, 
+		\hyperpage{8}
+
+  \indexspace
+  \bigletter H
+  \item \spxentry{hiveplot\_renderer()}\spxextra{im Modul src.renderer}, \hyperpage{15}
+  \item \spxentry{HivePlotLayout}\spxextra{Klasse in src.hiveplot}, \hyperpage{6}
+
+  \indexspace
+  \bigletter I
+  \item \spxentry{id\_to\_name}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{8}
+  \item \spxentry{ilp\_name()}\spxextra{im Modul src.ip\_model}, \hyperpage{11}
+  \item \spxentry{induced\_crossings()}\spxextra{im Modul src.ip\_model}, \hyperpage{11}
+  \item \spxentry{init\_graph()}\spxextra{im Modul src.main}, \hyperpage{13}
+  \item \spxentry{init\_hiveplot()}\spxextra{im Modul src.main}, \hyperpage{13}
+  \item \spxentry{init\_logger()}\spxextra{im Modul src.main}, \hyperpage{13}
+  \item \spxentry{init\_original()}\spxextra{im Modul src.main}, \hyperpage{13}
+  \item \spxentry{intra\_axis\_edges}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{8}
+  \item \spxentry{intra\_axis\_nodes}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{8}
+  \item \spxentry{ip\_model\_pipeline()}\spxextra{im Modul src.ip\_model}, \hyperpage{11}
+  \item \spxentry{ip\_ordering()}\spxextra{im Modul src.ordering}, \hyperpage{14}
+
+  \indexspace
+  \bigletter L
+  \item \spxentry{linearize\_product()}\spxextra{im Modul src.ip\_model}, \hyperpage{12}
+  \item \spxentry{LocalDTDResolver}\spxextra{Klasse in src.dblp\_parser}, \hyperpage{4}
+  \item \spxentry{log()}\spxextra{im Modul src.logger\_setup}, \hyperpage{13}
+  \item \spxentry{long\_edges}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{8}
+  \item \spxentry{louvain\_community\_detection()}\spxextra{im Modul src.partitioning}, 
+		\hyperpage{15}
+
+  \indexspace
+  \bigletter M
+  \item \spxentry{main()}\spxextra{im Modul src.main}, \hyperpage{13}
+  \item \spxentry{merge()}\spxextra{Methode von src.experiments.DataCollector}, \hyperpage{5}
+  \item \spxentry{missing()}\spxextra{Methode von src.experiments.DataCollector}, \hyperpage{5}
+  \item \spxentry{mixed\_nodes\_by\_axis}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{8}
+  \item \spxentry{module}
+    \subitem \spxentry{src}, \hyperpage{16}
+    \subitem \spxentry{src.cost}, \hyperpage{1}
+    \subitem \spxentry{src.crossing\_minimization}, \hyperpage{2}
+    \subitem \spxentry{src.dblp\_parser}, \hyperpage{4}
+    \subitem \spxentry{src.experiments}, \hyperpage{5}
+    \subitem \spxentry{src.hiveplot}, \hyperpage{6}
+    \subitem \spxentry{src.ip\_model}, \hyperpage{10}
+    \subitem \spxentry{src.logger\_setup}, \hyperpage{13}
+    \subitem \spxentry{src.main}, \hyperpage{13}
+    \subitem \spxentry{src.ordering}, \hyperpage{14}
+    \subitem \spxentry{src.partitioning}, \hyperpage{15}
+    \subitem \spxentry{src.renderer}, \hyperpage{15}
+
+  \indexspace
+  \bigletter N
+  \item \spxentry{name\_to\_id}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{8}
+  \item \spxentry{node\_groups}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{6}, 
+		\hyperpage{8}
+  \item \spxentry{node\_groups\_dummies}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{6}, \hyperpage{8}
+  \item \spxentry{node\_groups\_expanded}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{8}
+  \item \spxentry{node\_or\_axes\_span()}\spxextra{im Modul src.cost}, \hyperpage{1}
+  \item \spxentry{node\_order}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{6}
+  \item \spxentry{node\_to\_axis()}\spxextra{im Modul src.ordering}, \hyperpage{14}
+  \item \spxentry{node\_to\_axis\_maps()}\spxextra{im Modul src.ordering}, \hyperpage{14}
+  \item \spxentry{num\_axes}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, \hyperpage{6}, 
+		\hyperpage{8}
+
+  \indexspace
+  \bigletter O
+  \item \spxentry{onelayer\_twosided\_optimization()}\spxextra{im Modul src.ip\_model}, 
+		\hyperpage{12}
+  \item \spxentry{onelayer\_twosided\_optimization\_3b()}\spxextra{im Modul src.ip\_model}, 
+		\hyperpage{12}
+
+  \indexspace
+  \bigletter P
+  \item \spxentry{parse\_dummy\_name()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{3}
+  \item \spxentry{parse\_gd\_coauthor\_networks()}\spxextra{im Modul src.dblp\_parser}, 
+		\hyperpage{4}
+  \item \spxentry{pipeline()}\spxextra{im Modul src.main}, \hyperpage{13}
+  \item \spxentry{post\_processing\_expansion()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{8}
+  \item \spxentry{pre\_processing\_expansion()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{9}
+
+  \indexspace
+  \bigletter R
+  \item \spxentry{remove\_isolated\_nodes()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{3}
+  \item \spxentry{render\_svg()}\spxextra{im Modul src.renderer}, \hyperpage{15}
+  \item \spxentry{reordered\_node\_groups()}\spxextra{im Modul src.ordering}, \hyperpage{15}
+  \item \spxentry{resolve()}\spxextra{Methode von src.dblp\_parser.LocalDTDResolver}, \hyperpage{4}
+
+  \indexspace
+  \bigletter S
+  \item \spxentry{save()}\spxextra{Methode von src.experiments.DataCollector}, \hyperpage{5}
+  \item \spxentry{save\_pkl()}\spxextra{im Modul src.main}, \hyperpage{13}
+  \item \spxentry{save\_rendered\_hiveplot()}\spxextra{im Modul src.main}, \hyperpage{14}
+  \item \spxentry{scan\_booktitles()}\spxextra{im Modul src.dblp\_parser}, \hyperpage{5}
+  \item \spxentry{setup\_logger()}\spxextra{im Modul src.logger\_setup}, \hyperpage{13}
+  \item \spxentry{src}
+    \subitem \spxentry{module}, \hyperpage{16}
+  \item \spxentry{src.cost}
+    \subitem \spxentry{module}, \hyperpage{1}
+  \item \spxentry{src.crossing\_minimization}
+    \subitem \spxentry{module}, \hyperpage{2}
+  \item \spxentry{src.dblp\_parser}
+    \subitem \spxentry{module}, \hyperpage{4}
+  \item \spxentry{src.experiments}
+    \subitem \spxentry{module}, \hyperpage{5}
+  \item \spxentry{src.hiveplot}
+    \subitem \spxentry{module}, \hyperpage{6}
+  \item \spxentry{src.ip\_model}
+    \subitem \spxentry{module}, \hyperpage{10}
+  \item \spxentry{src.logger\_setup}
+    \subitem \spxentry{module}, \hyperpage{13}
+  \item \spxentry{src.main}
+    \subitem \spxentry{module}, \hyperpage{13}
+  \item \spxentry{src.ordering}
+    \subitem \spxentry{module}, \hyperpage{14}
+  \item \spxentry{src.partitioning}
+    \subitem \spxentry{module}, \hyperpage{15}
+  \item \spxentry{src.renderer}
+    \subitem \spxentry{module}, \hyperpage{15}
+  \item \spxentry{step\_ordering()}\spxextra{im Modul src.main}, \hyperpage{14}
+  \item \spxentry{strict\_intra\_nodes\_by\_axis}\spxextra{Attribut von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{10}
+  \item \spxentry{subdivide\_long\_edges()}\spxextra{im Modul src.crossing\_minimization}, 
+		\hyperpage{4}
+
+  \indexspace
+  \bigletter T
+  \item \spxentry{translate\_polar\_to\_carthesian()}\spxextra{im Modul src.renderer}, 
+		\hyperpage{16}
+
+  \indexspace
+  \bigletter U
+  \item \spxentry{update()}\spxextra{Methode von src.experiments.DataCollector}, \hyperpage{5}
+  \item \spxentry{updated\_nodes()}\spxextra{Methode von src.hiveplot.HivePlotLayout}, 
+		\hyperpage{10}
+
+  \indexspace
+  \bigletter V
+  \item \spxentry{validate()}\spxextra{Methode von src.experiments.DataCollector}, \hyperpage{5}
+
+\end{sphinxtheindex}

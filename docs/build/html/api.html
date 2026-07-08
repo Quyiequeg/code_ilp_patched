@@ -1,0 +1,1536 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src package &mdash; BA-Sauerteig 1.0 Dokumentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8fdbe8ab"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=9bf55d28"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Stichwortverzeichnis" href="genindex.html" />
+    <link rel="search" title="Suche" href="search.html" />
+    <link rel="prev" title="BA-Sauerteig – API-Dokumentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            BA-Sauerteig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" aria-label="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">src package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.cost">src.cost module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.cost.cost_function_whole"><code class="docutils literal notranslate"><span class="pre">cost_function_whole()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.cost.edges_between_axes"><code class="docutils literal notranslate"><span class="pre">edges_between_axes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.cost.node_or_axes_span"><code class="docutils literal notranslate"><span class="pre">node_or_axes_span()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.crossing_minimization">src.crossing_minimization module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.barycenter_crossmin_pipeline"><code class="docutils literal notranslate"><span class="pre">barycenter_crossmin_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.barycenter_heuristic"><code class="docutils literal notranslate"><span class="pre">barycenter_heuristic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.calculate_barycenter_position"><code class="docutils literal notranslate"><span class="pre">calculate_barycenter_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.edge_node_cleanup"><code class="docutils literal notranslate"><span class="pre">edge_node_cleanup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.finish_structured_axis_orders"><code class="docutils literal notranslate"><span class="pre">finish_structured_axis_orders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.parse_dummy_name"><code class="docutils literal notranslate"><span class="pre">parse_dummy_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.remove_isolated_nodes"><code class="docutils literal notranslate"><span class="pre">remove_isolated_nodes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.crossing_minimization.subdivide_long_edges"><code class="docutils literal notranslate"><span class="pre">subdivide_long_edges()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.dblp_parser">src.dblp_parser module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.dblp_parser.LocalDTDResolver"><code class="docutils literal notranslate"><span class="pre">LocalDTDResolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#src.dblp_parser.LocalDTDResolver.resolve"><code class="docutils literal notranslate"><span class="pre">LocalDTDResolver.resolve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#src.dblp_parser.build_node_identity_maps"><code class="docutils literal notranslate"><span class="pre">build_node_identity_maps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.dblp_parser.parse_gd_coauthor_networks"><code class="docutils literal notranslate"><span class="pre">parse_gd_coauthor_networks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.dblp_parser.scan_booktitles"><code class="docutils literal notranslate"><span class="pre">scan_booktitles()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.experiments">src.experiments module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.experiments.DataCollector"><code class="docutils literal notranslate"><span class="pre">DataCollector</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.data_keys"><code class="docutils literal notranslate"><span class="pre">DataCollector.data_keys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.data_sets"><code class="docutils literal notranslate"><span class="pre">DataCollector.data_sets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.delete"><code class="docutils literal notranslate"><span class="pre">DataCollector.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.get_data_set"><code class="docutils literal notranslate"><span class="pre">DataCollector.get_data_set()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.merge"><code class="docutils literal notranslate"><span class="pre">DataCollector.merge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.missing"><code class="docutils literal notranslate"><span class="pre">DataCollector.missing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.save"><code class="docutils literal notranslate"><span class="pre">DataCollector.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.update"><code class="docutils literal notranslate"><span class="pre">DataCollector.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.experiments.DataCollector.validate"><code class="docutils literal notranslate"><span class="pre">DataCollector.validate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.hiveplot">src.hiveplot module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.hiveplot.HivePlotLayout"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.graph"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.graph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.num_axes"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.num_axes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.axis_order"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.axis_order</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.node_groups"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.node_groups</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.node_groups_dummies"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.node_groups_dummies</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.node_order"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.node_order</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.crossings"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.crossings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.crossings_extended"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.crossings_extended</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.axis_order</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.classify_nodes_for_3b"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.classify_nodes_for_3b()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.copy"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.count_crossings"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.count_crossings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.crossings_expanded"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.crossings_expanded</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.dummy_edge_segments"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.dummy_edge_segments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.edges"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.edges()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.edges_expanded"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.edges_expanded</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.fixed_inter_axis_delta"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.fixed_inter_axis_delta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.fixed_positions_by_axis"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.fixed_positions_by_axis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.freeze_barycenter_positions"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.freeze_barycenter_positions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.freeze_inter_axis_delta"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.freeze_inter_axis_delta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.fuse_edges_with_edge_dummies"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.fuse_edges_with_edge_dummies()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.fuse_node_groups_with_dummies"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.fuse_node_groups_with_dummies()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.get_proper_neighborhood_map"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.get_proper_neighborhood_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.graph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.id_to_name"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.id_to_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.intra_axis_edges"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.intra_axis_edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.intra_axis_nodes"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.intra_axis_nodes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.long_edges"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.long_edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.mixed_nodes_by_axis"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.mixed_nodes_by_axis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.name_to_id"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.name_to_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.node_groups</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.node_groups_dummies</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.node_groups_expanded"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.node_groups_expanded</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.num_axes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.post_processing_expansion"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.post_processing_expansion()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.pre_processing_expansion"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.pre_processing_expansion()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.strict_intra_nodes_by_axis"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.strict_intra_nodes_by_axis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.updated_nodes"><code class="docutils literal notranslate"><span class="pre">HivePlotLayout.updated_nodes()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.ip_model">src.ip_model module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.delta_mapping"><code class="docutils literal notranslate"><span class="pre">delta_mapping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.get_delta_value"><code class="docutils literal notranslate"><span class="pre">get_delta_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.ilp_name"><code class="docutils literal notranslate"><span class="pre">ilp_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.induced_crossings"><code class="docutils literal notranslate"><span class="pre">induced_crossings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.ip_model_pipeline"><code class="docutils literal notranslate"><span class="pre">ip_model_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.linearize_product"><code class="docutils literal notranslate"><span class="pre">linearize_product()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.onelayer_twosided_optimization"><code class="docutils literal notranslate"><span class="pre">onelayer_twosided_optimization()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ip_model.onelayer_twosided_optimization_3b"><code class="docutils literal notranslate"><span class="pre">onelayer_twosided_optimization_3b()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.logger_setup">src.logger_setup module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.logger_setup.log"><code class="docutils literal notranslate"><span class="pre">log()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.logger_setup.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.main">src.main module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.init_graph"><code class="docutils literal notranslate"><span class="pre">init_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.init_hiveplot"><code class="docutils literal notranslate"><span class="pre">init_hiveplot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.init_logger"><code class="docutils literal notranslate"><span class="pre">init_logger()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.init_original"><code class="docutils literal notranslate"><span class="pre">init_original()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.pipeline"><code class="docutils literal notranslate"><span class="pre">pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.save_pkl"><code class="docutils literal notranslate"><span class="pre">save_pkl()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.save_rendered_hiveplot"><code class="docutils literal notranslate"><span class="pre">save_rendered_hiveplot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.main.step_ordering"><code class="docutils literal notranslate"><span class="pre">step_ordering()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.ordering">src.ordering module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.ordering.brute_force_ordering"><code class="docutils literal notranslate"><span class="pre">brute_force_ordering()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ordering.ip_ordering"><code class="docutils literal notranslate"><span class="pre">ip_ordering()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ordering.node_to_axis"><code class="docutils literal notranslate"><span class="pre">node_to_axis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ordering.node_to_axis_maps"><code class="docutils literal notranslate"><span class="pre">node_to_axis_maps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.ordering.reordered_node_groups"><code class="docutils literal notranslate"><span class="pre">reordered_node_groups()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.partitioning">src.partitioning module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.partitioning.clauset_newman_moore_communities"><code class="docutils literal notranslate"><span class="pre">clauset_newman_moore_communities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.partitioning.louvain_community_detection"><code class="docutils literal notranslate"><span class="pre">louvain_community_detection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.renderer">src.renderer module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.renderer.draw_basis"><code class="docutils literal notranslate"><span class="pre">draw_basis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.renderer.hiveplot_renderer"><code class="docutils literal notranslate"><span class="pre">hiveplot_renderer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.renderer.render_svg"><code class="docutils literal notranslate"><span class="pre">render_svg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src.renderer.translate_polar_to_carthesian"><code class="docutils literal notranslate"><span class="pre">translate_polar_to_carthesian()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BA-Sauerteig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> Quelltext anzeigen</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-package">
+<h1>src package<a class="headerlink" href="#src-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-src.cost">
+<span id="src-cost-module"></span><h2>src.cost module<a class="headerlink" href="#module-src.cost" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.cost.cost_function_whole">
+<span class="sig-prename descclassname"><span class="pre">src.cost.</span></span><span class="sig-name descname"><span class="pre">cost_function_whole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ordering</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_grps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/cost.html#cost_function_whole"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.cost.cost_function_whole" title="Link to this definition"></a></dt>
+<dd><p>Die Kostenfunktion wird in Schritt zwei der Pipeline (Sec. 3.2) verwendet, um die kostengünstigste Achsenordnung zu ermitteln.
+Kostengünstig bedeutet hier, dass möglichst viele Achsenpaare mit möglichst geringem Span einfließen sollen.
+Diese Funktion wird für Vergleichs- und Testzwecke weiterhin bereitgestellt.
+:param ordering: Ordnung der Achsen (phi)
+:type ordering: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>
+:param node_grps: key: Achse, value: Knoten auf der Achse
+:type node_grps: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>
+:param edges: Kantenliste des Graphen
+:type edges: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span></p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Gesamtkosten der Achsenordnung</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.cost.edges_between_axes">
+<span class="sig-prename descclassname"><span class="pre">src.cost.</span></span><span class="sig-name descname"><span class="pre">edges_between_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_grps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/cost.html#edges_between_axes"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.cost.edges_between_axes" title="Link to this definition"></a></dt>
+<dd><p>Ermittelt wieviele Kanten zwischen den gegebenen Achsen bestehen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_grps</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – key: subset, value: list</p></li>
+<li><p><strong>edges</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – Kantenliste aus Tupeln</p></li>
+<li><p><strong>a1</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Achse 1</p></li>
+<li><p><strong>a2</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Achse 2</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>Anzahl der Kanten</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.cost.node_or_axes_span">
+<span class="sig-prename descclassname"><span class="pre">src.cost.</span></span><span class="sig-name descname"><span class="pre">node_or_axes_span</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/cost.html#node_or_axes_span"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.cost.node_or_axes_span" title="Link to this definition"></a></dt>
+<dd><p>Berechnet den Span zweier Knoten oder Achsen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n1</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Achse/Knoten 1</p></li>
+<li><p><strong>n2</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Achse/Knoten 2</p></li>
+<li><p><strong>k</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Gesamtzahl der Achsen</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>errechneter Spann</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.crossing_minimization">
+<span id="src-crossing-minimization-module"></span><h2>src.crossing_minimization module<a class="headerlink" href="#module-src.crossing_minimization" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.barycenter_crossmin_pipeline">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">barycenter_crossmin_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paper_like</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#barycenter_crossmin_pipeline"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.barycenter_crossmin_pipeline" title="Link to this definition"></a></dt>
+<dd><p>Führt die Kreuzungsminimierungs-Pipeline mit der Barycenterheuristik aus (3a/3b).</p>
+<p>Die Pipeline umfasst im paper_like = false:
+1. anfängliches Layout expandieren
+2. Entfernen isolierter Knoten auf den Achsen.
+3. Einfügen von Dummy-Knoten für lange Kanten (Span &gt; 1) und sortieren der inter axis Knoten (Span = 0).
+4. Initialisierung des Sweeps und Updates der Datenstrukturen.
+5. Mehrfache CW/CCW-Sweeps für reale und anschließend virtuelle Knoten, die die Barycenterpositionen ermitteln und die Achsen entsprechend sortieren.
+6. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</p>
+<p>Die Pipeline umfasst im nicht paper_like = true:
+1. Entfernen isolierter Knoten auf den Achsen.
+2. Einfügen von Dummy-Knoten für lange Kanten (Span &gt; 1) und sortieren der inter axis Knoten (Span = 0).
+3. Initialisierung des Sweeps und Updates der Datenstrukturen.
+4. Mehrfache CW/CCW-Sweeps für reale und anschließend virtuelle Knoten, die die Barycenterpositionen ermitteln und die Achsen entsprechend sortieren.
+5. Barycenter 3b
+6. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – Das zu optimierende HivePlotLayout.</p></li>
+<li><p><strong>threshold</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Optionaler Abbruchschwellwert für die Anzahl der Sweep-Durchläufe.</p></li>
+<li><p><strong>layout_expanded</strong> (<em>bool</em>) – dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</p></li>
+<li><p><strong>paper_like</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – dient der Unterscheidung zwischen identischer und unterschiedlicher Knotenordnung</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.barycenter_heuristic">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">barycenter_heuristic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighborhood_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_axis_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_fixed_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#barycenter_heuristic"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.barycenter_heuristic" title="Link to this definition"></a></dt>
+<dd><p>Führt wiederholte Barycenter-Sweeps im und gegen den Uhrzeigersinn über alle Achsen aus. Abhängig vom Parameter real werden entweder die realen Knoten (node_groups)
+oder die Dummy-Knoten (node_groups_dummies) pro Achse entsprechend der Barycenterposition ihrer Nachbarn umsortiert. Der Sweep endet, wenn keine Änderung mehr auftritt oder der threshold an Iterationen erreicht ist. Es kann zu Osszilationen im Sweep kommen, wenn
+z.B. wenn zwei Knoten die gleiche Barycenter Position haben oder in den Sweeps einfach nur ihre Positionen hin- und hertauschen. Dies führt dazu, dass die Schleife nie terminiert. In state_set werden dementsprechend alle erreichten Zustände gehasht und beim Wiederkehren eines zuvor errechneten Zustands kann die Schleife vor einem neuen Durchgang abbrechen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – Aktuelles HivePlotLayout mit Achsenzuordnung und Knotenlisten.</p></li>
+<li><p><strong>neighborhood_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – Map von Knoten (real und/oder Dummy, initialisierungsabhängig) auf deren Nachbarn.</p></li>
+<li><p><strong>node_axis_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Map von Knoten auf Achsen in phi.</p></li>
+<li><p><strong>threshold</strong> – Maximale Anzahl Sweep-Durchläufe, bevor abgebrochen wird.</p></li>
+<li><p><strong>real</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – True, um reale Knoten zu sortieren; False, um Dummy-Knoten zu sortieren.</p></li>
+<li><p><strong>layout_expanded</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</p></li>
+<li><p><strong>use_fixed_positions</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – wird für 3b benötigt, damit fixierte positionen verwendet werden</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.calculate_barycenter_position">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">calculate_barycenter_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbor_group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_axis_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#calculate_barycenter_position"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.calculate_barycenter_position" title="Link to this definition"></a></dt>
+<dd><p>Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – das zu berechnende HivePlotLayout</p></li>
+<li><p><strong>neighbor_group</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Liste der Nachbarknoten</p></li>
+<li><p><strong>layout_expanded</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>Barycenterposition</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.edge_node_cleanup">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">edge_node_cleanup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#edge_node_cleanup"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.edge_node_cleanup" title="Link to this definition"></a></dt>
+<dd><p>Nachbereitung der Pipeline, dient als Absicherung, dass Kanten und intra Knoten im Layout korrekt gesetzt sind.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.finish_structured_axis_orders">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">finish_structured_axis_orders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isolated_node_groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#finish_structured_axis_orders"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.finish_structured_axis_orders" title="Link to this definition"></a></dt>
+<dd><p>Aktualisiert die node_groups am Ende der Pipeline und fügt isolierte Knoten wieder ein.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.parse_dummy_name">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">parse_dummy_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#parse_dummy_name"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.parse_dummy_name" title="Link to this definition"></a></dt>
+<dd><p>Zerlegt den Namen eines Dummyknotens in seine Bestandteile: Startknoten, Endknoten und Sequenznummer. (siehe make_dummy_name Funktion für Namensschema)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Der zu zerlegende Dummyknoten</p>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tupel aus int-Werten: (Startknoten, Endknoten, Sequenznummer)</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.remove_isolated_nodes">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">remove_isolated_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#remove_isolated_nodes"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.remove_isolated_nodes" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion entfernt alle isolierten Knoten aus der persistenten node_group des HivePlotLayouts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Graph</span></code></span>) – Der zugrundeliegende Graph aus dem HivePlotLayout.</p></li>
+<li><p><strong>node_groups</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span>) – Die persistente Knotenlisten der Achsen.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ein dict mit den isolierten Knoten pro Achse, key: Achse, value: Listen mit isolierten Knoten.</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.crossing_minimization.subdivide_long_edges">
+<span class="sig-prename descclassname"><span class="pre">src.crossing_minimization.</span></span><span class="sig-name descname"><span class="pre">subdivide_long_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_position_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_axis_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighborhood_map</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/crossing_minimization.html#subdivide_long_edges"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.crossing_minimization.subdivide_long_edges" title="Link to this definition"></a></dt>
+<dd><p>Funktion dient dem Einfügen von Dummyknoten für lange Kanten (span &gt; 1) auf den Achsen zwischen Start- und Endknoten. Schema: d_[Startknoten]_[Endknoten]_[Sequenznummer]: z.B. d_5_10_2 ist der zweite Dummyknoten auf der zerlegten langen Kante von 5 nach 10. Die lange Kante kann dann folgendermaßen beschrieben werden:
+Startknoten - d_5_10_1 - d_5_10_2 - … - d_5_10_(span-1) - Endknoten. Außerdem werden die inter axis Knoten (Span = 0) ermittelt und gefiltert, um später die Achsenreihenfolge sauber zu ermitteln und die Pipelineschritte zu Initialisieren. Gefiltert bedeutet hier:
+1. nur intra axis die nicht mixed sind (vgl. nested: is_mixed, werden in 3b behandelt)
+2. mixed (inter + intra, werden nur in 3a nicht aber in 3b berücksichtigt)
+Reine intra-axis Knoten werden aus den regulären node_groups entfernt und ihre Kanten vorübergehend aus dem Graphen gelöscht. Am Ende der Pipeline werden alle Informationen wieder konsistent zusammengesetzt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – Das HivePlotLayout-Objekt, das die Informationen über den Graphen, die Achsen und die Knoten enthält.</p></li>
+<li><p><strong>node_position_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Knoten-ID: Achsenindex in phi.</p></li>
+<li><p><strong>node_axis_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Knoten-ID: Achse</p></li>
+<li><p><strong>(</strong><strong>neighborhood_map</strong> (<em>neighborhood_map</em>) – dict[int | str, list[int | str]]): Knoten-ID: Nachbarknoten (:= proper = Span = 1)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None. Die Funktion arbeitet in-place auf dem übergebenen Layout</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.dblp_parser">
+<span id="src-dblp-parser-module"></span><h2>src.dblp_parser module<a class="headerlink" href="#module-src.dblp_parser" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.dblp_parser.LocalDTDResolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">src.dblp_parser.</span></span><span class="sig-name descname"><span class="pre">LocalDTDResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtd_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/dblp_parser.html#LocalDTDResolver"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.dblp_parser.LocalDTDResolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Resolver</span></code></p>
+<p>Da es beim Parse trotz schneller Hardware zu Performanzproblemen kam mussten Einstellungen feingranular festgelegt werden. Unter anderem in dieser Klasse gebündelt die dtd-Datei zur Übersetzung von Umlauten und Sonderzeichen. Sie wird, falls vorhanden, von lokal bevorzugt.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.dblp_parser.LocalDTDResolver.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/dblp_parser.html#LocalDTDResolver.resolve"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.dblp_parser.LocalDTDResolver.resolve" title="Link to this definition"></a></dt>
+<dd><p>Override this method to resolve an external source by
+<code class="docutils literal notranslate"><span class="pre">system_url</span></code> and <code class="docutils literal notranslate"><span class="pre">public_id</span></code>.  The third argument is an
+opaque context object.</p>
+<p>Return the result of one of the <code class="docutils literal notranslate"><span class="pre">resolve_*()</span></code> methods.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.dblp_parser.build_node_identity_maps">
+<span class="sig-prename descclassname"><span class="pre">src.dblp_parser.</span></span><span class="sig-name descname"><span class="pre">build_node_identity_maps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/dblp_parser.html#build_node_identity_maps"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.dblp_parser.build_node_identity_maps" title="Link to this definition"></a></dt>
+<dd><p>Funktion dient der Erstellung der Maps für die gleichnamigen Felder im Hiveplotlayout. Es werden KnotenIDs als Integer auf die Namen der Forschenden als Strings und vice versa gemappt. Dadurch wird es einerseits ermöglicht den Eingabegraphen in ein pipelinefreundliches Format zu übersetzen und
+gleichzeitig aus diesem am Ende die Label für den Renderer abzuleiten.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.dblp_parser.parse_gd_coauthor_networks">
+<span class="sig-prename descclassname"><span class="pre">src.dblp_parser.</span></span><span class="sig-name descname"><span class="pre">parse_gd_coauthor_networks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xml_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/dblp_parser.html#parse_gd_coauthor_networks"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.dblp_parser.parse_gd_coauthor_networks" title="Link to this definition"></a></dt>
+<dd><p>Parst dblp und gibt Co-Autoren-Graphen pro Jahr zurück. Ausgabe erfolgt als pickle, um die Daten wiederverwendbar zu halten, ohne den Parse wieder durchzuführen. Lädt aus Cache falls vorhanden.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Graph</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.dblp_parser.scan_booktitles">
+<span class="sig-prename descclassname"><span class="pre">src.dblp_parser.</span></span><span class="sig-name descname"><span class="pre">scan_booktitles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xml_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtd_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/dblp_parser.html#scan_booktitles"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.dblp_parser.scan_booktitles" title="Link to this definition"></a></dt>
+<dd><p>Vorverarbeitung der dblp-xml Datei um nach booktitles zu filtern, da die xml-Datei neben Konferenzbänden auch andere wissenschaftliche Erzeugnisse wie Dissertationen oder Buchpublikationen enthält, die nichts mit der GD-Konferenz zu tun haben.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.experiments">
+<span id="src-experiments-module"></span><h2>src.experiments module<a class="headerlink" href="#module-src.experiments" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.experiments.DataCollector">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">src.experiments.</span></span><span class="sig-name descname"><span class="pre">DataCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Zentrale Datenstruktur für den Datensatz der Experimente.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.data_keys">
+<span class="sig-name descname"><span class="pre">data_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.data_keys"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.data_keys" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.data_sets">
+<span class="sig-name descname"><span class="pre">data_sets</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.experiments.DataCollector.data_sets" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.delete"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.delete" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.get_data_set">
+<span class="sig-name descname"><span class="pre">get_data_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_set</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.get_data_set"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.get_data_set" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.merge"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.merge" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.missing">
+<span class="sig-name descname"><span class="pre">missing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.missing"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.missing" title="Link to this definition"></a></dt>
+<dd><p>Überprüft die Datensätze auf fehlende Einträge. Falls welche gefunden werden gibt es eine Liste aus Tupeln zurück,
+wobei das Tupel (Datensatz, x, fehlende Datenpunktbezeichner) ist. Falls x schon fehlt wird dies kenntlich gemacht.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Fehlende Einträge</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.save"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.save" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.update"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.update" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.experiments.DataCollector.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_set</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/experiments.html#DataCollector.validate"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.experiments.DataCollector.validate" title="Link to this definition"></a></dt>
+<dd><p>Ermittelt ob die Einträge des Datensatzes gleich viele Datenpunkte enthalten.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_set</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – betrachteter Datensatz</p>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>True = wenn Einträge gleiche Länge, sonst False. falls Datensatz fehlt Debug-Ausgabe</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-src.hiveplot">
+<span id="src-hiveplot-module"></span><h2>src.hiveplot module<a class="headerlink" href="#module-src.hiveplot" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">src.hiveplot.</span></span><span class="sig-name descname"><span class="pre">HivePlotLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_groups_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_groups_dummies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_edge_segments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">long_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_axis_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_axis_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_to_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_to_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossings_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mixed_nodes_by_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict_intra_nodes_by_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_inter_axis_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_positions_by_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Zentrale Datenstruktur für ein berechnetes Hive-Plot-Layout.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.graph">
+<span class="sig-name descname"><span class="pre">graph</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.graph" title="Link to this definition"></a></dt>
+<dd><p>ein Simple Graph den man nach der Verarbeitung der geparsten DBLP Daten erhält: V = Autoren, E = Coautorenschaft zu</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nx.Graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.num_axes">
+<span class="sig-name descname"><span class="pre">num_axes</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.num_axes" title="Link to this definition"></a></dt>
+<dd><p>k = Anzahl Achsen</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.axis_order">
+<span class="sig-name descname"><span class="pre">axis_order</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.axis_order" title="Link to this definition"></a></dt>
+<dd><p>phi</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.node_groups">
+<span class="sig-name descname"><span class="pre">node_groups</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.node_groups" title="Link to this definition"></a></dt>
+<dd><p>alpha: siehe node_groups Funktion in ordering.py</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, list[int]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.node_groups_dummies">
+<span class="sig-name descname"><span class="pre">node_groups_dummies</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.node_groups_dummies" title="Link to this definition"></a></dt>
+<dd><p>Achsen mit Dummyknoten</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, list[int]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">#</span> <span class="pre">dummy_edge_segments</span></span></dt>
+<dd><p>key: Kantentupel (u,v) value: Liste von Kantensegmenten die u und v über Dummyknoten verbinden</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[tuple[int,int], list[tuple[int, int]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.node_order">
+<span class="sig-name descname"><span class="pre">node_order</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.node_order" title="Link to this definition"></a></dt>
+<dd><p>pi_i pro Achse gebündelt</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, list[int]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.crossings">
+<span class="sig-name descname"><span class="pre">crossings</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.crossings" title="Link to this definition"></a></dt>
+<dd><p>Kreuzungszahl Standardmodell</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.crossings_extended">
+<span class="sig-name descname"><span class="pre">crossings_extended</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.crossings_extended" title="Link to this definition"></a></dt>
+<dd><p>Kreuzungszahl erweitertes Modell</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">axis_order</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.classify_nodes_for_3b">
+<span class="sig-name descname"><span class="pre">classify_nodes_for_3b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.classify_nodes_for_3b"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.classify_nodes_for_3b" title="Link to this definition"></a></dt>
+<dd><p>Klassifiziert die Knoten für Pipelineschritt 3b.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.copy"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.copy" title="Link to this definition"></a></dt>
+<dd><p>Gibt eine Deepcopy des Hiveplotlayouts zurück.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#src.hiveplot.HivePlotLayout.copy" title="src.hiveplot.HivePlotLayout.copy"><code class="xref py py-class docutils literal notranslate"><span class="pre">copy</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.count_crossings">
+<span class="sig-name descname"><span class="pre">count_crossings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.count_crossings"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.count_crossings" title="Link to this definition"></a></dt>
+<dd><p>Funktion zählt die induzierten Kanten des fertigen Hiveplotlayout.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.crossings_expanded">
+<span class="sig-name descname"><span class="pre">crossings_expanded</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.crossings_expanded" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.dummy_edge_segments">
+<span class="sig-name descname"><span class="pre">dummy_edge_segments</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.dummy_edge_segments" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.edges">
+<span class="sig-name descname"><span class="pre">edges</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.edges"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.edges" title="Link to this definition"></a></dt>
+<dd><p>Gibt die Kantenliste des Graphen zurück. Notwendig, weil mit dem Networkx Edgeview nicht direkt gearbeitet werden kann.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Liste der Kanten als Tupel (u, v)</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.edges_expanded">
+<span class="sig-name descname"><span class="pre">edges_expanded</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.edges_expanded" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.fixed_inter_axis_delta">
+<span class="sig-name descname"><span class="pre">fixed_inter_axis_delta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.fixed_inter_axis_delta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.fixed_positions_by_axis">
+<span class="sig-name descname"><span class="pre">fixed_positions_by_axis</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.fixed_positions_by_axis" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.freeze_barycenter_positions">
+<span class="sig-name descname"><span class="pre">freeze_barycenter_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.freeze_barycenter_positions"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.freeze_barycenter_positions" title="Link to this definition"></a></dt>
+<dd><p>Legt die fixierten Positionen für den Pipelineschritt 3b der Barycenterpipeline fest. Wird für alle mixed Knoten ermittelt.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.freeze_inter_axis_delta">
+<span class="sig-name descname"><span class="pre">freeze_inter_axis_delta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.freeze_inter_axis_delta"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.freeze_inter_axis_delta" title="Link to this definition"></a></dt>
+<dd><p>Legt die delta Map für den Pipelineschritt 3b der ILP-Pipeline fest. Wird für alle mixed Knoten ermittelt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.fuse_edges_with_edge_dummies">
+<span class="sig-name descname"><span class="pre">fuse_edges_with_edge_dummies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.fuse_edges_with_edge_dummies"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.fuse_edges_with_edge_dummies" title="Link to this definition"></a></dt>
+<dd><p>Erzeugt eine Liste die alle kurzen Kanten und Dummykanten vereinigt zurückgibt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Vereinigung aus Kanten und Dummykanten</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.fuse_node_groups_with_dummies">
+<span class="sig-name descname"><span class="pre">fuse_node_groups_with_dummies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.fuse_node_groups_with_dummies"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.fuse_node_groups_with_dummies" title="Link to this definition"></a></dt>
+<dd><p>Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.
+:param layout_expanded: dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)
+:type layout_expanded: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Vereinigung der Knoten und Dummyknoten pro Achse.</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.get_proper_neighborhood_map">
+<span class="sig-name descname"><span class="pre">get_proper_neighborhood_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fused_edge_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.get_proper_neighborhood_map"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.get_proper_neighborhood_map" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion ermittelt eine Liste, die jeden Knoten (sowohl real als auch virtuell) auf eine Liste seiner Nachbarn mappt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fused_edge_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – list[tuple[int | str, int | str]]: Liste der realen und virtuellen Kantentupel</p></li>
+<li><p><strong>layout_expanded</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[int | str]]: KnotenID: Nachbarliste</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[slice(int | str, list[int | str], None)]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">graph</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Graph</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.id_to_name">
+<span class="sig-name descname"><span class="pre">id_to_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.id_to_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.intra_axis_edges">
+<span class="sig-name descname"><span class="pre">intra_axis_edges</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.intra_axis_edges" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.intra_axis_nodes">
+<span class="sig-name descname"><span class="pre">intra_axis_nodes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.intra_axis_nodes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.long_edges">
+<span class="sig-name descname"><span class="pre">long_edges</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.long_edges" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.mixed_nodes_by_axis">
+<span class="sig-name descname"><span class="pre">mixed_nodes_by_axis</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.mixed_nodes_by_axis" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.name_to_id">
+<span class="sig-name descname"><span class="pre">name_to_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.name_to_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">node_groups</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">node_groups_dummies</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.node_groups_expanded">
+<span class="sig-name descname"><span class="pre">node_groups_expanded</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.node_groups_expanded" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">num_axes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.post_processing_expansion">
+<span class="sig-name descname"><span class="pre">post_processing_expansion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_axis_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.post_processing_expansion"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.post_processing_expansion" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion dient dem post-processing des Eingabegraphen nach der Pipeline, sodass bei diesem die Achsen expandiert werden. Dazu wird die Achse i (&gt; 0) zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.
+Folgende Schritte werden durchgeführt:
+1. Initialiseren der Dummysegmente, diese werden in der Funktion mutiert
+2. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)
+3. Initialisieren der Map inter_expandables mit allen Kanten die genau einen Start oder Enknoten auf der expandierten Achse haben
+4. Initielisieren der node_groups_expanded mit Keys ursprüngliche AchsenIDs und expandierte AchsenIDs und ihre in node_groups enthaltenen Knotenlisten (expandierte Achse -i bekommt alle Knoten von i zugeordnet, jedoch werden die KnotenIDs negativ gesetzt, für virtuelle Knoten wird die neue Sequenznummer ermittelt und die neue Kante zwischen den virtuellen Knoten direkt in das Netwworkx Graphmodell hinzugefügt)
+5. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl und Update der edge_axis_map
+6. Initialisieren einer axis_position_map mit Key AchsenID und Value Position der Achse in der neuen Achsenordnung
+7. Behandlung der intra-axis Kanten</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Entfernen der intra-axis Kanten aus dem Hiveplotlayout</p></li>
+<li><p>Erstellen der neuen intra-axis Kanten zwischen den expandierten Achsen (Kante (u,v) auf Achse i wird symmetrisch gespiegelt zu den Kanten (-u, v) und (u, -v))</p></li>
+<li><p>Einpflegen der neuen intra-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</p></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="8">
+<li><dl class="simple">
+<dt>Behandlung der inter-axis Kanten</dt><dd><ol class="loweralpha simple">
+<li><p>Entfernen der inter-axis Kanten aus dem Hiveplotlayout und den Dummykantensegmenten</p></li>
+<li><dl class="simple">
+<dt>Erstellen der neuen inter-axis Kanten, Fallbehandlung:</dt><dd><dl class="simple">
+<dt>I: Sonderfall: sowohl u als auch v auf expandierten achsen</dt><dd><dl class="simple">
+<dt>i.) v muss aktualisiert werden</dt><dd><p>&lt;1&gt; v ist real und muss negiert werden
+&lt;2&gt; v ist dummy und muss aktualisiert werden</p>
+</dd>
+<dt>ii.) u muss aktualisiert werden</dt><dd><p>&lt;1&gt; u ist real und muss negiert werden
+&lt;2&gt; u ist dummy und muss aktualisiert werden</p>
+</dd>
+</dl>
+</dd>
+<dt>II: u auf expandierter achse, v auf nicht expandierter achse</dt><dd><p>i.) u ist real und muss negiert werden
+ii.) u ist dummy und muss aktualisiert werden</p>
+</dd>
+<dt>III: v auf expandierter achse, u auf nicht expandierter achse</dt><dd><p>i.) v ist real und muss negiert werden
+ii.) v ist dummy und muss aktualisiert werden</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><p>Einpflegen der neuen inter-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>alle neuen Knoten in hiveplot.graph.nodes speichern und subset zuordnen</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_axis_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Knoten-ID: Achsen-ID</p></li>
+<li><p><strong>dummy_copy</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – eine Aktuelle Kopie der Dummysegmente, Default ist None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.pre_processing_expansion">
+<span class="sig-name descname"><span class="pre">pre_processing_expansion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_axis_map</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.pre_processing_expansion"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.pre_processing_expansion" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion dient der Umsetzung unterschiedlicher Knotenordnungen auf expandierten Achsen. Die Funktion ist ausschließlich zum pre-processing des Eingabegraphen bevor etwaige Berechnungen der Pipeline durchgeführt werden gedacht. Dazu wird die Achse i zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.
+Folgende Schritte werden durchgeführt:
+1. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)
+2. Initialisieren der Map inter_expandables mit allen Kanten die genau einen Start oder Enknoten auf der expandierten Achse haben
+3. Initielisieren der node_groups_expanded mit Keys ursprüngliche AchsenIDs und expandierte AchsenIDs und ihre in node_groups enthaltenen Knotenlisten (expandierte Achse -i bekommt alle Knoten von i zugeordnet, jedoch werden die KnotenIDs negativ gesetzt)
+4. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl
+5. Initialisieren einer axis_position_map mit Key AchsenID und Value ist Position der Achse in der neuen Achsenordnung
+6. Behandlung der intra-axis Kanten</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Entfernen der intra-axis Kanten aus dem Hiveplotlayout</p></li>
+<li><p>Erstellen der neuen intra-axis Kanten zwischen den expandierten Achsen (Kante (u,v) auf Achse i wird symmetrisch gespiegelt zu den Kanten (-u, v) und (u, -v))</p></li>
+<li><p>Einpflegen der neuen intra-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</p></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="7">
+<li><dl class="simple">
+<dt>Behandlung der inter-axis Kanten</dt><dd><ol class="loweralpha simple">
+<li><p>Entfernen der inter-axis Kanten aus dem Hiveplotlayout</p></li>
+<li><dl class="simple">
+<dt>Erstellen der neuen inter-axis Kanten:</dt><dd><p>I: Ziel- und Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v wenn i vor j in der Achsenordnung, Kante (u, v) zu (-u, v) andernfalls zu (u, -v) [i -&gt; -i -&gt; j -&gt; -j]
+II: Ziel- oder Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v (i expandiert), falls i vor j in der Achsenordnung (u,v) zu (-u, v), andernfalls Kante übernehmen [j -&gt; i -&gt; -i]</p>
+</dd>
+</dl>
+</li>
+<li><p>Einpflegen der neuen inter-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>Einpflegen und Zuordnung zu Subsets der neuen Knoten in der Networkx Graphenstruktur des Hiveplotlayouts</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node_axis_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Knoten-ID: Achsen-ID</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.strict_intra_nodes_by_axis">
+<span class="sig-name descname"><span class="pre">strict_intra_nodes_by_axis</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#src.hiveplot.HivePlotLayout.strict_intra_nodes_by_axis" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.hiveplot.HivePlotLayout.updated_nodes">
+<span class="sig-name descname"><span class="pre">updated_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fused_node_groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/hiveplot.html#HivePlotLayout.updated_nodes"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.hiveplot.HivePlotLayout.updated_nodes" title="Link to this definition"></a></dt>
+<dd><p>Gibt die Knotenliste des Graphen zurück. Notwendig, weil die Knoten sich ändern und je nach Pipelineschritt die Knoten geupdated werden müssen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fused_node_groups</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em> | </em><em>str</em><em>]</em><em>]</em>) – AchsenID: Knotenliste (real und virtuell)</p>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>Liste der realen und virtuellen Knoten</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-src.ip_model">
+<span id="src-ip-model-module"></span><h2>src.ip_model module<a class="headerlink" href="#module-src.ip_model" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.delta_mapping">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">delta_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fused_groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#delta_mapping"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.delta_mapping" title="Link to this definition"></a></dt>
+<dd><p>Dient der Initialisierung der Ordnungsvariablen (delta^i_u,v) für das 1L2S-ILP. Erzeugt aus der Vereinigung von virtuellen und realen Knoten das Mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>layout</strong> (<a class="reference internal" href="#src.hiveplot.HivePlotLayout" title="src.hiveplot.HivePlotLayout"><em>HivePlotLayout</em></a>) – das zugrundeliegende Hiveplotlayout</p>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>key: (u, v, alpha(u,v)), value: None</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], 1]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.get_delta_value">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">get_delta_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#get_delta_value"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.get_delta_value" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion gibt das korrekte delta für fixierte oder nicht fixierte Ordnung zurück. Notwendig für 3b.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.ilp_name">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">ilp_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#ilp_name"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.ilp_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.induced_crossings">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">induced_crossings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prob</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_static</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sorted_neighbors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pi_fix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pi_var_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pi_var</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#induced_crossings"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.induced_crossings" title="Link to this definition"></a></dt>
+<dd><p>Ermittelt die Summanden der Zielfunktion für induzierte Kreuzungen. Für jedes Knotenpaar der variablen Achse werden alle Nachbarpaare auf
+der festen Achse betrachtet. Kreuzungen werden durch die Linearisierung der Produkte der entsprechenden Ordnungsvariablen modelliert. Wir verwenden eine allgemeine
+Linearisierung, da die Funktion get_delta_value sowohl feste Werte als auch PuLP-Variablen zurückgeben kann. Die Zielfunktion bleibt äquivalent zu Nöllenburg
+und Wallinger, sie wird dadurch nur robust für den Solver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prob</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">LpProblem</span></code></span>) – das zugrunde liegende ILP-Modell</p></li>
+<li><p><strong>delta_static</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code>]</span>) – bereits bekannte Ordnungsvariablen</p></li>
+<li><p><strong>fixed_delta</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – fixierte delta-Werte</p></li>
+<li><p><strong>sorted_neighbors</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – Nachbarschaftsmap</p></li>
+<li><p><strong>pi_fix</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – ID feste Achse</p></li>
+<li><p><strong>pi_var_id</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – ID variable Achse</p></li>
+<li><p><strong>pi_var</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – Knoten der variablen Achse</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>lineare Zielfunktion zur Minimierung induzierter Kreuzungen</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.ip_model_pipeline">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">ip_model_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paper_like</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#ip_model_pipeline"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.ip_model_pipeline" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion führt die gesamte Pipeline zur Kreuzungsminimierung durch, inklusive der Berechnung des 1L2S-ILP. Alle Schritte werden in-place am HivePlotLayout durchgeführt.
+Ablauf paper_like = false:
+1. anfängliches Layout expandieren
+2. isolierte Knoten entfernen
+3. Segmentierung
+4. 1L2S-ILP berechnen
+5. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</p>
+<p>Ablauf paper_like = true:
+1. isolierte Knoten entfernen
+2. Segmentierung
+3. 1L2S-ILP berechnen 3a
+4. 1L2S-ILP berechnen 3b
+5. Herstellen der Achsenornung und letztes Update der Datenstrukturen um die Visualisierung starten zu können.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – das zugrundeliegende Hiveplotlayout</p></li>
+<li><p><strong>threshold</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Anzahl der Sweeps bis zum Abbruch, Defaultwert ist 10.</p></li>
+<li><p><strong>layout_expanded</strong> (<em>bool</em>) – dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</p></li>
+<li><p><strong>paper_like</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – dient der Unterscheidung zwischen identischer und unterschiedlicher Knotenordnung</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.linearize_product">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">linearize_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prob</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#linearize_product"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.linearize_product" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion kapselt die Linearisierung der quadratischen Terme in der Zielfunktion. Legt sowohl Variablen an als auch Nebenbedingungen fest.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">LpVariable</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.onelayer_twosided_optimization">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">onelayer_twosided_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighborhood_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_axis_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paper_like</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#onelayer_twosided_optimization"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.onelayer_twosided_optimization" title="Link to this definition"></a></dt>
+<dd><p>Enthält die gesamte Logik, um das One Layer Two Sided Integer Linear Program (1L2S ILP) zu definieren und zu berechnen. Die Funktion verändert das HiveplotLayout in-place. Die Pipeline besteht aus Sweeps.
+Ein Sweep umfasst eine clockwise und eine counterclockwise Berechnung über jede Achse des Hiveplots. Folgende Schritte werden in der Funktion durchgeführt:
+1. Initialisierung der Ordnungsvariablen (delta^i_u,v) durch delta_mapping()
+2. Initialisierung der Sweepschleife, Abbruch bei Erreichen eines Thresholds
+3. Danach schließt sich ein Sweep an erst in clockwise dann counterclockwise Richtung, beide habe das gleiche Schema:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Erstellen einer Probleminstanz und einer Kopie für die aktuelle Achse</p></li>
+<li><dl class="simple">
+<dt>Initialisierung der Ordnungsvariablen für die aktuelle Achse (virtuelle und reale Knotenordnung werden in einem Schritt berechnet, aber die Achsenordnung real &lt; virtuell muss berücksichtigt werden, da Gaps nicht explizit behandelt werden)</dt><dd><p>I: Ordnungsvariablen getrennt für reale und virtuelle Achsenabschnitte
+II: Ordnungsvariablen für real &lt; virtuell = konstant 1
+III: Ordnungsvariablen für virtuell &lt; real = konstant 0</p>
+</dd>
+</dl>
+</li>
+<li><p>Erstellen der Zielfunktion speziell für die variable Achse</p></li>
+<li><dl class="simple">
+<dt>Erstellen der Nebenbedingungen für:</dt><dd><p>I: Antisymmetrie (im Paper implizit behandelt)
+II: Transitivität</p>
+</dd>
+</dl>
+</li>
+<li><p>Lösen des ILP</p></li>
+<li><p>Synchroniesieren der Lösung mit delta</p></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>Aktualisieren des Layouts durch Übersetzung von delta zurück in die Achsenordnung, da die variable Achse auf einem geupdateten Stand ermittelt werden muss, wird dies am Ende eines Sweeps durchgeführt</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – das zugrundeliegende HivePlotLayout</p></li>
+<li><p><strong>neighborhood_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – KnotenID: Liste von proper Nachbarn</p></li>
+<li><p><strong>node_axis_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – KnotenID: Achse</p></li>
+<li><p><strong>threshold</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10</p></li>
+<li><p><strong>layout_expanded</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ip_model.onelayer_twosided_optimization_3b">
+<span class="sig-prename descclassname"><span class="pre">src.ip_model.</span></span><span class="sig-name descname"><span class="pre">onelayer_twosided_optimization_3b</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighborhood_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_axis_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paper_like</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ip_model.html#onelayer_twosided_optimization_3b"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ip_model.onelayer_twosided_optimization_3b" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion arbeitet analog zu onelayer_twosided_optimization(), berücksichtigt allerdings die zuvor fixierte globale Ordnung. Die Funktion wird explizit für Pipelineschritt 3b benötigt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – das zugrundeliegende HivePlotLayout</p></li>
+<li><p><strong>neighborhood_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – KnotenID: Liste von proper Nachbarn</p></li>
+<li><p><strong>node_axis_map</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – KnotenID: Achse</p></li>
+<li><p><strong>threshold</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10</p></li>
+<li><p><strong>layout_expanded</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.logger_setup">
+<span id="src-logger-setup-module"></span><h2>src.logger_setup module<a class="headerlink" href="#module-src.logger_setup" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.logger_setup.log">
+<span class="sig-prename descclassname"><span class="pre">src.logger_setup.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/logger_setup.html#log"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.logger_setup.log" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.logger_setup.setup_logger">
+<span class="sig-prename descclassname"><span class="pre">src.logger_setup.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_session</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/logger_setup.html#setup_logger"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.logger_setup.setup_logger" title="Link to this definition"></a></dt>
+<dd><p>Konfiguriert den Logger und initialisiert ihn. Kann für Batchläufe eine Datei schreiben und für Einzeldurchläufe mehrere.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_dir</strong> (<span class="sphinx_autodoc_typehints-type">Path</span>) – Ablagepfad</p></li>
+<li><p><strong>per_session</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Batch- oder Einzelauswahl. Defaults to True.</p></li>
+<li><p><strong>file_name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Dateiname. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>der angelegte Log</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.main">
+<span id="src-main-module"></span><h2>src.main module<a class="headerlink" href="#module-src.main" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.init_graph">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">init_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_to_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#init_graph"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.init_graph" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.init_hiveplot">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">init_hiveplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">own_pkl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#init_hiveplot"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.init_hiveplot" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.init_logger">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">init_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">per_session</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#init_logger"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.init_logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.init_original">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">init_original</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">own_pkl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#init_original"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.init_original" title="Link to this definition"></a></dt>
+<dd><p>Lädt einen Graphen aus dem Cache oder einer eigenen Pickle-Datei.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>year</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – gewünschte GD-Jahr</p></li>
+<li><p><strong>own_pkl</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Dateiname einer .pkl-Datei in LOAD_DIR. Muss ein nx.Graph-Objekt enthalten.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>das Graph-Objekt</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Graph</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.main">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#main"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.pipeline">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paper_like</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">own_pkl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gui</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#pipeline"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.pipeline" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.save_pkl">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">save_pkl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hiveplot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#save_pkl"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.save_pkl" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.save_rendered_hiveplot">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">save_rendered_hiveplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svg_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#save_rendered_hiveplot"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.save_rendered_hiveplot" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.main.step_ordering">
+<span class="sig-prename descclassname"><span class="pre">src.main.</span></span><span class="sig-name descname"><span class="pre">step_ordering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hiveplot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main.html#step_ordering"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.main.step_ordering" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.ordering">
+<span id="src-ordering-module"></span><h2>src.ordering module<a class="headerlink" href="#module-src.ordering" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ordering.brute_force_ordering">
+<span class="sig-prename descclassname"><span class="pre">src.ordering.</span></span><span class="sig-name descname"><span class="pre">brute_force_ordering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ordering</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_grps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ordering.html#brute_force_ordering"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ordering.brute_force_ordering" title="Link to this definition"></a></dt>
+<dd><p>Berechnet die optimale Knotenordnung nach der Kostenfunktion über alle Permutationen von k.
+Diese Funktion wird für Vergleichs- und Testzwecke weiterhin bereitgestellt.
+:param ordering: aktuelle Achsenordnung (phi)
+:type ordering: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>
+:param node_grps: key: Achse, value: Knoten
+:type node_grps: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span>
+:param edges: Knotenliste
+:type edges: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optimierte Achsenordnung</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ordering.ip_ordering">
+<span class="sig-prename descclassname"><span class="pre">src.ordering.</span></span><span class="sig-name descname"><span class="pre">ip_ordering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ordering.html#ip_ordering"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ordering.ip_ordering" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ordering.node_to_axis">
+<span class="sig-prename descclassname"><span class="pre">src.ordering.</span></span><span class="sig-name descname"><span class="pre">node_to_axis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_grps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ordering.html#node_to_axis"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ordering.node_to_axis" title="Link to this definition"></a></dt>
+<dd><p>Gibt an auf welcher Achse sich ein Knoten befindet. Funktion wird nur zum Initialisieren verwendet. Für Iterationen in der Pipeline ist sie nicht performant. Dafür werden Mappings benutzt (z.B. siehe ordering.node_to_axis_maps)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>int</em>) – Knoten ID</p></li>
+<li><p><strong>node_grps</strong> (<em>dict</em>) – key: Achse, value: Knoten</p></li>
+<li><p><strong>position</strong> (<em>bool</em>) – Rückgabe der Achse, true Rückgabe der Position der Achse in der Achsenordnung (phi). False ist default.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Verursacht<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – Der Knoten kann keiner Achse zugeordnet werden.</p>
+</dd>
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Achsen ID</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ordering.node_to_axis_maps">
+<span class="sig-prename descclassname"><span class="pre">src.ordering.</span></span><span class="sig-name descname"><span class="pre">node_to_axis_maps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fused_node_groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ordering.html#node_to_axis_maps"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ordering.node_to_axis_maps" title="Link to this definition"></a></dt>
+<dd><p>Die Funktion berechnet zwei Maps um für einen gegeben Knoten sehr schnell 1. alpha(Knoten) und 2. phi[alpha(Knoten)] zu bestimmen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">HivePlotLayout</span></code></span>) – Das Hiveplotlayout</p></li>
+<li><p><strong>fused_node_groups</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span>) – Achse: Knotenliste (virtuell und real)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>Knoten: Achse &amp; Knoten: Achsenposition in Phi</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.ordering.reordered_node_groups">
+<span class="sig-prename descclassname"><span class="pre">src.ordering.</span></span><span class="sig-name descname"><span class="pre">reordered_node_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_grps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_order</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/ordering.html#reordered_node_groups"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.ordering.reordered_node_groups" title="Link to this definition"></a></dt>
+<dd><p>Schnelles Umordnen nach Optimierung der Achsenordnung.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.partitioning">
+<span id="src-partitioning-module"></span><h2>src.partitioning module<a class="headerlink" href="#module-src.partitioning" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.partitioning.clauset_newman_moore_communities">
+<span class="sig-prename descclassname"><span class="pre">src.partitioning.</span></span><span class="sig-name descname"><span class="pre">clauset_newman_moore_communities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/partitioning.html#clauset_newman_moore_communities"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.partitioning.clauset_newman_moore_communities" title="Link to this definition"></a></dt>
+<dd><p>Berechnet die Communities eines Graphen per Clauset-Newman-Moore Algorithmus und wandelt die frozenset Liste in ein dict um.
+Falls ein Threshold übergeben wird, so wird die Anzahl der Communities auf den Threshold gestaucht. So wird sichergestellt, dass man
+eine Anzahl Communities (Achsen) erhält, die noch einen übersichtlichen Hiveplot erzeugen lassen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>nx.Graph</em>) – Der Eingabegraph für den die Communities berechnet werden sollen.</p></li>
+<li><p><strong>threshold</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – maximale Anzahl Communities, bei Default (=0) wird die natürliche Anzahl von Communities ermittelt und zurückgegeben</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ein Dictionary mit den Communities als Werte und ihren IDs als Schlüssel.</p>
+</dd>
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.partitioning.louvain_community_detection">
+<span class="sig-prename descclassname"><span class="pre">src.partitioning.</span></span><span class="sig-name descname"><span class="pre">louvain_community_detection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/partitioning.html#louvain_community_detection"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.partitioning.louvain_community_detection" title="Link to this definition"></a></dt>
+<dd><p>Berechnet die Communities eines Graphen per Louvain Community Detection und wandelt die frozenset Liste in ein dict um.
+Diese Funktion wird für Vergleichs- und Testzwecke weiterhin bereitgestellt.
+:type graph: nx.Graph
+:param graph: Der Eingabegraph, für den die Communities berechnet werden sollen.
+:type graph: nx.Graph</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Ein Dictionary mit den Communities als Werte und ihren IDs als Schlüssel.</p>
+</dd>
+<dt class="field-even">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[int, list[int]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.renderer">
+<span id="src-renderer-module"></span><h2>src.renderer module<a class="headerlink" href="#module-src.renderer" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.renderer.draw_basis">
+<span class="sig-prename descclassname"><span class="pre">src.renderer.</span></span><span class="sig-name descname"><span class="pre">draw_basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_to_label_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unordered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer.html#draw_basis"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.renderer.draw_basis" title="Link to this definition"></a></dt>
+<dd><p>Bündelt die Darstellung von Kanten, Knoten, Labels und Achsen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.renderer.hiveplot_renderer">
+<span class="sig-prename descclassname"><span class="pre">src.renderer.</span></span><span class="sig-name descname"><span class="pre">hiveplot_renderer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_expanded</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unordered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paper_like</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer.html#hiveplot_renderer"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.renderer.hiveplot_renderer" title="Link to this definition"></a></dt>
+<dd><p>Pipeline die das Rendern des fertig berechneten Hiveplotlayouts in eine Scalable Vector Graphics (SVG) realisiert.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.renderer.render_svg">
+<span class="sig-prename descclassname"><span class="pre">src.renderer.</span></span><span class="sig-name descname"><span class="pre">render_svg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elements</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer.html#render_svg"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.renderer.render_svg" title="Link to this definition"></a></dt>
+<dd><p>Setzt den Header der .svg Datei und hängt die Graphenelemente an und setzt die Schlussklausel. Datei wird neu erstellt bzw. überschrieben, falls sie bereits existiert.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.renderer.translate_polar_to_carthesian">
+<span class="sig-prename descclassname"><span class="pre">src.renderer.</span></span><span class="sig-name descname"><span class="pre">translate_polar_to_carthesian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer.html#translate_polar_to_carthesian"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#src.renderer.translate_polar_to_carthesian" title="Link to this definition"></a></dt>
+<dd><p>Umrechnung der Polarkoordinate in ein karthesisches Tupel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src" title="Link to this heading"></a></h2>
+<p>Top-level package for project source files.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="BA-Sauerteig – API-Dokumentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Zurück</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

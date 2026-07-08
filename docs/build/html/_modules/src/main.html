@@ -1,0 +1,388 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.main &mdash; BA-Sauerteig 1.0 Dokumentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8fdbe8ab"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=9bf55d28"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Stichwortverzeichnis" href="../../genindex.html" />
+    <link rel="search" title="Suche" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            BA-Sauerteig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" aria-label="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">BA-Sauerteig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modul-Quellcode</a></li>
+      <li class="breadcrumb-item active">src.main</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Quellcode für src.main</h1><div class="highlight"><pre>
+<span></span><span class="c1"># stdlib pakete</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+
+<span class="c1"># pakete</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">svglib.svglib</span><span class="w"> </span><span class="kn">import</span> <span class="n">svg2rlg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.graphics</span><span class="w"> </span><span class="kn">import</span> <span class="n">renderPDF</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">experiments</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataCollector</span>
+
+<span class="c1">#os path</span>
+<span class="n">ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+<span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">&quot;src&quot;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">&quot;src&quot;</span><span class="p">))</span>
+
+<span class="c1"># src ordner + gd daten</span>
+<span class="n">CACHE_DIR</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">&quot;dblp_daten_gesamt&quot;</span>
+<span class="n">GD_DATA</span>    <span class="o">=</span> <span class="n">CACHE_DIR</span> <span class="o">/</span> <span class="s2">&quot;gd_graphs.pkl&quot;</span>
+<span class="n">OUTPUT_DIR</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">&quot;output&quot;</span>
+
+<span class="c1"># ordnerstruktur</span>
+<span class="n">DEBUG_DIR</span> <span class="o">=</span> <span class="n">OUTPUT_DIR</span> <span class="o">/</span> <span class="s2">&quot;debug&quot;</span> <span class="c1"># entfernen?</span>
+<span class="n">GRAPH_DIR</span> <span class="o">=</span> <span class="n">OUTPUT_DIR</span> <span class="o">/</span> <span class="s2">&quot;graphs&quot;</span>
+<span class="n">SAVE_DIR</span> <span class="o">=</span> <span class="n">OUTPUT_DIR</span> <span class="o">/</span> <span class="s2">&quot;save&quot;</span>
+<span class="n">LOAD_DIR</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">&quot;load&quot;</span>
+<span class="n">LOG_DIR</span>   <span class="o">=</span> <span class="n">OUTPUT_DIR</span> <span class="o">/</span> <span class="s2">&quot;logs&quot;</span>
+<span class="n">EXPERIMENT_DATA</span> <span class="o">=</span> <span class="n">OUTPUT_DIR</span> <span class="o">/</span> <span class="s2">&quot;experiments&quot;</span>
+
+<span class="c1"># bei erstem programmstart ordnerstruktur anlegen</span>
+<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">DEBUG_DIR</span><span class="p">,</span> <span class="n">GRAPH_DIR</span><span class="p">,</span> <span class="n">SAVE_DIR</span><span class="p">,</span> <span class="n">LOAD_DIR</span><span class="p">,</span> <span class="n">LOG_DIR</span><span class="p">,</span> <span class="n">EXPERIMENT_DATA</span><span class="p">]:</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="c1"># module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logger_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hiveplot</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">HivePlotLayout</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">renderer</span><span class="w"> </span><span class="kn">import</span> <span class="n">hiveplot_renderer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logger_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_logger</span><span class="p">,</span> <span class="n">log</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">partitioning</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">clauset_newman_moore_communities</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dblp_parser</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_node_identity_maps</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ordering</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">reordered_node_groups</span><span class="p">,</span>
+    <span class="n">ip_ordering</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">crossing_minimization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">barycenter_crossmin_pipeline</span><span class="p">,</span>
+    <span class="n">edge_node_cleanup</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ip_model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ip_model_pipeline</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">experiments</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataCollector</span>
+<span class="c1">## hilfsfunktionen für pipeline</span>
+<div class="viewcode-block" id="init_logger">
+<a class="viewcode-back" href="../../api.html#src.main.init_logger">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_logger</span><span class="p">(</span><span class="n">per_session</span><span class="p">):</span>
+    <span class="n">setup_logger</span><span class="p">(</span><span class="n">LOG_DIR</span><span class="p">,</span> <span class="n">per_session</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="init_original">
+<a class="viewcode-back" href="../../api.html#src.main.init_original">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_original</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">own_pkl</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lädt einen Graphen aus dem Cache oder einer eigenen Pickle-Datei.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        year (int): gewünschte GD-Jahr</span>
+<span class="sd">        own_pkl (str | None, optional): Dateiname einer .pkl-Datei in LOAD_DIR. Muss ein nx.Graph-Objekt enthalten.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        nx.Graph: das Graph-Objekt</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">SAVE_DIR</span> <span class="o">/</span> <span class="n">own_pkl</span> <span class="k">if</span> <span class="n">own_pkl</span> <span class="k">else</span> <span class="n">GD_DATA</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">own_pkl</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="c1"># nxgraph objekt</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">graphs</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="c1"># dict</span>
+            <span class="k">return</span> <span class="n">graphs</span><span class="p">[</span><span class="n">year</span><span class="p">]</span> <span class="c1"># eintrag</span></div>
+
+
+<div class="viewcode-block" id="init_graph">
+<a class="viewcode-back" href="../../api.html#src.main.init_graph">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_graph</span><span class="p">(</span><span class="n">original</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">,</span> <span class="n">name_to_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span> <span class="c1"># transformieren</span>
+    <span class="n">output_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="n">original_edges</span> <span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">original_edges</span><span class="p">:</span>
+        <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name_to_id</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">name_to_id</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span>
+    <span class="n">output_graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_graph</span></div>
+
+
+<div class="viewcode-block" id="init_hiveplot">
+<a class="viewcode-back" href="../../api.html#src.main.init_hiveplot">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_hiveplot</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">own_pkl</span><span class="p">,</span> <span class="n">partitions</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HivePlotLayout</span><span class="p">:</span>
+    <span class="n">original</span> <span class="o">=</span> <span class="n">init_original</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">year</span><span class="p">,</span> <span class="n">own_pkl</span><span class="o">=</span><span class="n">own_pkl</span><span class="p">)</span>
+    <span class="n">hpl_basis</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;id_to_name&quot;</span><span class="p">],</span> <span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;name_to_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">build_node_identity_maps</span><span class="p">(</span><span class="n">original</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
+    <span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;graph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_graph</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;name_to_id&quot;</span><span class="p">])</span>
+    <span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;node_groups&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">clauset_newman_moore_communities</span><span class="p">(</span><span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;graph&quot;</span><span class="p">],</span> <span class="n">partitions</span><span class="p">)</span>
+    <span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;axis_order&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;node_groups&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;num_axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hpl_basis</span><span class="p">[</span><span class="s2">&quot;axis_order&quot;</span><span class="p">])</span>
+    <span class="n">hiveplot</span> <span class="o">=</span> <span class="n">HivePlotLayout</span><span class="p">(</span><span class="o">**</span><span class="n">hpl_basis</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hiveplot</span></div>
+
+
+<div class="viewcode-block" id="step_ordering">
+<a class="viewcode-back" href="../../api.html#src.main.step_ordering">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">step_ordering</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">hiveplot</span><span class="o">.</span><span class="n">axis_order</span> <span class="o">=</span> <span class="n">ip_ordering</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">)</span>
+    <span class="n">hiveplot</span><span class="o">.</span><span class="n">node_groups</span> <span class="o">=</span> <span class="n">reordered_node_groups</span><span class="p">(</span><span class="n">hiveplot</span><span class="o">.</span><span class="n">node_groups</span><span class="p">,</span> <span class="n">hiveplot</span><span class="o">.</span><span class="n">axis_order</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="save_pkl">
+<a class="viewcode-back" href="../../api.html#src.main.save_pkl">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_pkl</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">:</span> <span class="n">HivePlotLayout</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">SAVE_DIR</span> <span class="o">/</span> <span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.pkl&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span> <span class="c1"># dict</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Hiveplotlayout gespeichert: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="save_rendered_hiveplot">
+<a class="viewcode-back" href="../../api.html#src.main.save_rendered_hiveplot">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_rendered_hiveplot</span><span class="p">(</span><span class="n">svg_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">year_dir</span> <span class="o">=</span> <span class="n">GRAPH_DIR</span> <span class="o">/</span> <span class="nb">str</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+        <span class="n">year_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">drawing</span> <span class="o">=</span> <span class="n">svg2rlg</span><span class="p">(</span><span class="n">svg_path</span><span class="p">)</span>
+        <span class="n">pdf_path</span> <span class="o">=</span> <span class="n">year_dir</span> <span class="o">/</span> <span class="n">svg_path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.pdf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="c1"># verzeichnis ändern</span>
+        <span class="n">renderPDF</span><span class="o">.</span><span class="n">drawToFile</span><span class="p">(</span><span class="n">drawing</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">))</span></div>
+
+
+<span class="c1">## pipeline</span>
+<div class="viewcode-block" id="pipeline">
+<a class="viewcode-back" href="../../api.html#src.main.pipeline">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pipeline</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span> <span class="n">output_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">variant</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">paper_like</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">partitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">own_pkl</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">gui</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+
+    <span class="c1"># für versuchsdaten, siehe unten</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Berechnung Start.&quot;</span><span class="p">)</span>
+    <span class="n">collector</span> <span class="o">=</span> <span class="n">DataCollector</span><span class="p">()</span>
+    <span class="n">collected_data_time</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">collected_data_crossings</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="c1"># graph erzeugen und partitionieren</span>
+    <span class="n">hiveplot</span> <span class="o">=</span> <span class="n">init_hiveplot</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">own_pkl</span><span class="p">,</span> <span class="n">partitions</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+
+    <span class="c1"># achsenordnung optimieren</span>
+    <span class="n">step_ordering</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+
+    <span class="c1"># zwischenspeichern der zwischenbasis</span>
+    <span class="n">save_pkl</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_basis_nach_ordering&quot;</span><span class="p">,</span> <span class="n">save</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">variant</span> <span class="o">==</span> <span class="s2">&quot;Barycenterheuristik&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">paper_like</span><span class="p">:</span> <span class="c1"># originalframework</span>
+            <span class="c1"># subpipeline</span>
+            <span class="n">barycenter_crossmin_pipeline</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">paper_like</span><span class="p">)</span>
+
+            <span class="c1"># kreuzungszahlen und konsistenz</span>
+            <span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span> <span class="o">=</span> <span class="n">hiveplot</span><span class="o">.</span><span class="n">count_crossings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">edge_node_cleanup</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span><span class="p">)</span>
+
+            <span class="c1"># Beispiel: Messdaten speichern</span>
+            <span class="c1"># elapsed = time.time() - start_time</span>
+            <span class="c1"># collected_data_time[f&quot;Laufzeit {partitions}&quot;] = round(elapsed, 5)</span>
+            <span class="c1"># collected_data_crossings[f&quot;Kreuzungen {partitions}&quot;] = hiveplot.crossings_expanded</span>
+            <span class="c1"># collector.update(&quot;Parameterstudie&quot;, partitions, **collected_data_time)</span>
+            <span class="c1"># collector.update(&quot;Parameterstudie&quot;, partitions, **collected_data_crossings)</span>
+
+            <span class="c1"># speichern des fertigen HPL</span>
+            <span class="n">save_pkl</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">save</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span> <span class="c1"># snapshot</span>
+
+            <span class="c1"># rendern und als pdf speichern</span>
+            <span class="n">svg_path</span> <span class="o">=</span> <span class="n">hiveplot_renderer</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">hiveplot</span><span class="p">,</span> <span class="n">DEBUG_DIR</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># optionale parameter möglich</span>
+            <span class="n">save_rendered_hiveplot</span><span class="p">(</span><span class="n">svg_path</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># erweitert</span>
+            <span class="c1"># subpipeline</span>
+            <span class="n">barycenter_crossmin_pipeline</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">paper_like</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="c1"># kreuzungszahlen und konsistenz</span>
+            <span class="n">edge_node_cleanup</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">)</span>
+            <span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span> <span class="o">=</span> <span class="n">hiveplot</span><span class="o">.</span><span class="n">count_crossings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span><span class="p">)</span>
+
+            <span class="c1"># speichern des fertigen HPL</span>
+            <span class="n">save_pkl</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">save</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span> <span class="c1"># snapshot</span>
+            
+            <span class="c1"># rendern und als pdf speichern</span>
+            <span class="n">svg_path</span> <span class="o">=</span> <span class="n">hiveplot_renderer</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">hiveplot</span><span class="p">,</span> <span class="n">DEBUG_DIR</span><span class="p">,</span> <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">unordered</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># optionale parameter möglich</span>
+            <span class="n">save_rendered_hiveplot</span><span class="p">(</span><span class="n">svg_path</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span> <span class="c1"># ilp</span>
+        <span class="k">if</span> <span class="n">paper_like</span><span class="p">:</span> <span class="c1"># originalframework</span>
+            <span class="c1"># subpipeline</span>
+            <span class="n">ip_model_pipeline</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">paper_like</span><span class="p">)</span>
+
+            <span class="c1"># kreuzungszahlen und konsistenz</span>
+            <span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span> <span class="o">=</span> <span class="n">hiveplot</span><span class="o">.</span><span class="n">count_crossings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span><span class="p">)</span>
+            <span class="n">edge_node_cleanup</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">)</span>
+
+            <span class="c1"># speichern des fertigen HPL</span>
+            <span class="n">save_pkl</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">save</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span> <span class="c1"># snapshot</span>
+            
+            <span class="c1"># rendern und als pdf speichern</span>
+            <span class="n">svg_path</span> <span class="o">=</span> <span class="n">hiveplot_renderer</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">hiveplot</span><span class="p">,</span> <span class="n">DEBUG_DIR</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># optionale parameter möglich</span>
+            <span class="n">save_rendered_hiveplot</span><span class="p">(</span><span class="n">svg_path</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># erweitert</span>
+            <span class="c1"># subpipeline</span>
+            <span class="n">ip_model_pipeline</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">paper_like</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="c1"># kreuzungszahlen und konsistenz</span>
+            <span class="n">edge_node_cleanup</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">)</span>
+            <span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span> <span class="o">=</span> <span class="n">hiveplot</span><span class="o">.</span><span class="n">count_crossings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">hiveplot</span><span class="o">.</span><span class="n">crossings_expanded</span><span class="p">)</span>
+
+            <span class="c1"># speichern des fertigen HPL</span>
+            <span class="n">save_pkl</span><span class="p">(</span><span class="n">hiveplot</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">save</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span> <span class="c1"># snapshot</span>
+
+            <span class="c1"># rendern und als pdf speichern</span>
+            <span class="n">svg_path</span> <span class="o">=</span> <span class="n">hiveplot_renderer</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">_P(</span><span class="si">{</span><span class="n">partitions</span><span class="si">}</span><span class="s2">)_paperlike(</span><span class="si">{</span><span class="n">paper_like</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">hiveplot</span><span class="p">,</span> <span class="n">DEBUG_DIR</span><span class="p">,</span> <span class="n">layout_expanded</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">unordered</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># optionale parameter möglich</span>
+            <span class="n">save_rendered_hiveplot</span><span class="p">(</span><span class="n">svg_path</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Berechnung Ende.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../api.html#src.main.main">[Doku]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># parameter für die pipeline</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;year&quot;</span><span class="p">:</span> <span class="mi">2017</span><span class="p">,</span>
+        <span class="s2">&quot;output_name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;logger&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># &quot;variant&quot;: &quot;Barycenterheuristik&quot;,</span>
+        <span class="s2">&quot;variant&quot;</span><span class="p">:</span> <span class="s2">&quot;1L2S-ILP&quot;</span><span class="p">,</span>
+        <span class="c1"># &quot;paper_like&quot;: True,</span>
+        <span class="s2">&quot;paper_like&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;partitions&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">&quot;save&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="c1"># &quot;save&quot;: True,</span>
+        <span class="s2">&quot;debug&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="c1"># &quot;debug&quot;: True,</span>
+        <span class="s2">&quot;batch&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="c1"># &quot;batch&quot;: True,</span>
+        <span class="s2">&quot;own_pkl&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;gui&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1">#logger init</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">]:</span> <span class="c1"># ausgabe für experimente</span>
+            <span class="n">logger</span> <span class="o">=</span> <span class="n">setup_logger</span><span class="p">(</span><span class="n">EXPERIMENT_DATA</span><span class="p">,</span> <span class="n">per_session</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">],</span> <span class="n">file_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">])</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;logger&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">logger</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;debug&quot;</span><span class="p">]:</span> <span class="c1"># ausgabe für debug</span>
+            <span class="n">logger</span> <span class="o">=</span> <span class="n">init_logger</span><span class="p">(</span><span class="n">per_session</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">logger</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">])</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;logger&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">logger</span>
+    
+
+    <span class="c1"># einzeldurchlauf</span>
+    <span class="n">pipeline</span><span class="p">(</span><span class="n">run</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span></div>
+
+
+    <span class="c1"># für batchläufe</span>
+    <span class="c1"># for i in range(2000, 2025): # run kann auch als run = 0 übergeben und die iteration angepasst werden</span>
+    <span class="c1">#         config[&quot;year&quot;] = i</span>
+    <span class="c1">#         print(f&quot;year {i} - variant {config[&#39;variant&#39;]}&quot;)</span>
+    <span class="c1">#         pipeline(run=0, **config)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

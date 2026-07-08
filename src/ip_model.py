@@ -54,7 +54,7 @@ def onelayer_twosided_optimization(layout: HivePlotLayout, neighborhood_map: dic
     4. Aktualisieren des Layouts durch Übersetzung von delta zurück in die Achsenordnung, da die variable Achse auf einem geupdateten Stand ermittelt werden muss, wird dies am Ende eines Sweeps durchgeführt
 
     Args:
-        layout (HivePlotLayout): _description_das zugrundeliegende HivePlotLayout
+        layout (HivePlotLayout): das zugrundeliegende HivePlotLayout
         neighborhood_map (dict[str | int, list[int  |  str]]): KnotenID: Liste von proper Nachbarn
         node_axis_map (dict[str  | int, int]): KnotenID: Achse
         threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10
@@ -277,7 +277,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
     """Die Funktion arbeitet analog zu onelayer_twosided_optimization(), berücksichtigt allerdings die zuvor fixierte globale Ordnung. Die Funktion wird explizit für Pipelineschritt 3b benötigt.
 
     Args:
-        layout (HivePlotLayout): _description_das zugrundeliegende HivePlotLayout
+        layout (HivePlotLayout): das zugrundeliegende HivePlotLayout
         neighborhood_map (dict[str | int, list[int  |  str]]): KnotenID: Liste von proper Nachbarn
         node_axis_map (dict[str  | int, int]): KnotenID: Achse
         threshold (int, optional): Anzahl der Sweeps (=1x cw+ 1x ccw), Defaultwert ist 10
@@ -542,7 +542,7 @@ def induced_crossings(prob: pp.LpProblem, delta_static: dict[tuple[int | str, in
     und Wallinger, sie wird dadurch nur robust für den Solver.
 
     Args:
-        prob (pp.LpProblem): _description_
+        prob (pp.LpProblem): das zugrunde liegende ILP-Modell
         delta_static (dict[tuple[int  |  str, int  |  str, int], object]): bereits bekannte Ordnungsvariablen
         fixed_delta (dict[tuple[int  |  str, int  |  str, int], int]): fixierte delta-Werte
         sorted_neighbors (dict[tuple[int, int  |  str], list[int  |  str]]): Nachbarschaftsmap

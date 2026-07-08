@@ -1,0 +1,707 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.hiveplot &mdash; BA-Sauerteig 1.0 Dokumentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8fdbe8ab"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=9bf55d28"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Stichwortverzeichnis" href="../../genindex.html" />
+    <link rel="search" title="Suche" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            BA-Sauerteig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" aria-label="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">BA-Sauerteig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modul-Quellcode</a></li>
+      <li class="breadcrumb-item active">src.hiveplot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Quellcode für src.hiveplot</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+
+<div class="viewcode-block" id="HivePlotLayout">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout">[Doku]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HivePlotLayout</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Zentrale Datenstruktur für ein berechnetes Hive-Plot-Layout.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        graph (nx.Graph): ein Simple Graph den man nach der Verarbeitung der geparsten DBLP Daten erhält: V = Autoren, E = Coautorenschaft zu </span>
+<span class="sd">        num_axes (int): k = Anzahl Achsen</span>
+<span class="sd">        axis_order (list[int]): phi</span>
+<span class="sd">        node_groups (dict[int, list[int]]): alpha: siehe node_groups Funktion in ordering.py</span>
+<span class="sd">        node_groups_dummies (dict[int, list[int]]): Achsen mit Dummyknoten</span>
+<span class="sd">        # dummy_edge_segments (dict[tuple[int,int], list[tuple[int, int]]]): key: Kantentupel (u,v) value: Liste von Kantensegmenten die u und v über Dummyknoten verbinden</span>
+<span class="sd">        node_order (dict[int, list[int]]): pi_i pro Achse gebündelt</span>
+<span class="sd">        crossings (Optional[int]): Kreuzungszahl Standardmodell</span>
+<span class="sd">        crossings_extended (Optional[int]): Kreuzungszahl erweitertes Modell</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># eingabegraph</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span>
+
+    <span class="c1"># mathematisches modell</span>
+    <span class="n">num_axes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">axis_order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">node_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]</span>
+
+    <span class="c1"># mathematisches modell erweitert</span>
+    <span class="n">node_groups_expanded</span><span class="p">:</span>  <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">edges_expanded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="c1"># erweiterungen für implementierung</span>
+    <span class="n">node_groups_dummies</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span> <span class="c1"># virtuelle knoten</span>
+    <span class="n">dummy_edge_segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="o">|</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span> <span class="c1"># virtuelle kantensegmente</span>
+    <span class="n">long_edges</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+    <span class="n">intra_axis_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">intra_axis_edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="c1"># datenstrukturen für utility</span>
+    <span class="n">id_to_name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">name_to_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">crossings_expanded</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mixed_nodes_by_axis</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span> <span class="c1"># klassifizierung für 3b</span>
+    <span class="n">strict_intra_nodes_by_axis</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span> <span class="c1"># klassifizierung für 3b</span>
+    <span class="n">fixed_inter_axis_delta</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fixed_positions_by_axis</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Besser lesbarere Darstellung der HivePlotLayout-Instanz.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Zeilenweise Ausgabe der Parameter und Felder.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;HivePlotLayout:&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Graph: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Number of Axes: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_axes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Axis Order (phi): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Node Groups (alpha): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Node Groups with Dummies: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Dummy Edge Segments: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Intra-Axis Nodes: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">intra_axis_nodes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Intra-Axis Edges: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">intra_axis_edges</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Long Edges: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">long_edges</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  node_groups_expanded: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  edges_expanded: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">edges_expanded</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  Kreuzungen: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">crossings_expanded</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="HivePlotLayout.copy">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.copy">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">copy</span><span class="p">:</span>
+        <span class="s2">&quot;Gibt eine Deepcopy des Hiveplotlayouts zurück.&quot;</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HivePlotLayout.edges">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.edges">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">edges</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gibt die Kantenliste des Graphen zurück. Notwendig, weil mit dem Networkx Edgeview nicht direkt gearbeitet werden kann.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[tuple]: Liste der Kanten als Tupel (u, v)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="HivePlotLayout.updated_nodes">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.updated_nodes">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">updated_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fused_node_groups</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gibt die Knotenliste des Graphen zurück. Notwendig, weil die Knoten sich ändern und je nach Pipelineschritt die Knoten geupdated werden müssen.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fused_node_groups (dict[int, list[int | str]]): AchsenID: Knotenliste (real und virtuell)</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            list[int]: Liste der realen und virtuellen Knoten</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">updated_node_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fused_node_groups</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">fused_node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="n">updated_node_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">updated_node_list</span></div>
+
+    
+<div class="viewcode-block" id="HivePlotLayout.fuse_node_groups_with_dummies">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.fuse_node_groups_with_dummies">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Erzeugt ein dict mit Achsen als Schlüssel und der vereinigten Menge aus Knoten und Dummyknoten pro Achse als Wert. Zuerst die realen dann die virtuellen Knoten.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[int, list[int]]: Vereinigung der Knoten und Dummyknoten pro Achse.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fused_groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+                <span class="n">original_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">dummy_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">fused_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">original_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">dummy_nodes</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">original_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">dummy_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">fused_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">original_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">dummy_nodes</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fused_groups</span></div>
+
+
+<div class="viewcode-block" id="HivePlotLayout.fuse_edges_with_edge_dummies">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.fuse_edges_with_edge_dummies">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fuse_edges_with_edge_dummies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Erzeugt eine Liste die alle kurzen Kanten und Dummykanten vereinigt zurückgibt.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[tuple[int | str, int | str]]: Vereinigung aus Kanten und Dummykanten</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">direct_edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span> <span class="k">if</span> <span class="n">edge</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">long_edges</span><span class="p">]</span>
+        <span class="n">fused_edges</span> <span class="o">=</span> <span class="n">direct_edges</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span>
+        <span class="k">return</span> <span class="n">fused_edges</span></div>
+
+    
+<div class="viewcode-block" id="HivePlotLayout.get_proper_neighborhood_map">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.get_proper_neighborhood_map">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_proper_neighborhood_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fused_edge_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]],</span>  <span class="n">layout_expanded</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Die Funktion ermittelt eine Liste, die jeden Knoten (sowohl real als auch virtuell) auf eine Liste seiner Nachbarn mappt.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fused_edge_list: list[tuple[int | str, int | str]]: Liste der realen und virtuellen Kantentupel</span>
+<span class="sd">            layout_expanded(bool): dient der Unterscheidung, ob in der Pipeline mit expandierten Achsen gerechnet wird oder nicht, Default = False (nicht expandierter Fall)</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[int | str: list[int | str]]: KnotenID: Nachbarliste</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">neighbor_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">fused_node_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fuse_node_groups_with_dummies</span><span class="p">(</span><span class="n">layout_expanded</span><span class="p">)</span>
+        <span class="n">node_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">updated_nodes</span><span class="p">(</span><span class="n">fused_node_groups</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_list</span><span class="p">:</span>
+            <span class="n">neighbor_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">fused_edge_list</span><span class="p">:</span>
+            <span class="n">neighbor_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">neighbor_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">neighbor_map</span></div>
+
+
+<div class="viewcode-block" id="HivePlotLayout.pre_processing_expansion">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.pre_processing_expansion">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pre_processing_expansion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Die Funktion dient der Umsetzung unterschiedlicher Knotenordnungen auf expandierten Achsen. Die Funktion ist ausschließlich zum pre-processing des Eingabegraphen bevor etwaige Berechnungen der Pipeline durchgeführt werden gedacht. Dazu wird die Achse i zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.</span>
+<span class="sd">        Folgende Schritte werden durchgeführt:</span>
+<span class="sd">        1. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)</span>
+<span class="sd">        2. Initialisieren der Map inter_expandables mit allen Kanten die genau einen Start oder Enknoten auf der expandierten Achse haben</span>
+<span class="sd">        3. Initielisieren der node_groups_expanded mit Keys ursprüngliche AchsenIDs und expandierte AchsenIDs und ihre in node_groups enthaltenen Knotenlisten (expandierte Achse -i bekommt alle Knoten von i zugeordnet, jedoch werden die KnotenIDs negativ gesetzt)</span>
+<span class="sd">        4. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl</span>
+<span class="sd">        5. Initialisieren einer axis_position_map mit Key AchsenID und Value ist Position der Achse in der neuen Achsenordnung</span>
+<span class="sd">        6. Behandlung der intra-axis Kanten</span>
+<span class="sd">            a. Entfernen der intra-axis Kanten aus dem Hiveplotlayout</span>
+<span class="sd">            b. Erstellen der neuen intra-axis Kanten zwischen den expandierten Achsen (Kante (u,v) auf Achse i wird symmetrisch gespiegelt zu den Kanten (-u, v) und (u, -v))</span>
+<span class="sd">            c. Einpflegen der neuen intra-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</span>
+<span class="sd">        7. Behandlung der inter-axis Kanten</span>
+<span class="sd">            a. Entfernen der inter-axis Kanten aus dem Hiveplotlayout</span>
+<span class="sd">            b. Erstellen der neuen inter-axis Kanten:</span>
+<span class="sd">                I: Ziel- und Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v wenn i vor j in der Achsenordnung, Kante (u, v) zu (-u, v) andernfalls zu (u, -v) [i -&gt; -i -&gt; j -&gt; -j]</span>
+<span class="sd">                II: Ziel- oder Startknoten der Kante auf expandierter Achse: betrachte Kanten i/j mit Knoten u/v (i expandiert), falls i vor j in der Achsenordnung (u,v) zu (-u, v), andernfalls Kante übernehmen [j -&gt; i -&gt; -i]</span>
+<span class="sd">            c. Einpflegen der neuen inter-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</span>
+<span class="sd">        8. Einpflegen und Zuordnung zu Subsets der neuen Knoten in der Networkx Graphenstruktur des Hiveplotlayouts</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># initialisierung</span>
+        <span class="n">edge_axis_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span> <span class="p">(</span><span class="n">node_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">()}</span>
+        <span class="n">intra_expandables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">inter_expandables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">node_groups_expanded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span>
+        <span class="n">node_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span>
+
+        <span class="c1"># intra kanten filtern</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edge_axis_map</span><span class="p">:</span> <span class="c1"># key = knotenpaar, filter nach intra axis kanten</span>
+            <span class="n">edge_positions</span> <span class="o">=</span> <span class="n">edge_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">edge_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge_positions</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                 <span class="n">intra_expandables</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">edge_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span> <span class="c1"># check ob key vorhandenen + append</span>
+        
+        <span class="c1"># inter kanten filtern</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edge_axis_map</span><span class="p">:</span> <span class="c1"># erst möglich nach dem filtern der einen intra kanten</span>
+            <span class="n">edge_positions</span> <span class="o">=</span> <span class="n">edge_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">edge_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge_positions</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="n">edge_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                <span class="n">inter_expandables</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">edge_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span> <span class="c1"># check ob key vorhandenen + append</span>
+            <span class="k">elif</span> <span class="n">edge_positions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                <span class="n">inter_expandables</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">edge_positions</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span> <span class="c1"># check ob key vorhandenen + append</span>
+
+        <span class="c1"># expandierte node_groups initialisieren</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                <span class="n">node_groups_expanded</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                <span class="n">node_groups_expanded</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># pi^- links</span>
+                <span class="n">node_groups_expanded</span><span class="p">[</span><span class="o">-</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span> <span class="c1"># pi^- rechts</span>
+
+        <span class="c1"># datenstrukturen aktualisieren und vorbereiten</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_groups_expanded</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_axes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">)</span>
+        <span class="n">axis_position_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">):</span> <span class="c1"># achsenid: position in phi</span>
+            <span class="n">axis_position_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+        <span class="c1"># intra kanten spiegeln</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">intra_expandables</span><span class="p">[</span><span class="n">axis</span><span class="p">])</span>
+            <span class="n">new_intra_edges</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span> <span class="c1"># expandierte achse und ihre intra kanten spiegeln</span>
+                <span class="n">new_intra_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="o">-</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">new_intra_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">new_intra_edges</span><span class="p">)</span>
+
+        <span class="c1"># inter kanten spiegeln</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">inter_expandables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">inter_expandables</span><span class="p">[</span><span class="n">axis</span><span class="p">])</span>
+            <span class="n">new_inter_edges</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">inter_expandables</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_axes</span>
+                <span class="n">axis_u</span> <span class="o">=</span> <span class="n">edge_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">axis_v</span> <span class="o">=</span> <span class="n">edge_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">pos_axis_u</span> <span class="o">=</span> <span class="n">axis_position_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis_u</span><span class="p">,</span> <span class="n">axis_position_map</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">axis_u</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span> <span class="c1"># beide fälle müssen abgedeckt sein: achse ist int und achse ist expandiert und tupel</span>
+                <span class="n">pos_axis_v</span> <span class="o">=</span> <span class="n">axis_position_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis_v</span><span class="p">,</span> <span class="n">axis_position_map</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">axis_v</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+                <span class="n">dist_left_u_v</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos_axis_u</span> <span class="o">-</span> <span class="n">pos_axis_v</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+                <span class="n">dist_left_v_u</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos_axis_v</span> <span class="o">-</span> <span class="n">pos_axis_u</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+
+                <span class="c1"># FALL A</span>
+                <span class="k">if</span> <span class="n">axis_u</span> <span class="ow">in</span> <span class="n">intra_expandables</span> <span class="ow">and</span> <span class="n">axis_v</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span> <span class="c1"># ziel- und startachse expandiert</span>
+                    <span class="k">if</span> <span class="n">dist_left_u_v</span> <span class="o">&lt;=</span> <span class="n">dist_left_v_u</span><span class="p">:</span> <span class="c1"># v -&gt; u + bei gleichstand immer links</span>
+                        <span class="n">new_inter_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="k">elif</span> <span class="n">dist_left_v_u</span> <span class="o">&lt;</span> <span class="n">dist_left_u_v</span><span class="p">:</span> <span class="c1"># u auf expandierter achse und u -&gt; v</span>
+                        <span class="n">new_inter_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="o">-</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                
+                <span class="c1"># FALL B</span>
+                <span class="k">elif</span> <span class="n">axis_u</span> <span class="o">==</span> <span class="n">axis</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dist_left_u_v</span> <span class="o">&lt;=</span> <span class="n">dist_left_v_u</span><span class="p">:</span> <span class="c1"># u auf expandierter achse und v -&gt; u + bei gleichstand immer links</span>
+                        <span class="n">new_inter_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="k">elif</span> <span class="n">dist_left_v_u</span> <span class="o">&lt;</span> <span class="n">dist_left_u_v</span><span class="p">:</span> <span class="c1"># u auf expandierter achse und u -&gt; v</span>
+                        <span class="n">new_inter_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="o">-</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+                <span class="c1"># FALL C</span>
+                <span class="k">elif</span> <span class="n">axis_v</span> <span class="o">==</span> <span class="n">axis</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dist_left_v_u</span> <span class="o">&lt;=</span> <span class="n">dist_left_u_v</span><span class="p">:</span> <span class="c1"># v auf expandierter achse und u -&gt; v</span>
+                        <span class="n">new_inter_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="k">elif</span> <span class="n">dist_left_u_v</span> <span class="o">&lt;</span> <span class="n">dist_left_v_u</span><span class="p">:</span> <span class="c1"># v auf expandierter achse und v -&gt; u</span>
+                        <span class="n">new_inter_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="c1"># neue kanten in HPL speichern</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">new_inter_edges</span><span class="p">)</span>
+
+        <span class="c1"># sanity check für knoten</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span> <span class="c1"># negative knotenids auf expandierten achsen behandeln</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="s1">&#39;subset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">axis</span></div>
+
+        
+<div class="viewcode-block" id="HivePlotLayout.post_processing_expansion">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.post_processing_expansion">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post_processing_expansion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_axis_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">dummy_copy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Die Funktion dient dem post-processing des Eingabegraphen nach der Pipeline, sodass bei diesem die Achsen expandiert werden. Dazu wird die Achse i (&gt; 0) zu den Achsen mit KnotenIDs i und -i expandiert.  Die intra-axis Kanten werden symmetrisch zwischen den Achsenkopien gezeichnet.</span>
+<span class="sd">        Folgende Schritte werden durchgeführt:</span>
+<span class="sd">        1. Initialiseren der Dummysegmente, diese werden in der Funktion mutiert</span>
+<span class="sd">        2. Initialisieren der Map intra_expandables mit Key AchsenID einer Kante und ihrer intra-axis Kanten (Achse wird nur aufgenommen, wenn es intra-axis Kanten gibt)</span>
+<span class="sd">        3. Initialisieren der Map inter_expandables mit allen Kanten die genau einen Start oder Enknoten auf der expandierten Achse haben</span>
+<span class="sd">        4. Initielisieren der node_groups_expanded mit Keys ursprüngliche AchsenIDs und expandierte AchsenIDs und ihre in node_groups enthaltenen Knotenlisten (expandierte Achse -i bekommt alle Knoten von i zugeordnet, jedoch werden die KnotenIDs negativ gesetzt, für virtuelle Knoten wird die neue Sequenznummer ermittelt und die neue Kante zwischen den virtuellen Knoten direkt in das Netwworkx Graphmodell hinzugefügt)</span>
+<span class="sd">        5. Update des Hiveplotlayouts mit neuer Achsenordnung und -anzahl und Update der edge_axis_map</span>
+<span class="sd">        6. Initialisieren einer axis_position_map mit Key AchsenID und Value Position der Achse in der neuen Achsenordnung</span>
+<span class="sd">        7. Behandlung der intra-axis Kanten</span>
+<span class="sd">            a. Entfernen der intra-axis Kanten aus dem Hiveplotlayout</span>
+<span class="sd">            b. Erstellen der neuen intra-axis Kanten zwischen den expandierten Achsen (Kante (u,v) auf Achse i wird symmetrisch gespiegelt zu den Kanten (-u, v) und (u, -v))</span>
+<span class="sd">            c. Einpflegen der neuen intra-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</span>
+<span class="sd">        8. Behandlung der inter-axis Kanten</span>
+<span class="sd">            a. Entfernen der inter-axis Kanten aus dem Hiveplotlayout und den Dummykantensegmenten</span>
+<span class="sd">            b. Erstellen der neuen inter-axis Kanten, Fallbehandlung:</span>
+<span class="sd">                I: Sonderfall: sowohl u als auch v auf expandierten achsen</span>
+<span class="sd">                    i.) v muss aktualisiert werden</span>
+<span class="sd">                        &lt;1&gt; v ist real und muss negiert werden</span>
+<span class="sd">                        &lt;2&gt; v ist dummy und muss aktualisiert werden</span>
+<span class="sd">                    ii.) u muss aktualisiert werden</span>
+<span class="sd">                        &lt;1&gt; u ist real und muss negiert werden</span>
+<span class="sd">                        &lt;2&gt; u ist dummy und muss aktualisiert werden</span>
+<span class="sd">                II: u auf expandierter achse, v auf nicht expandierter achse</span>
+<span class="sd">                    i.) u ist real und muss negiert werden</span>
+<span class="sd">                    ii.) u ist dummy und muss aktualisiert werden</span>
+<span class="sd">                III: v auf expandierter achse, u auf nicht expandierter achse</span>
+<span class="sd">                    i.) v ist real und muss negiert werden</span>
+<span class="sd">                    ii.) v ist dummy und muss aktualisiert werden</span>
+<span class="sd">            c. Einpflegen der neuen inter-axis Kanten in die Networkx Graphenstruktur des Hiveplotlayouts</span>
+<span class="sd">        9. alle neuen Knoten in hiveplot.graph.nodes speichern und subset zuordnen</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node_axis_map (dict[int  |  str, int]): Knoten-ID: Achsen-ID</span>
+<span class="sd">            dummy_copy (list[tuple[int  |  str, int  |  str]], optional): eine Aktuelle Kopie der Dummysegmente, Default ist None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># kreis vermeiden</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">crossing_minimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_dummy_name</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ordering</span><span class="w"> </span><span class="kn">import</span> <span class="n">node_to_axis_maps</span>
+
+        <span class="c1"># initialisierung</span>
+        <span class="k">if</span> <span class="n">dummy_copy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dummy_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dummy_edges</span> <span class="o">=</span> <span class="n">dummy_copy</span>
+        <span class="n">node_groups_expanded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span>
+        <span class="n">node_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span>
+        <span class="n">edge_axis_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span> <span class="p">(</span><span class="n">node_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">()}</span>
+        <span class="n">intra_expandables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">inter_expandables</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># intra kanten filtern</span>
+        <span class="k">for</span> <span class="n">edge</span><span class="p">,</span> <span class="p">(</span><span class="n">axis_u</span><span class="p">,</span> <span class="n">axis_v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">edge_axis_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">axis_u</span> <span class="o">==</span> <span class="n">axis_v</span><span class="p">:</span>
+                <span class="n">intra_expandables</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">axis_u</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intra_axis_edges</span><span class="p">:</span>
+            <span class="n">axis_u</span> <span class="o">=</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">axis_v</span> <span class="o">=</span> <span class="n">node_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">axis_u</span> <span class="o">==</span> <span class="n">axis_v</span><span class="p">:</span> <span class="c1"># fallback</span>
+                <span class="n">intra_expandables</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">axis_u</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+
+        <span class="c1"># inter kanten filtern</span>
+        <span class="k">for</span> <span class="n">edge</span><span class="p">,</span> <span class="p">(</span><span class="n">axis_u</span><span class="p">,</span> <span class="n">axis_v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">edge_axis_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">axis_u</span> <span class="o">==</span> <span class="n">axis_v</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">axis_u</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                <span class="n">inter_expandables</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">axis_u</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">axis_v</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                <span class="n">inter_expandables</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">axis_v</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+
+        <span class="c1"># expandierte node_groups initialisieren</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">:</span>
+            <span class="n">node_groups_expanded</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                <span class="n">node_groups_expanded</span><span class="p">[</span><span class="o">-</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># realen knoten spiegeln</span>
+                        <span class="n">mirrored</span> <span class="o">=</span> <span class="o">-</span><span class="n">node</span>
+                    <span class="k">else</span><span class="p">:</span> <span class="c1"># virtuelle knoten spiegeln</span>
+                        <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">parse_dummy_name</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                        <span class="n">mirrored</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;d_</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="o">-</span><span class="n">seq</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="k">if</span> <span class="n">mirrored</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_groups_expanded</span><span class="p">[</span><span class="o">-</span><span class="n">axis</span><span class="p">]:</span>
+                        <span class="n">node_groups_expanded</span><span class="p">[</span><span class="o">-</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mirrored</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">mirrored</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">mirrored</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mirrored</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mirrored</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dummy_edges</span><span class="p">:</span>
+                            <span class="n">dummy_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">node</span><span class="p">,</span> <span class="n">mirrored</span><span class="p">))</span>
+
+        <span class="c1"># datenstrukturen aktualisieren und vorbereiten</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_groups_expanded</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_axes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">)</span>
+        <span class="n">node_groups_for_axis_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">axis</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">node_groups_expanded</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">dummies</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">node_groups_for_axis_map</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">for</span> <span class="n">dummy</span> <span class="ow">in</span> <span class="n">dummies</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">dummy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_groups_for_axis_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+                    <span class="n">node_groups_for_axis_map</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dummy</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">node_to_axis_map_updated</span> <span class="o">=</span> <span class="n">node_to_axis_maps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_groups_for_axis_map</span><span class="p">)</span>
+
+        <span class="c1"># korrekten spiegel ermitteln, notwendig für lange dummysegmente (vorher long kanten mit span &gt; 2)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">mirror_endpoint</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">return</span> <span class="o">-</span><span class="n">node</span>
+            
+            <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">parse_dummy_name</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="n">mirrored</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;d_</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="o">-</span><span class="n">seq</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="n">node_to_axis_map_updated</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="n">mirror_axis</span> <span class="o">=</span> <span class="o">-</span><span class="n">axis</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">mirror_axis</span><span class="p">,</span> <span class="p">[])</span>
+
+            <span class="k">if</span> <span class="n">mirrored</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="p">[</span><span class="n">mirror_axis</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_dummies</span><span class="p">[</span><span class="n">mirror_axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mirrored</span><span class="p">)</span>
+
+            <span class="n">node_groups_for_axis_map</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">mirror_axis</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="n">mirrored</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_groups_for_axis_map</span><span class="p">[</span><span class="n">mirror_axis</span><span class="p">]:</span>
+                <span class="n">node_groups_for_axis_map</span><span class="p">[</span><span class="n">mirror_axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mirrored</span><span class="p">)</span>
+
+            <span class="n">node_to_axis_map_updated</span><span class="p">[</span><span class="n">mirrored</span><span class="p">]</span> <span class="o">=</span> <span class="n">mirror_axis</span>
+
+            <span class="k">if</span> <span class="n">mirrored</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">mirrored</span><span class="p">)</span>
+
+            <span class="c1"># interne verbindung zwischen dummy und dummy spiegel in datenstruktur einfügen</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">has_edge</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mirrored</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mirrored</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mirrored</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dummy_edges</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mirrored</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dummy_edges</span><span class="p">:</span>
+                <span class="n">dummy_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">node</span><span class="p">,</span> <span class="n">mirrored</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">mirrored</span>
+
+        <span class="c1"># aktualisierung</span>
+        <span class="n">edge_axis_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span> <span class="p">(</span><span class="n">node_to_axis_map_updated</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">node_to_axis_map_updated</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">()}</span>
+        <span class="n">axis_position_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">axis</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">)}</span>
+
+        <span class="c1"># alte segmente nach spiegelnung entfernen</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">remove_dummy_segment</span><span class="p">(</span><span class="n">edge</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span><span class="o">.</span><span class="n">remove</span><span class="p">((</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="c1"># intra kanten spiegeln</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">edges</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+            <span class="n">new_intra_edges</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+                <span class="n">new_intra_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mirror_endpoint</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">v</span><span class="p">))</span>
+                <span class="n">new_intra_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">u</span><span class="p">,</span> <span class="n">mirror_endpoint</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">new_intra_edges</span><span class="p">)</span>
+
+        <span class="c1"># inter kanten spiegeln</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">edges</span> <span class="ow">in</span> <span class="n">inter_expandables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+            <span class="n">new_inter_edges</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+                <span class="c1"># initialisierung</span>
+                <span class="n">axis_u</span><span class="p">,</span> <span class="n">axis_v</span> <span class="o">=</span> <span class="n">edge_axis_map</span><span class="p">[</span><span class="n">edge</span><span class="p">]</span>
+                <span class="n">pos_u</span> <span class="o">=</span> <span class="n">axis_position_map</span><span class="p">[</span><span class="n">axis_u</span><span class="p">]</span>
+                <span class="n">pos_v</span> <span class="o">=</span> <span class="n">axis_position_map</span><span class="p">[</span><span class="n">axis_v</span><span class="p">]</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_axes</span>
+                <span class="c1"># linksgerichtete distanz</span>
+                <span class="n">dist_left_u_v</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos_u</span> <span class="o">-</span> <span class="n">pos_v</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+                <span class="n">dist_left_v_u</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos_v</span> <span class="o">-</span> <span class="n">pos_u</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
+
+                <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">edge</span>
+                <span class="n">new_u</span><span class="p">,</span> <span class="n">new_v</span> <span class="o">=</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span>
+
+                <span class="c1"># Fall A</span>
+                <span class="k">if</span> <span class="n">axis_u</span> <span class="ow">in</span> <span class="n">intra_expandables</span> <span class="ow">and</span> <span class="n">axis_v</span> <span class="ow">in</span> <span class="n">intra_expandables</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dist_left_u_v</span> <span class="o">&lt;=</span> <span class="n">dist_left_v_u</span><span class="p">:</span>
+                        <span class="c1"># u bleibt auf Originalachse, v geht auf Kopie</span>
+                        <span class="n">new_v</span> <span class="o">=</span> <span class="n">mirror_endpoint</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># v bleibt auf Originalachse, u geht auf Kopie</span>
+                        <span class="n">new_u</span> <span class="o">=</span> <span class="n">mirror_endpoint</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+
+                <span class="c1"># Fall B</span>
+                <span class="k">elif</span> <span class="n">axis_u</span> <span class="o">==</span> <span class="n">axis</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dist_left_u_v</span> <span class="o">&gt;</span> <span class="n">dist_left_v_u</span><span class="p">:</span>
+                        <span class="n">new_u</span> <span class="o">=</span> <span class="n">mirror_endpoint</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+
+                <span class="c1"># Fall C</span>
+                <span class="k">elif</span> <span class="n">axis_v</span> <span class="o">==</span> <span class="n">axis</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dist_left_v_u</span> <span class="o">&gt;</span> <span class="n">dist_left_u_v</span><span class="p">:</span>
+                        <span class="n">new_v</span> <span class="o">=</span> <span class="n">mirror_endpoint</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+                <span class="n">new_edge</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_u</span><span class="p">,</span> <span class="n">new_v</span><span class="p">)</span>
+                <span class="n">new_inter_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_edge</span><span class="p">)</span>
+                <span class="n">remove_dummy_segment</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+            <span class="c1"># kanten aktualisieren</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">new_inter_edges</span><span class="p">)</span>
+
+        <span class="c1"># sanity check</span>
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="s2">&quot;subset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">axis</span></div>
+
+        
+<div class="viewcode-block" id="HivePlotLayout.count_crossings">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.count_crossings">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_crossings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">layout_expanded</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Funktion zählt die induzierten Kanten des fertigen Hiveplotlayout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># initialisieren</span>
+        <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+            <span class="n">node_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">node_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span>
+        <span class="n">hpl_copy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intra_axis_edges</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">layout_expanded</span><span class="p">:</span>
+                <span class="n">hpl_copy</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+            <span class="n">neighbor_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">layout_expanded</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hpl_copy</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dummy_edge_segments</span><span class="p">)</span>
+            <span class="n">neighbor_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_proper_neighborhood_map</span><span class="p">(</span><span class="n">hpl_copy</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">layout_expanded</span><span class="p">)</span>
+        <span class="n">node_positions_pi</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># knoten -&gt; position in pi</span>
+        <span class="n">node_axis_map</span> <span class="o">=</span> <span class="p">{}</span> 
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="p">:</span> 
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]):</span>
+                <span class="n">node_positions_pi</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">node_axis_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">axis</span>
+        
+        <span class="c1"># zähllogik </span>
+        <span class="n">crossings</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="c1"># betrachte achsen paarweise</span>
+            <span class="n">axis_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">[</span><span class="n">step</span><span class="p">]</span>
+            <span class="n">axis_j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis_order</span><span class="p">[(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span><span class="p">]</span>
+            <span class="n">order_i</span> <span class="o">=</span> <span class="n">node_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis_i</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">for</span> <span class="n">idx_u</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">order_i</span><span class="p">):</span> <span class="c1"># betrachte knoten paarweise</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">order_i</span><span class="p">[</span><span class="n">idx_u</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
+                    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">neighbor_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="p">[]):</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">neighbor_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">[]):</span>
+                            <span class="k">if</span> <span class="p">(</span><span class="n">node_axis_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">==</span> <span class="n">axis_j</span> <span class="ow">and</span> <span class="n">node_axis_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">==</span> <span class="n">axis_j</span> <span class="ow">and</span> <span class="n">node_positions_pi</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">node_positions_pi</span><span class="p">[</span><span class="n">s</span><span class="p">]):</span>
+                                <span class="n">crossings</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">crossings</span></div>
+
+    
+<div class="viewcode-block" id="HivePlotLayout.classify_nodes_for_3b">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.classify_nodes_for_3b">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">classify_nodes_for_3b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Klassifiziert die Knoten für Pipelineschritt 3b.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mixed_nodes_by_axis</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strict_intra_nodes_by_axis</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span><span class="p">:</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">mixed_nodes_by_axis</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strict_intra_nodes_by_axis</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intra_axis_nodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">strict_intra_nodes_by_axis</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mixed_nodes_by_axis</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="HivePlotLayout.freeze_inter_axis_delta">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.freeze_inter_axis_delta">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">freeze_inter_axis_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Legt die delta Map für den Pipelineschritt 3b der ILP-Pipeline fest. Wird für alle mixed Knoten ermittelt.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ip_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">delta_mapping</span>
+        <span class="n">groups_copy</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span><span class="p">:</span>
+            <span class="n">groups_copy</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+                <span class="n">groups_copy</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="n">full_delta</span> <span class="o">=</span> <span class="n">delta_mapping</span><span class="p">(</span><span class="n">groups_copy</span><span class="p">)</span>
+        <span class="n">partial_delta</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">full_delta</span><span class="p">:</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+            <span class="n">u_is_fixed</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">v_is_fixed</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mixed_nodes_by_axis</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">fixed_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mixed_nodes_by_axis</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="n">fixed_node</span><span class="p">:</span>
+                        <span class="n">u_is_fixed</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">fixed_node</span><span class="p">:</span>
+                        <span class="n">v_is_fixed</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="n">u_is_fixed</span> <span class="ow">and</span> <span class="n">v_is_fixed</span><span class="p">:</span>
+                <span class="n">partial_delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">full_delta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_inter_axis_delta</span> <span class="o">=</span> <span class="n">partial_delta</span></div>
+
+
+<div class="viewcode-block" id="HivePlotLayout.freeze_barycenter_positions">
+<a class="viewcode-back" href="../../api.html#src.hiveplot.HivePlotLayout.freeze_barycenter_positions">[Doku]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">freeze_barycenter_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout_expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Legt die fixierten Positionen für den Pipelineschritt 3b der Barycenterpipeline fest. Wird für alle mixed Knoten ermittelt.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_positions_by_axis</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">layout_expanded</span><span class="p">:</span>
+            <span class="n">node_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups_expanded</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">node_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_groups</span>
+
+        <span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">node_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_positions_by_axis</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span> <span class="p">:</span> <span class="n">position</span> <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nodes</span><span class="p">)}</span></div>
+</div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+   <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
