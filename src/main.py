@@ -23,7 +23,7 @@ GD_DATA    = CACHE_DIR / "gd_graphs.pkl"
 OUTPUT_DIR = ROOT / "output"
 
 # ordnerstruktur
-DEBUG_DIR = OUTPUT_DIR / "debug" # entfernen?
+DEBUG_DIR = OUTPUT_DIR / "debug"
 GRAPH_DIR = OUTPUT_DIR / "graphs"
 SAVE_DIR = OUTPUT_DIR / "save"
 LOAD_DIR = ROOT / "load"
@@ -31,8 +31,8 @@ LOG_DIR   = OUTPUT_DIR / "logs"
 EXPERIMENT_DATA = OUTPUT_DIR / "experiments"
 
 # bei erstem programmstart ordnerstruktur anlegen
-for d in [OUTPUT_DIR, DEBUG_DIR, GRAPH_DIR, SAVE_DIR, LOAD_DIR, LOG_DIR, EXPERIMENT_DATA]:
-    d.mkdir(parents=True, exist_ok=True)
+for directory in [OUTPUT_DIR, DEBUG_DIR, GRAPH_DIR, SAVE_DIR, LOAD_DIR, LOG_DIR, EXPERIMENT_DATA]:
+    directory.mkdir(parents=True, exist_ok=True)
 
 
 # module
@@ -121,10 +121,15 @@ def save_rendered_hiveplot(svg_path: Path, year: int, logger: logging.Logger) ->
         renderPDF.drawToFile(drawing, str(pdf_path))
 
 ## pipeline
-def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | None, variant: str, paper_like: bool, partitions: int = 8, threshold: int = 5, save: bool = False, debug: bool = False, batch: bool = False, own_pkl: str | None = None, gui: bool = False):
+def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | None, variant: str, paper_like: bool, partitions: int = 8, threshold: int = 5, save: bool = False, debug: bool = False, batch: bool = False, own_pkl: str | None = None):
+    if debug and not logger: # bezeichner für den log
+            logging_file = setup_logger(EXPERIMENT_DATA, per_session = not batch, file_name = output_name)
+            logger = logging_file
 
-    # für versuchsdaten, siehe unten
     print("Berechnung Start.")
+
+    # versuchsdatenparameter, beispiel zur benutzung siehe unten
+    # als x-wert kann auch run benutzt werden z.b. collector.update("Parameterstudie", run, **collected_data_time)
     collector = DataCollector()
     collected_data_time = {}
     collected_data_crossings = {}
@@ -135,6 +140,9 @@ def pipeline(year: int, run: int, logger: logging.Logger, output_name: str | Non
 
     # achsenordnung optimieren
     step_ordering(hiveplot, logger)
+
+    # beispieleintrag im log
+    # log(logger, "Ein Beispieleintrag.")
 
     # zwischenspeichern der zwischenbasis
     save_pkl(hiveplot, f"{variant}_{year}_basis_nach_ordering", save, logger)
@@ -218,7 +226,7 @@ def main():
     # parameter für die pipeline
     config = {
         "year": 2017,
-        "output_name": "",
+        "output_name": "Beispiellog",
         "logger": None,
         # "variant": "Barycenterheuristik",
         "variant": "1L2S-ILP",
@@ -233,20 +241,9 @@ def main():
         "batch": False,
         # "batch": True,
         "own_pkl": None,
-        "gui": False,
     }
 
-    #logger init
-    if config["output_name"]: # ausgabe für experimente
-            logger = setup_logger(EXPERIMENT_DATA, per_session = not config["batch"], file_name = config["output_name"])
-            config["logger"] = logger
-    else:
-        if config["debug"]: # ausgabe für debug
-            logger = init_logger(per_session = not logger["batch"])
-            config["logger"] = logger
-    
-
-    # einzeldurchlauf
+    # einzeldurchlauf mit obiger konfiguration: kein logging, kein speichern der graphen
     pipeline(run = 0, **config)
 
     # für batchläufe
