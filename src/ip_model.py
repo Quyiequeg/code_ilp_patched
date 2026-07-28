@@ -449,7 +449,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
 
         # ccw-sweep
         for axis in reversed_phi:
-                # expandierte teile ignorieren
+            # expandierte teile ignorieren
             if paper_like and axis < 0:
                 continue
 
