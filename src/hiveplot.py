@@ -560,29 +560,7 @@ class HivePlotLayout:
         else:
             node_groups = self.node_groups
 
-        for axis, nodes in node_groups.items():
-            self.fixed_positions_by_axis[axis] = {}
+        for axis, nodes in node_groups.items(): self.fixed_positions_by_axis[axis] = {node : position for position, node in enumerate(nodes)}
 
-            if layout_expanded:
-                original_axis = abs(axis)
-            else:
-                original_axis = axis
-
-            mixed_nodes = self.mixed_nodes_by_axis.get(original_axis, [])
-
-            for position, node in enumerate(nodes):
-
-                if layout_expanded:
-                    if not isinstance(node, int):
-                        continue
-
-                    original_node = abs(node)
-
-                    if original_node in mixed_nodes:
-                        self.fixed_positions_by_axis[axis][node] = position
-
-                else:
-                    if node in mixed_nodes:
-                        self.fixed_positions_by_axis[axis][node] = position
 if __name__ == "__main__":
    pass

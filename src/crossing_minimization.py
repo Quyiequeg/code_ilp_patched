@@ -272,6 +272,213 @@ def barycenter_heuristic(layout: HivePlotLayout, neighborhood_map: dict[int | st
 
             node_groups[axis] = new_order
 
+def barycenter_heuristic_3b_paper_like(layout: HivePlotLayout, neighborhood_map: dict[int | str, list[int | str]], node_axis_map: dict[int | str, int], threshold=float("inf")) -> None:
+    """
+    Barycenterheuristik für Schritt 3b im paper-like-Fall.
+
+    Die positiven und negativen Achsenkopien werden gekoppelt behandelt.
+    Die relative Ordnung der Mixed-Knoten aus Schritt 3a bleibt erhalten.
+    Strict-Intra-Knoten dürfen neu eingeordnet werden.
+    """
+
+    node_groups = layout.node_groups_expanded
+
+    # nur positive achsen behandeln
+    phi = []
+    for axis in layout.axis_order:
+        if axis > 0:
+            phi.append(axis)
+    reversed_phi = list(reversed(phi))
+    changed = True
+    threshold_run = 0
+    state_set = set()
+
+    while threshold_run < threshold and changed:
+        # zustand speichern -> oszillation erkennen
+        state = []
+        for axis in phi:
+            state.append(tuple(node_groups.get(axis, [])))
+        state = tuple(state)
+        if state in state_set:
+            break
+        state_set.add(state)
+
+        threshold_run += 1
+        changed = False
+
+        # cw-sweep
+        for axis in phi:
+            bary_axis_order = node_groups.get(axis, [])
+            if len(bary_axis_order) == 0:
+                continue
+            mixed_nodes = layout.mixed_nodes_by_axis.get(axis, [])
+            strict_intra_nodes = layout.strict_intra_nodes_by_axis.get(axis, [])
+            mixed_set = set(mixed_nodes)
+            strict_intra_set = set(strict_intra_nodes)
+
+            # relative mixed-ordnung aus 3a
+            mixed_order = []
+            for node in bary_axis_order:
+                if node in mixed_set:
+                    mixed_order.append(node)
+
+            # speichert tupel: (barycenter wert, position, knoten)
+            barycenter_values = []
+
+            for position, node in enumerate(bary_axis_order):
+                # virtuelle knoten werden in dieser funktion nicht behandelt
+                if not isinstance(node, int):
+                    continue
+
+                # mixed-knoten dienen als feste ordnungsanker
+                if node in mixed_set:
+                    value = position / max(1, len(bary_axis_order))
+                    barycenter_values.append((value, position, node))
+                    continue
+
+                # nur strict-intra-knoten werden in 3b neu optimiert
+                if node not in strict_intra_set:
+                    value = position / max(1, len(bary_axis_order))
+                    barycenter_values.append((value, position, node))
+                    continue
+
+                values = []
+
+                # positive achsenkopie
+                node_neighbors = neighborhood_map.get(node, [])
+
+                if len(node_neighbors) > 0:
+                    value = calculate_barycenter_position(layout, node_neighbors, node_axis_map, layout_expanded=True)
+                    values.append(value)
+
+                # negative achsenkopie
+                mirror_axis = -axis
+                mirror_node = -node
+
+                if mirror_axis in node_groups:
+                    mirror_neighbors = neighborhood_map.get(mirror_node, [])
+                    if len(mirror_neighbors) > 0:
+                        value = calculate_barycenter_position(layout,mirror_neighbors,node_axis_map,layout_expanded=True)
+                        values.append(value)
+
+                if len(values) > 0:
+                    value = sum(values)/len(values)
+                else:
+                    value = position/max(1, len(bary_axis_order))
+                barycenter_values.append((value, position, node))
+
+            # stabile sortierung
+            barycenter_values.sort(key=lambda item: (item[0], item[1]))
+
+            # neue ordnung auslesen
+            new_order = []
+            for _, _, node in barycenter_values:
+                new_order.append(node)
+
+            # relative mixed-ordnung prüfen
+            new_mixed_order = []
+            for node in new_order:
+                if node in mixed_set:
+                    new_mixed_order.append(node)
+
+            if new_mixed_order != mixed_order:
+                raise RuntimeError(f"Mixed-Ordnung auf Achse {axis} wurde in 3b verändert.")
+
+            if new_order != bary_axis_order:
+                changed = True
+
+            node_groups[axis] = new_order
+
+            # identische ordnung auf negative kopie übertragen
+            mirror_axis = -axis
+            if mirror_axis in node_groups:
+                mirror_order = []
+                for node in new_order:
+                    mirror_order.append(-node)
+                node_groups[mirror_axis] = mirror_order
+
+        # ccw-sweep
+        for axis in reversed_phi:
+            bary_axis_order = node_groups.get(axis, [])
+            if len(bary_axis_order) == 0:
+                continue
+            mixed_nodes = layout.mixed_nodes_by_axis.get(axis, [])
+            strict_intra_nodes = layout.strict_intra_nodes_by_axis.get(axis, [])
+            mixed_set = set(mixed_nodes)
+            strict_intra_set = set(strict_intra_nodes)
+
+            mixed_order = []
+            for node in bary_axis_order:
+                if node in mixed_set:
+                    mixed_order.append(node)
+
+            barycenter_values = []
+
+            for position, node in enumerate(bary_axis_order):
+
+                if not isinstance(node, int):
+                    continue
+
+                if node in mixed_set:
+                    value = position / max(1, len(bary_axis_order))
+                    barycenter_values.append((value, position, node))
+                    continue
+
+                if node not in strict_intra_set:
+                    value = position / max(1, len(bary_axis_order))
+                    barycenter_values.append((value, position, node))
+                    continue
+
+                values = []
+
+                node_neighbors = neighborhood_map.get(node, [])
+
+                if len(node_neighbors) > 0:
+                    value = calculate_barycenter_position(layout, node_neighbors, node_axis_map, layout_expanded=True)
+                    values.append(value)
+
+                mirror_axis = -axis
+                mirror_node = -node
+
+                if mirror_axis in node_groups:
+                    mirror_neighbors = neighborhood_map.get(mirror_node, [])
+                    if len(mirror_neighbors) > 0:
+                        value = calculate_barycenter_position(layout, mirror_neighbors, node_axis_map, layout_expanded=True)
+                        values.append(value)
+
+                if len(values) > 0:
+                    value = sum(values) / len(values)
+                else:
+                    value = position / max(1, len(bary_axis_order))
+                barycenter_values.append((value, position, node))
+
+            barycenter_values.sort(key=lambda item: (item[0], item[1]))
+
+            new_order = []
+            for _, _, node in barycenter_values:
+                new_order.append(node)
+
+            new_mixed_order = []
+            for node in new_order:
+                if node in mixed_set:
+                    new_mixed_order.append(node)
+
+            if new_mixed_order != mixed_order:
+                raise RuntimeError(f"Mixed-Ordnung auf Achse {axis} wurde in 3b verändert.")
+
+            if new_order != bary_axis_order:
+                changed = True
+
+            node_groups[axis] = new_order
+
+            mirror_axis = -axis
+
+            if mirror_axis in node_groups:
+                mirror_order = []
+                for node in new_order:
+                    mirror_order.append(-node)
+                node_groups[mirror_axis] = mirror_order
+
 def calculate_barycenter_position(layout: HivePlotLayout, neighbor_group: list[int], node_axis_map, layout_expanded: bool = False) -> float:
     """Berechnet die Barycenterposition eines Knotens über seine ermittelten Nachbarn. Siehe HivePlotLayout.get_proper_neighbors().
 
@@ -404,7 +611,6 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
 
         # ---------- Vorbereitung Pipeline 3b ----------
         layout.classify_nodes_for_3b()
-        layout.freeze_barycenter_positions(layout_expanded=False)
 
         fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
         node_position_map, node_axis_map = node_to_axis_maps(layout, fused_node_list)
@@ -412,9 +618,6 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
         # ---------- Expansion ----------
         layout.post_processing_expansion(node_axis_map)
         layout_expanded = True
-
-        # nach expansion alle konkreten achsenordnungen fixieren
-        layout.freeze_barycenter_positions(layout_expanded=True)
 
         fused_edge_list = layout.fuse_edges_with_edge_dummies()
         fused_node_list = layout.fuse_node_groups_with_dummies(layout_expanded=layout_expanded)
@@ -424,14 +627,11 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
 
         # ---------- Pipeline 3b ----------
         # reale knoten optimieren
-        barycenter_heuristic(
+        barycenter_heuristic_3b_paper_like(
             layout,
             neighborhood_map,
             node_axis_map,
-            threshold=threshold,
-            real=True,
-            layout_expanded=layout_expanded,
-            use_fixed_positions=True)
+            threshold=threshold)
         
         # virtuelle knoten optimieren
         barycenter_heuristic(
@@ -440,8 +640,7 @@ def barycenter_crossmin_pipeline(layout: HivePlotLayout, logger: logging.Logger,
             node_axis_map,
             threshold=threshold,
             real=False,
-            layout_expanded=layout_expanded,
-            use_fixed_positions=True)
+            layout_expanded=layout_expanded)
 
         # ---------- Finish ----------
         finish_structured_axis_orders(layout,isolated_nodes, layout_expanded=layout_expanded)
