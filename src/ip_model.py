@@ -391,7 +391,7 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
                     if mirrored_key in fixed_delta:
                         continue
                 if (isinstance(key[0], int) and isinstance(key[1], int)): 
-                    pp.LpVariable(ilp_name(key[0], key[1], key[2]), cat="Binary")
+                    delta_static[key] = pp.LpVariable(ilp_name(key[0], key[1], key[2]), cat="Binary")
                 elif isinstance(key[0], int) and isinstance(key[1], str): # real < virtuell =  1
                     delta_static[key] = 1
                 elif isinstance(key[0], str) and isinstance(key[1], int): # virtuell < real = 0
