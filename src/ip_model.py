@@ -449,10 +449,9 @@ def onelayer_twosided_optimization_3b(layout: HivePlotLayout, neighborhood_map: 
 
         # ccw-sweep
         for axis in reversed_phi:
-            for axis in phi: # expandierte achsen nicht behandeln = paper_like = gleiche ordnung
                 # expandierte teile ignorieren
-                if paper_like and axis < 0:
-                    continue
+            if paper_like and axis < 0:
+                continue
 
             # probleminstanz
             prob = pp.LpProblem(f"1S2L_ILP_counter_clockwise_run_{threshold_break}_axis_{axis}", pp.LpMinimize)
